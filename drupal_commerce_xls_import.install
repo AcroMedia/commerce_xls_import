@@ -1,0 +1,47 @@
+<?php
+
+/**
+ * @file acro_commerce_xls_import.install
+ * Install, update, and uninstall functions for the acro_commerce_xls_import
+ */
+
+function acro_commerce_xls_import_install() {
+
+}
+
+function acro_commerce_xls_import_uninstall() {
+  variable_del('import_count_status');
+  variable_del('import_completed');
+  variable_del('last_import');
+
+}
+
+/**
+ * Table to keep track of whether an attempted stop has occured
+ */
+function acro_commerce_xls_import_schema() {
+  $schema = array();
+
+  $schema['current_xls_imports'] = array(
+    'fields' => array(
+      'stopped' => array(
+        'type' => 'int',
+        'default' => 0,
+      ),
+      'handle' => array(
+        'type' => 'varchar',
+        'length' => 255,
+        'not null' => TRUE,
+        'default' => '',
+      ),
+      'uid' => array(
+        'type' => 'int',
+        'not null' => TRUE,
+      ),
+    ),
+    'primary key' => array('stopped'),
+  );
+
+  return $schema;
+}
+
