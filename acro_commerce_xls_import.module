@@ -1,7 +1,7 @@
 <?php
 
 /**
- * @file drupal_commerce_xls_import.module
+ * @file acro_commerce_xls_import.module
  *
  * Imports Drupal Commerce Entities from an XLS file and returns an XLS file highlighting success and failures
  */
