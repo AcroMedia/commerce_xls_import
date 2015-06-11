@@ -388,10 +388,7 @@ function acro_commerce_xls_import_export($op, $product_info = NULL, $product_typ
   $headers = array();
   $data = array();
 
-  $path = $_SERVER['DOCUMENT_ROOT'];
-  if ( base_path() != "/" ) {
-    $path += base_path();
-  }
+  $path = drupal_get_path('module', 'acro_commerce_xls_import');
 
   $headers = acro_commerce_xls_import_generate_headers($nids, $product_type);
   $options = array('format' => 'xls', 'title' => t('Product Import Template') );
@@ -436,7 +433,7 @@ function acro_commerce_xls_import_export($op, $product_info = NULL, $product_typ
       //there are errors with this import
       $filename = "product_import_results.xls";
       $options['errors'] = TRUE;
-      $result = phpexcel_export($headers, $data, "$path$filename", $options);
+      $result = phpexcel_export($headers, $data, "$path/$filename", $options);
 
       if ($result == PHPEXCEL_SUCCESS) {
         drupal_set_message(t('Import results generated'));
@@ -450,20 +447,22 @@ function acro_commerce_xls_import_export($op, $product_info = NULL, $product_typ
       header('Content-Disposition: attachment;filename="' . $filename . '"');
       header('Cache-Control: max-age=0');
 
-      readfile("$path$filename");
+      readfile("$path/$filename");
       exit;
 
       break;
     case 'template':
       $filename = $product_type . "_template.xls";
-      $result = phpexcel_export($headers, $data, "$path$filename", $options);
+      $result = phpexcel_export($headers, $data, "$path/$filename", $options);
+
+      drupal_set_message(t("$path/$filename"));
 
 
       header('Content-Type: application/vnd.openxmlformats-officedocument.spreadsheetml.sheet');
       header('Content-Disposition: attachment;filename="' . $filename . '"');
       header('Cache-Control: max-age=0');
 
-      readfile("$path$filename");
+      readfile("$path/$filename");
       exit;
 
       if ($result == PHPEXCEL_SUCCESS) {
@@ -1465,6 +1464,7 @@ function acro_commerce_xls_import_get_possible_fields($product_type) {
   $fields = field_info_field_map();
 
   foreach ($fields as $key => $field) {
+
     if ((isset($field['bundles']['commerce_product']) && in_array($product_type, $field['bundles']['commerce_product']))
         || (isset($field['bundles']['node']) && in_array($product_type, $field['bundles']['node']))) {
       // We don't want to include the product reference since the import will take care of that for us
@@ -1475,6 +1475,7 @@ function acro_commerce_xls_import_get_possible_fields($product_type) {
       }
     }
   }
+
 
   return $result;
 }
