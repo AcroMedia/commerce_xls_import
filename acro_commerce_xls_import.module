@@ -335,17 +335,14 @@ function acro_commerce_xls_import_settings_submit($form, &$form_state) {
   }
   elseif ( $form_state['clicked_button']['#id'] == 'edit-errors-button' ) {
 
-    $path = $_SERVER['DOCUMENT_ROOT'];
-    if ( base_path() != "/" ) {
-      $path += base_path();
-    }
+    $path = drupal_get_path('module', 'acro_commerce_xls_import');
     $filename = "product_import_results.xls";
 
-    if ( is_readable("$path$filename") ) {
+    if ( is_readable("$path/$filename") ) {
       header('Content-Type: application/vnd.openxmlformats-officedocument.spreadsheetml.sheet');
       header('Content-Disposition: attachment;filename="' . $filename . '"');
       header('Cache-Control: max-age=0');
-      readfile("$path$filename");
+      readfile("$path/$filename");
       exit;
     }
     else {
