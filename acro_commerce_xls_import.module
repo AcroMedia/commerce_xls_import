@@ -664,20 +664,24 @@ function acro_commerce_xls_import_validate_image_path( $filename ) {
 
 
 /**
- * Checks the languages table for a corresponding language
- * Returns the language if a match is found, false if no match found
+ * Checks to see if the language table exists, if it does then it checks
+ * the languages table for a corresponding language.
+ * 
+ * Returns the language if a match is found, false if the table does not
+ * exist or no language match found
  */
 function acro_commerce_xls_import_validate_languages($language) {
-  $result = db_select('languages', 'l')
-            ->fields('l', array('language', 'name'))
-            ->execute();
-  while ( $record = $result->fetchAssoc() ) {
-    if ( (strtolower($record['language']) == strtolower($language)) || strtolower($language) == strtolower($record['name']) ) {
-      return $record['language'];
-      break;
+  if(db_table_exists('languages')){
+    $result = db_select('languages', 'l')
+      ->fields('l', array('language', 'name'))
+      ->execute();
+    while ( $record = $result->fetchAssoc() ) {
+      if ( (strtolower($record['language']) == strtolower($language)) || strtolower($language) == strtolower($record['name']) ) {
+        return $record['language'];
+        break;
+      }
     }
   }
-
   return FALSE;
 }
 
@@ -749,7 +753,7 @@ function acro_commerce_xls_import_create_product($values, $entity_info, $product
     	"$language" => array(
         0 => array(
           'value' => $entity_info["body"],
-    			'format' => 'html_content',
+    			'format' => 'html_content'
         ),
        ),
      );
