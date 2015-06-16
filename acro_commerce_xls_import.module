@@ -1597,7 +1597,6 @@ function acro_commerce_xls_import_file_entry_exists($uri) {
 function acro_commerce_xls_import_get_possible_fields($product_type) {
   $result = array();
   $fields = field_info_field_map();
-  watchdog('possible fields', "<pre>" . print_r($fields, true) . "</pre>");
   foreach ($fields as $key => $field) {
 
     if ((isset($field['bundles']['commerce_product']) && in_array($product_type, $field['bundles']['commerce_product']))
