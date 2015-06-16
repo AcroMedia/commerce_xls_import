@@ -21,7 +21,7 @@ define('ACRO_COMMERCE_XLS_IMPORT_DATA_NONE', 3);
 function acro_commerce_xls_import_menu() {
   $items = array();
 
-  $items['admin/content/import_commerce'] = array(
+  $items['admin/commerce/products/import_commerce'] = array(
     'title' => 'Commerce Import',
     'description' => 'Import commerce XLS or generate XLS headers form',
     'page callback' => 'drupal_get_form',
