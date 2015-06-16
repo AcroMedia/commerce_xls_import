@@ -1494,14 +1494,14 @@ function acro_commerce_xls_import_get_column_status($column, $row) {
  * handles the main zip extraction
  */
 function acro_commerce_xls_import_extract_zip() {
-  $dir = file_stream_wrapper_get_instance_by_uri('public://')->realpath();
+  $dir = realpath(".") . "/" . variable_get('file_public_path', conf_path() . '/files');
   $filenames = array();
 
-  $import_successful = acro_commerce_xls_import_unpack_zip(realpath("."), 'import_images/product_images', "$dir/product_images");
+  $import_successful = acro_commerce_xls_import_unpack_zip($dir, 'import_images/product_images', "$dir");
 
   //add new files to the file table
   if($import_successful){
-    return acro_commerce_xls_import_create_image_database_entries("public://product_images");
+    return acro_commerce_xls_import_create_image_database_entries("public://");
   }
   else {
     return false;
@@ -1532,6 +1532,7 @@ function acro_commerce_xls_import_create_image_database_entries($base_path) {
         $results[$filename] = $fid;
       }
       else {
+        watchdog('Create Image DB Entries', "Creating img file entry");
         //doesn't exist, create file entry
         $file = new stdClass;
         $file->uid = $user->uid;
@@ -1568,8 +1569,12 @@ function acro_commerce_xls_import_file_entry_exists($uri) {
  * Uses the command line to unpack .zip files and move to public files directory
  */
  function acro_commerce_xls_import_unpack_zip($zip_dir, $filename, $save_dir) {
-
-    $command = "unzip -oq $zip_dir/$filename.zip -d $save_dir 2>&1";
+    $file_directory = $save_dir;
+    $thumbnail_directory = $save_dir . "/styles/product_thumbnail/public";
+    $full_directory = $save_dir . "/styles/product_full/public";
+    $command = "unzip -oq $zip_dir/$filename.zip -d $file_directory 2>&1 |
+                unzip -oq $zip_dir/$filename.zip -d $thumbnail_directory 2>&1 |
+                unzip -oq $zip_dir/$filename.zip -d $full_directory 2>&1";
     $output = array();
     exec($command, $output, $result);
     $error_message = implode("\r\n", $output);
