@@ -1597,8 +1597,6 @@ function acro_commerce_xls_import_file_entry_exists($uri) {
 function acro_commerce_xls_import_get_possible_fields($product_type) {
   $result = array();
   $fields = field_info_field_map();
-  dpm($product_type);
-  dpm($fields);
   watchdog('possible fields', "<pre>" . print_r($fields, true) . "</pre>");
   foreach ($fields as $key => $field) {
 
@@ -1607,14 +1605,11 @@ function acro_commerce_xls_import_get_possible_fields($product_type) {
       // We don't want to include the product reference since the import will take care of that for us
       // Also don't want to include the field rating since it's based off user comments and isn't something that can
       // be set by a simple value
-      drupal_set_message("Possible Field: $key");
       if ($key != 'field_product' && $key != 'field_rating') {
         $result[$key] = $key;
       }
     }
   }
-
-  dpm($result);
   return $result;
 }
 
