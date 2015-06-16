@@ -1543,7 +1543,7 @@ function acro_commerce_xls_import_create_image_database_entries($base_path) {
         $file->status = 1;
 
         $file = file_save($file);
-        $results[$file] = $file->fid;
+        $results[$filename] = $file->fid;
       }
     }
   }
