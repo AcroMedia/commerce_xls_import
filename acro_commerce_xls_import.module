@@ -724,7 +724,7 @@ function acro_commerce_xls_import_create_product($values, $entity_info, $product
       "$language" => array(
         0 => array(
           'value' => $entity_info["body"],
-  				'format' => 'html_content',
+  				'format' => 'full_html',
         ),
        ),
      );
@@ -759,7 +759,7 @@ function acro_commerce_xls_import_create_product($values, $entity_info, $product
     	"$language" => array(
         0 => array(
           'value' => $entity_info["body"],
-    			'format' => 'html_content'
+    			'format' => 'full_html'
         ),
        ),
      );
@@ -889,7 +889,7 @@ function acro_commerce_xls_import_create_product($values, $entity_info, $product
         "$language" => array(
           0 => array(
             'value' => $entity_info["body"],
-            'format' => 'html_content'
+            'format' => 'full_html'
           ),
         ),
       );
