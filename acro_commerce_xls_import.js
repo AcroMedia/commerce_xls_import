@@ -27,7 +27,7 @@ var timer;
 	}
 	function periodic_update_import_status() {
 		$.ajax({
-			url: "/js/get-import-status",
+			url: Drupal.settings.basePath + "?q=admin/commerce/products/import_commerce/get-import-status",
 			type: "POST",
 			dataType: "json",
 			data: {},

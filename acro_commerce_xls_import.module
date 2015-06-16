@@ -29,7 +29,7 @@ function acro_commerce_xls_import_menu() {
     'access arguments' => array('administer commerce import'),
     'file' => NULL
   );
-  $items['js/get-import-status'] = array(
+  $items['admin/commerce/products/import_commerce/get-import-status'] = array(
     'title' => 'Commerce Import Status Update',
     'description' => 'Update the status of the current commerce xls import',
     'page callback' => 'acro_commerce_xls_import_current_status',
@@ -331,7 +331,7 @@ function acro_commerce_xls_import_settings_submit($form, &$form_state) {
     else {
       drupal_set_message(t('Failed to Stop Import'), 'error', FALSE);
     }
-    drupal_goto('admin/content/import_commerce');
+    drupal_goto('admin/commerce/products/import_commerce');
   }
   elseif ( $form_state['clicked_button']['#id'] == 'edit-errors-button' ) {
 
@@ -470,10 +470,10 @@ function acro_commerce_xls_import_export($op, $product_info = NULL, $product_typ
         drupal_set_message(t('There was an error generating the template. If this persists, contact the system administrator'), 'error');
       }
 
-      drupal_goto("admin/content/import_commerce");
+      drupal_goto("admin/commerce/products/import_commerce");
       break;
   }
-  drupal_goto("admin/content/import_commerce");
+  drupal_goto("admin/commerce/products/import_commerce");
 
 }
 
