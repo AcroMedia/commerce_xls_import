@@ -509,7 +509,6 @@ function acro_commerce_xls_import_import($op, $file = NULL) {
    //if an array, import function was successful
    if ( is_array($result) ) {
       if ( count($result) > 0 ) {
-        watchdog('Import', "<span>" . print_r($result, true) . "</span>");
         foreach ( $result as $sheet ) {
           foreach ( $sheet as $product ) {
             $entity_number++;
@@ -528,7 +527,6 @@ function acro_commerce_xls_import_import($op, $file = NULL) {
               $is_parent = FALSE;
             }
             elseif ( $product['title'] != NULL && $product['SKU'] == NULL ) {
-              watchdog('Import', "This is parent");
               //this is the parent product
               //check to see whether process should be stopped
               $res = db_select('current_xls_imports', 'cxi')
@@ -584,7 +582,7 @@ function acro_commerce_xls_import_import($op, $file = NULL) {
                 }
               }
               if ( isset($_SESSION['import_errors'][$_SESSION['commerce_xls_import_current_row']]) ) {
-                watchdog('Import', "There were import errors");
+                watchdog('Import', $product['title'] . " had import errors");
                 //there are errors if this session variable is set
                 $_SESSION['import_errors'][$_SESSION['commerce_xls_import_current_row']]['has_errors'] = TRUE;
                 $_errors['import_errors'][$_SESSION['commerce_xls_import_current_row']]['has_errors'] = TRUE;
@@ -833,12 +831,9 @@ function acro_commerce_xls_import_create_product($values, $entity_info, $product
   else {
     if ( !isset($entity_info['nid']) || $entity_info['nid'] == NULL ) {
       if ( commerce_product_validate_sku_unique($sku, NULL) ) {
-
-        watchdog("Create Product", "Validating Product NID - no sku");
         $nid = acro_commerce_xls_import_get_product_nid($entity_info['title']);
       }
       else {
-        watchdog("Create Product", "Validating Product NID - sku");
         $nid = acro_commerce_xls_import_get_product_nid($entity_info['title'], $sku);
       }
     }
@@ -1013,16 +1008,13 @@ function acro_commerce_xls_import_create_product($values, $entity_info, $product
    $form['node'] = $node;
 
   if ( $is_parent ) {
-    watchdog('Create Product', "Is Parent");
     $form_state['language'] = $new_language;
     $node->language = $new_language;
     //only validate node if it's a parent, there are no node changes if it's an entity
-    watchdog('Import', "$product_type");
     drupal_form_submit("$product_type" . "_node_form", $form_state, $node);
     $errors = form_get_errors();
 
     if(is_array($errors)){
-      watchdog('Create Product', "errors is an array");
       //mark any form validation errors
       foreach ( $errors as $key => $error ) {
         //check the errors for any fields matching the error
@@ -1032,7 +1024,6 @@ function acro_commerce_xls_import_create_product($values, $entity_info, $product
             //hackey fix, category was giving a validation error even though the data was entered correctly and displaying in node correctly
             //it is validated manually above anyway
             if ( $field != "field_product_category" ) {
-              watchdog('Create Product', "(934) Error: $error");
               $_SESSION['import_errors'][$current_row][$field]['value'] = ACRO_COMMERCE_XLS_IMPORT_DATA_ERROR;
               $_SESSION['import_errors'][$current_row][$field]['message'] = $error;
               $_SESSION['import_errors'][$current_row]['has_errors'] = TRUE;
@@ -1051,8 +1042,6 @@ function acro_commerce_xls_import_create_product($values, $entity_info, $product
             $field_info = field_info_field($key);
             if ( $field_info['type'] == 'image' ) {
               if ( $field == "" || pathinfo($field, PATHINFO_EXTENSION) == "" ) {
-
-                watchdog('Create Product', "(953) Error: $error");
                 $_SESSION['import_errors'][$current_row][$key]['value'] = ACRO_COMMERCE_XLS_IMPORT_DATA_ERROR;
                 $_SESSION['import_errors'][$current_row][$key]['message'] = t("Invalid Image data entered");
                 $_SESSION['import_errors'][$current_row]['has_errors'] = TRUE;
@@ -1072,8 +1061,6 @@ function acro_commerce_xls_import_create_product($values, $entity_info, $product
       return $node->nid;
     }
     else {
-
-      watchdog('Create Product', "(977) Error: $error");
       //mark the parent as an error so the children entities aren't attached to a bad node
       $_SESSION['import_errors'][$current_row]['parent_info']['value'] = ACRO_COMMERCE_XLS_IMPORT_DATA_ERROR;
       $_SESSION['import_errors'][$current_row]['parent_info']['message'] = t('Invalid node created, not creating children entities');
