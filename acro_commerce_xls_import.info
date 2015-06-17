@@ -5,7 +5,6 @@ version = "7.x-1.0"
 package = Acro Media Inc.
 dependencies[] = phpexcel
 dependencies[] = background_process
-dependencies[] = commerce_kickstart_product
 
 stylesheets[all][] = acro_commerce_xls_import.css
 scripts[] = acro_commerce_xls_import.js
