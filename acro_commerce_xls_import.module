@@ -1132,6 +1132,9 @@ function acro_commerce_xls_import_get_product_nid($title, $sku = NULL) {
   if ( count($nids) == 1 ) {
     return $nids[0];
   }
+  elseif(count($nids) > 1) {
+    return $nids;
+  }
   else {
     return NULL;
   }

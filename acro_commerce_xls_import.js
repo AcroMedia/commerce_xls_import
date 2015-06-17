@@ -38,7 +38,7 @@ var timer;
 				if(data.status == 1){
 					location.reload();
 				}
-			},
+			}
 
 		});
 	}
