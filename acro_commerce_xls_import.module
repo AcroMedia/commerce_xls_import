@@ -27,7 +27,8 @@ function acro_commerce_xls_import_menu() {
     'page callback' => 'drupal_get_form',
     'page arguments' => array('acro_commerce_xls_import_settings'),
     'access arguments' => array('administer commerce import'),
-    'file' => NULL
+    'file' => NULL,
+    'type' => MENU_LOCAL_TASK
   );
   $items['admin/commerce/products/import_commerce/get-import-status'] = array(
     'title' => 'Commerce Import Status Update',
