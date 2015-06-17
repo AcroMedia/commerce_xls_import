@@ -164,7 +164,7 @@ function acro_commerce_xls_import_settings() {
   );
   $image_instructions = "";
   $image_instructions .= "<h5 id='image-description'>" . t("Image Instructions") . "</h5>";
-  $image_instructions .= "<p>" . t('Images may be uploaded through ftp by creating a .zip file that contains the necessary images to the /import_images directory named !strongproduct_images.zip!endstrong. Full path : /import_images/product_images.zip', array('!strong' => '<strong>', '!endstrong' => '</strong>')) . "</p>";
+  $image_instructions .= "<p>" . t('Images may be uploaded through ftp by creating a .zip file that contains the necessary images to the /import_images directory named !strongproduct_images.zip!endstrong. Full path : sites/default/files/import_images/product_images.zip', array('!strong' => '<strong>', '!endstrong' => '</strong>')) . "</p>";
 
   $form['legend']['images-text'] = array(
     '#markup' => $image_instructions,
