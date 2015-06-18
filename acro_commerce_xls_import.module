@@ -820,9 +820,9 @@ function acro_commerce_xls_import_create_product($values, $entity_info, $product
     }
 
     watchdog('Create Product', print "NID = $nid");
-    if (is_array($nid)) {
+    if ($nid != NULL) {
 
-      watchdog('Create Product', "Multiple product matches found");
+      watchdog('Create Product', "Product/Variation Already Exists");
       //multiple possible nid's mark warning and do not proceed any further
       $_SESSION['import_errors'][$current_row]['nid_conflict']['value'] = ACRO_COMMERCE_XLS_IMPORT_DATA_WARNING;
       $_SESSION['import_errors'][$current_row]['nid_conflict']['message'] = t("Multiple product matches found");
