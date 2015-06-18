@@ -677,7 +677,7 @@ function acro_commerce_xls_import_validate_languages($language) {
  */
 function acro_commerce_xls_import_create_product($values, $entity_info, $product_type, $image_info = array(), $is_parent = FALSE) {
   module_load_include('inc', 'node');
-  require_once(DRUPAL_ROOT . "/modules/node/node.pages.inc");
+  module_load_include('inc', 'node', 'node.pages');
   global $user;
   $form = array();
   $form_state = array();
