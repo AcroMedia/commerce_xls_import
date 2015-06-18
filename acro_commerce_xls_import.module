@@ -649,7 +649,7 @@ function acro_commerce_xls_import_process_result($product, $image_info, $is_pare
  */
 function acro_commerce_xls_import_validate_image_path($filename) {
   $dir = file_stream_wrapper_get_instance_by_uri('public://')->realpath();
-  return file_exists("$dir/product_images/$filename");
+  return file_exists("$dir/$filename");
 }
 
 
