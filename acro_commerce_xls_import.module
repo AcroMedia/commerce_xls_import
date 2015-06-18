@@ -441,7 +441,7 @@ function acro_commerce_xls_import_export($op, $product_info = NULL, $product_typ
       $result = phpexcel_export($headers, $data, "$path/$filename", $options);
 
       if ($result == PHPEXCEL_SUCCESS) {
-        drupal_set_message(t('Template generation successfull'));
+        drupal_set_message(t('Template generation successful'));
       } else {
         drupal_set_message(t('PHPExcel error @result', array('@result' => check_plain($result))), 'error');
         drupal_set_message(t('There was an error generating the template. If this persists, contact the system administrator'), 'error');
