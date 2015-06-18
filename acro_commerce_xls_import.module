@@ -801,11 +801,11 @@ function acro_commerce_xls_import_create_product($values, $entity_info, $product
       }
     }
 
-    if ($categories != NULL) {
-      $node->field_product_category = array(
-        "$language" => $categories,
-      );
-    }
+//    if ($categories != NULL) {
+//      $node->field_product_category = array(
+//        "$language" => $categories,
+//      );
+//    }
 
     $form_state['values']['language'] = $language;
   } else {
@@ -1609,4 +1609,3 @@ function acro_commerce_xls_import_current_status() {
   $output = array('completed' => $current['completed'], 'total' => $current['total'], 'message' => $message, 'status' => $status);
   print json_encode($output);
 }
-
