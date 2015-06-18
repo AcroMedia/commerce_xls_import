@@ -440,16 +440,6 @@ function acro_commerce_xls_import_export($op, $product_info = NULL, $product_typ
       $filename = $product_type . "_template.xls";
       $result = phpexcel_export($headers, $data, "$path/$filename", $options);
 
-      drupal_set_message(t("$path/$filename"));
-
-
-      header('Content-Type: application/vnd.openxmlformats-officedocument.spreadsheetml.sheet');
-      header('Content-Disposition: attachment;filename="' . $filename . '"');
-      header('Cache-Control: max-age=0');
-
-      readfile("$path/$filename");
-      exit;
-
       if ($result == PHPEXCEL_SUCCESS) {
         drupal_set_message(t('Template generation successfull'));
       } else {
@@ -457,7 +447,15 @@ function acro_commerce_xls_import_export($op, $product_info = NULL, $product_typ
         drupal_set_message(t('There was an error generating the template. If this persists, contact the system administrator'), 'error');
       }
 
+      header('Content-Type: application/vnd.openxmlformats-officedocument.spreadsheetml.sheet');
+      header('Content-Disposition: attachment;filename="' . $filename . '"');
+      header('Cache-Control: max-age=0');
+
+      readfile("$path/$filename");
+
       drupal_goto("admin/commerce/products/import_commerce");
+      exit;
+
       break;
   }
   drupal_goto("admin/commerce/products/import_commerce");
