@@ -834,9 +834,9 @@ function acro_commerce_xls_import_create_product($values, $entity_info, $product
     } elseif ($nid == NULL) {
 
 
-      // TODO This is a super ugly fix. This is the same code from the if( $is_parent)
-      // statement from above. But it fixes the problem where a new product wouldn't
-      // be created if it didn't already exist.
+      // TODO | This is a super ugly fix. This is the same code from the if($is_parent)
+      // TODO | statement from above. But it fixes the problem where a new product wouldn't
+      // TODO | be created if it didn't already exist.
 
       watchdog('Create Product', "No matching products found");
 
