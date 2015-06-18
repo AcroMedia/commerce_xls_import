@@ -419,6 +419,12 @@ function acro_commerce_xls_import_export($op, $product_info = NULL, $product_typ
       //there are errors with this import
       $filename = "product_import_results.xls";
       $options['errors'] = TRUE;
+
+      if(file_exists("$path/$filename")){
+        $command = "rm $path/$filename 2>&1";
+        exec($command);
+      }
+
       $result = phpexcel_export($headers, $data, "$path/$filename", $options);
 
       if ($result == PHPEXCEL_SUCCESS) {
