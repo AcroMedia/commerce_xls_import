@@ -872,17 +872,17 @@ function acro_commerce_xls_import_create_product($values, $entity_info, $product
 
       if (!isset($entity_info['categories']) || $entity_info['categories'] == NULL) {
         watchdog('Create Product', "No category specified");
-        $_SESSION['import_errors'][$current_row]['field_product_category']['value'] = ACRO_COMMERCE_XLS_IMPORT_DATA_ERROR;
-        $_SESSION['import_errors'][$current_row]['field_product_category']['message'] = t("No Category specified");
-        $_SESSION['import_errors'][$current_row]['has_errors'] = TRUE;
+//        $_SESSION['import_errors'][$current_row]['field_product_category']['value'] = ACRO_COMMERCE_XLS_IMPORT_DATA_ERROR;
+//        $_SESSION['import_errors'][$current_row]['field_product_category']['message'] = t("No Category specified");
+//        $_SESSION['import_errors'][$current_row]['has_errors'] = TRUE;
 
       } else {
         $categories = acro_commerce_xls_import_get_category_id($entity_info['categories']);
         if (count($categories) == 0) {
           watchdog('Create Product', "No category specified");
-          $_SESSION['import_errors'][$current_row]['field_product_category']['value'] = ACRO_COMMERCE_XLS_IMPORT_DATA_ERROR;
-          $_SESSION['import_errors'][$current_row]['field_product_category']['message'] = t("No Category specified");
-          $_SESSION['import_errors'][$current_row]['has_errors'] = TRUE;
+//          $_SESSION['import_errors'][$current_row]['field_product_category']['value'] = ACRO_COMMERCE_XLS_IMPORT_DATA_ERROR;
+//          $_SESSION['import_errors'][$current_row]['field_product_category']['message'] = t("No Category specified");
+//          $_SESSION['import_errors'][$current_row]['has_errors'] = TRUE;
 
           $categories = NULL;
         }
