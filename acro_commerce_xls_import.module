@@ -753,6 +753,9 @@ function acro_commerce_xls_import_create_product($values, $entity_info, $product
 
   $values['language'] = $language;
   if ($is_parent) {
+    // TODO Might be able to get rid of all of this. It never seems to
+    // TODO get called anymore.
+    watchdog("THIS IS A PARENT", "IT'S A PARENT!!!!");
     if (!isset($entity_info['nid']) || $entity_info['nid'] == NULL) {
       $node->type = $product_type;
       node_object_prepare($node);
@@ -824,14 +827,24 @@ function acro_commerce_xls_import_create_product($values, $entity_info, $product
         $nid = acro_commerce_xls_import_get_product_nid($entity_info['title']);
       }
       else {
+        // SKU already exists, probably exists
         $nid = acro_commerce_xls_import_get_product_nid($entity_info['title'], $sku);
+        watchdog('Create Product', "Product/Variation Already Exists");
+        // Multiple possible nid's mark warning and do not proceed any further.
+        $_SESSION['import_errors'][$current_row]['nid_conflict']['value'] = ACRO_COMMERCE_XLS_IMPORT_DATA_WARNING;
+        $_SESSION['import_errors'][$current_row]['nid_conflict']['message'] = t("Multiple product matches found");
+        $_SESSION['import_errors'][$current_row]['has_errors'] = TRUE;
+
+        $_SESSION['import_info']['node'][$current_row]['nid'] = $nid;
+        drupal_set_message(t("Multiple  product matches found for the SKU -- @SKU", array("@SKU" => $sku)), 'warning');
+        return FALSE;
       }
     }
     else {
       $nid = $entity_info['nid'];
     }
 
-    if ($nid != NULL) {
+    if (is_array($nid)) {
 
       watchdog('Create Product', "Product/Variation Already Exists");
       // Multiple possible nid's mark warning and do not proceed any further.
