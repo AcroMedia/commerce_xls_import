@@ -3,8 +3,6 @@
  * @file
  * Imports Drupal Commerce Entities from an XLS file.
  *
- *  Acro_commerce_xls_import.module.
- *
  * Returns an XLS file highlighting success and failures.
  */
 
