@@ -274,7 +274,7 @@ function acro_commerce_xls_import_is_running() {
 }
 
 /**
- *
+ * Validates the settings.
  */
 function acro_commerce_xls_import_settings_validate($form, &$form_state) {
 
@@ -363,7 +363,7 @@ function acro_commerce_xls_import_settings_submit($form, &$form_state) {
 
 
 /**
- *
+ * Stops current import.
  */
 function acro_commerce_xls_import_stop_import() {
   // Set all updates to stopped status.
@@ -1147,7 +1147,7 @@ function acro_commerce_xls_import_get_category_id($category_names) {
 
 
 /**
- *
+ * Updates the node info.
  */
 function acro_commerce_xls_import_update_node_info($node, $entity_info, $values, $image_info) {
   $language = $values['language'];
@@ -1188,7 +1188,7 @@ function acro_commerce_xls_import_update_node_info($node, $entity_info, $values,
 }
 
 /**
- *
+ * Updates the entity info.
  */
 function acro_commerce_xls_import_update_entity_info($product, $entity_info, $values, $image_info, $a_node = FALSE) {
   $language = $values['language'];
@@ -1314,7 +1314,7 @@ function acro_commerce_xls_import_update_entity_info($product, $entity_info, $va
 
 
 /**
- *
+ * Gets the entity reference nid.
  */
 function acro_commerce_xls_import_get_entity_reference_nid($field) {
   $result = db_select('node', 'n')
@@ -1521,7 +1521,8 @@ function acro_commerce_xls_import_extract_zip() {
  * @param base_path
  *   The base path where the file is located
  *
- *   Returns  an array containing the filename and fid pairs
+ * @return array
+ *   An array containing the filename and fid pairs
  */
 function acro_commerce_xls_import_create_image_database_entries($base_path) {
   global $user;
@@ -1558,7 +1559,9 @@ function acro_commerce_xls_import_create_image_database_entries($base_path) {
 
 
 /**
- *
+ * Checks to see if file entry already exists.
+ * @param string
+ * @return bool
  */
 function acro_commerce_xls_import_file_entry_exists($uri) {
   $result = db_select('file_managed', 'f')
@@ -1645,7 +1648,9 @@ function acro_commerce_xls_import_generate_headers($nid = NULL, $product_type = 
 }
 
 /**
- *
+ * Gets the owner of the form field.
+ * @param $field_name
+ * @return string
  */
 function acro_commerce_xls_import_get_field_owner($field_name) {
   if ($field_name == 'title') {
@@ -1677,7 +1682,7 @@ function acro_commerce_xls_import_get_field_owner($field_name) {
 }
 
 /**
- *
+ * Checks the status of the current import.
  */
 function acro_commerce_xls_import_current_status() {
   $current = variable_get('import_count_status', '');
