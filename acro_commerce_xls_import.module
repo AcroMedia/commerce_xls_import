@@ -1,10 +1,9 @@
 <?php
-
 /**
- * @file acro_commerce_xls_import.module
+ * Imports Drupal Commerce Entities from an XLS file.
+ * @file acro_commerce_xls_import.module.
  *
- * Imports Drupal Commerce Entities from an XLS file and returns an XLS file
- * highlighting success and failures.
+ * Returns an XLS file highlighting success and failures.
  */
 
 define('ACRO_COMMERCE_XLS_IMPORT_DATA_ERROR', 0);
@@ -549,7 +548,8 @@ function acro_commerce_xls_import_import($op, $file = NULL) {
               variable_set('last_import', array(
                 'completed' => time(),
                 'row' => $entity_number - 1,
-                'total' => count($sheet)));
+                'total' => count($sheet),
+              ));
               acro_commerce_xls_import_export('errors', $result, $product_type, $_SESSION['import_errors'], TRUE);
               return;
             }
@@ -621,7 +621,11 @@ function acro_commerce_xls_import_import($op, $file = NULL) {
     }
 
     $import_counts = variable_get('import_count_status', '');
-    variable_set('last_import', array('completed' => time(), 'row' => $import_counts['completed'], 'total' => $import_counts['total']));
+    variable_set('last_import', array(
+      'completed' => time(),
+      'row' => $import_counts['completed'],
+      'total' => $import_counts['total'],
+    ));
     variable_del('import_count_status');
     acro_commerce_xls_import_export('errors', $result, $product_type, $_SESSION['import_errors'], TRUE);
     unset($_SESSION['import_errors']);
@@ -670,7 +674,7 @@ function acro_commerce_xls_import_process_result($product, $image_info, $is_pare
 
 
 /**
- * Checks whether the import image path exists
+ * Checks whether the import image path exists.
  *
  * Returns true if the path exists, false if it doesn't.
  */
@@ -696,7 +700,6 @@ function acro_commerce_xls_import_validate_languages($language) {
     while ($record = $result->fetchAssoc()) {
       if ((strtolower($record['language']) == strtolower($language)) || strtolower($language) == strtolower($record['name'])) {
         return $record['language'];
-        break;
       }
     }
   }
@@ -779,7 +782,7 @@ function acro_commerce_xls_import_create_product($values, $entity_info, $product
 
     acro_commerce_xls_import_update_entity_info($node, $entity_info, $values, $image_info, TRUE);
 
-    // create the form_state to use node validation.
+    // Create the form_state to use node validation.
     foreach ($values as $key => $field) {
       $field_info = field_info_field($key);
       if ($field_info['type'] == 'image') {
@@ -875,7 +878,6 @@ function acro_commerce_xls_import_create_product($values, $entity_info, $product
         ),
       );
 
-      //      $categories = NULL;
       acro_commerce_xls_import_update_entity_info($node, $entity_info, $values, $image_info, TRUE);
 
       // Create the form_state to use node validation.
@@ -960,7 +962,8 @@ function acro_commerce_xls_import_create_product($values, $entity_info, $product
   if ($is_parent) {
     $form_state['language'] = $new_language;
     $node->language = $new_language;
-    // Only validate node if it's a parent, there are no node changes if it's an entity.
+    // Only validate node if it's a parent, there are no node changes if it's
+    // an entity.
     drupal_form_submit("$product_type" . "_node_form", $form_state, $node);
     $errors = form_get_errors();
 
@@ -1039,7 +1042,8 @@ function acro_commerce_xls_import_create_product($values, $entity_info, $product
 
 
 /**
- * Tries to find a product matching this title
+ * Tries to find a product matching this title.
+ *
  * Returns the nid of the product, or multiple nids if multiple possibilities.
  */
 function acro_commerce_xls_import_get_product_nid($title, $sku = NULL) {
@@ -1286,7 +1290,7 @@ function acro_commerce_xls_import_get_entity_reference_nid($field) {
 
 
 /**
- * Implements hook_phpexcel_export.
+ * Implements hook_phpexcel_export().
  */
 function acro_commerce_xls_import_phpexcel_export($op, &$data, &$phpexcel, $options, $column = NULL, $row = NULL) {
 
@@ -1478,11 +1482,11 @@ function acro_commerce_xls_import_extract_zip() {
 /**
  * Adds the any images in the base path directory to the file table.
  *
- * @param base_path
- *   The base path where the file is located
+ * @param string $base_path
+ *   The base path where the file is located.
  *
  * @return array
- *   An array containing the filename and fid pairs
+ *   An array containing the filename and fid pairs.
  */
 function acro_commerce_xls_import_create_image_database_entries($base_path) {
   global $user;
@@ -1520,8 +1524,6 @@ function acro_commerce_xls_import_create_image_database_entries($base_path) {
 
 /**
  * Checks to see if file entry already exists.
- * @param string
- * @return bool
  */
 function acro_commerce_xls_import_file_entry_exists($uri) {
   $result = db_select('file_managed', 'f')
@@ -1611,9 +1613,6 @@ function acro_commerce_xls_import_generate_headers($nid = NULL, $product_type = 
 
 /**
  * Gets the owner of the form field.
- *
- * @param $field_name
- * @return string
  */
 function acro_commerce_xls_import_get_field_owner($field_name) {
   if ($field_name == 'title') {
@@ -1666,6 +1665,11 @@ function acro_commerce_xls_import_current_status() {
     $status = 0;
   }
 
-  $output = array('completed' => $current['completed'], 'total' => $current['total'], 'message' => $message, 'status' => $status);
+  $output = array(
+    'completed' => $current['completed'],
+    'total' => $current['total'],
+    'message' => $message,
+    'status' => $status,
+  );
   print json_encode($output);
 }
