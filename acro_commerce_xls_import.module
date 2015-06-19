@@ -157,7 +157,7 @@ function acro_commerce_xls_import_settings() {
   $description .= "</ul>";
   $description .= "<p>" . t("Using the product templates, a list of products to add may be uploaded using the appropriate file upload section which will then be added to the commerce catalogue. Use the legend below to figure out which fields belong to the base product, or each variation.") . "</p>";
   $description .= "<p>" . t("When an import is complete, a result document will be generated to show how the import went. If the product was imported successfully, the line will be marked green. If the product had an error, the bad fields will be marked red and the product will not be created, nor will it's variations. If a variation has an error, the field will be marked red.") . "</p>";
-//  $description .= "<p>" . t("If you find an error and wish to change that product in question, make your changes in the error document and submit it using the regular import functionality. This will update all the products in the file and not create new ones.") . "</p>";
+  $description .= "<p>" . t("If you find an error and wish to change that product in question, make your changes in the error document and submit it using the regular import functionality. This will update all the products in the file and not create new ones.") . "</p>";
 
   $form['legend']['description'] = array(
     '#markup' => $description,
