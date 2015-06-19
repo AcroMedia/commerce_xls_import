@@ -818,8 +818,7 @@ function acro_commerce_xls_import_create_product($values, $entity_info, $product
     } else {
       $nid = $entity_info['nid'];
     }
-
-    watchdog('Create Product', print "NID = $nid");
+    
     if ($nid != NULL) {
 
       watchdog('Create Product', "Product/Variation Already Exists");
