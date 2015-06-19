@@ -37,7 +37,7 @@
 }
 
 #both-swatch .swatch {
-  background-color: #24abb7
+  background-color: #24abb7;
 }
 
 #warning-swatch .swatch {
@@ -62,8 +62,6 @@
   width: 130px;
   vertical-align: top;
 }
-
-
 
 .product-field h6 {
   padding: 0px 15px 0px 0px;
@@ -102,11 +100,6 @@
 .product-options .form-submit:hover,
 #edit-errors-button:hover {
   text-decoration: underline;
-}
-
-.product-options .form-type-file {
-  /* float:left;
-  width:450px;*/
 }
 
 div.divider {

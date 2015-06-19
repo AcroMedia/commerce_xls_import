@@ -7,7 +7,6 @@
  * highlighting success and failures.
  */
 
-
 define('ACRO_COMMERCE_XLS_IMPORT_DATA_ERROR', 0);
 define('ACRO_COMMERCE_XLS_IMPORT_DATA_SUCCESS', 1);
 define('ACRO_COMMERCE_XLS_IMPORT_DATA_WARNING', 2);
@@ -42,8 +41,8 @@ function acro_commerce_xls_import_menu() {
 }
 
 /**
- * Menu Form that just contains the buttons to begin the import or to generate
- * example headers.
+ * Import Menu Form
+ * Just contains the buttons to begin the import or to generate example headers.
  */
 function acro_commerce_xls_import_settings() {
   $form = array();
@@ -257,7 +256,7 @@ function acro_commerce_xls_import_permission() {
 
 
 /**
- * Determines whether an import is currently running in the background
+ * Determines whether an import is currently running in the background.
  * Returns True if one is running, otherwise false.
  */
 function acro_commerce_xls_import_is_running() {
@@ -383,10 +382,10 @@ function acro_commerce_xls_import_stop_import() {
 /**
  * Main function for the drupal commerce XLS export.
  */
-
 function acro_commerce_xls_import_export($op, $product_info = NULL, $product_type = NULL, $errors = NULL, $nids = FALSE) {
   module_load_include('inc', 'phpexcel');
-  // NOTE: This is required because the phpexcel module gives strict warnings with its export functionality.
+  // NOTE: This is required because the phpexcel module gives strict warnings
+  // with its export functionality.
   error_reporting(E_ALL ^ E_STRICT);
 
   $headers = array();
@@ -479,7 +478,7 @@ function acro_commerce_xls_import_export($op, $product_info = NULL, $product_typ
 
       readfile("$path/$filename");
 
-      //      drupal_goto("admin/commerce/products/import_commerce");
+      // drupal_goto("admin/commerce/products/import_commerce");
       exit;
 
     break;
@@ -492,7 +491,6 @@ function acro_commerce_xls_import_export($op, $product_info = NULL, $product_typ
 /**
  * Main function for the drupal commerce XLS import.
  */
-
 function acro_commerce_xls_import_import($op, $file = NULL) {
   module_load_include('inc', 'phpexcel', 'phpexcel');
   $parent = NULL;
@@ -526,7 +524,8 @@ function acro_commerce_xls_import_import($op, $file = NULL) {
           variable_set('import_count_status', array('completed' => $entity_number - 1, 'total' => count($sheet)));
 
           if ($parent == NULL && $product['title'] == NULL) {
-            // Not enough information to attach entity to product, mark full row as error.
+            // Not enough information to attach entity to product, mark full row
+            // as error.
             $_SESSION['import_errors'][$entity_number]['parent_info']['value'] = ACRO_COMMERCE_XLS_IMPORT_DATA_ERROR;
             $_SESSION['import_errors'][$entity_number]['parent_info']['message'] = t('No parent product speficied');
             $_SESSION['import_errors'][$_SESSION['commerce_xls_import_current_row']]['has_errors'] = TRUE;
@@ -576,7 +575,6 @@ function acro_commerce_xls_import_import($op, $file = NULL) {
           if (!$has_errors) {
             if (!$is_parent && isset($parent['failed'])) {
               // Skip this entity as the parent product was not created.
-              watchdog('Import', t("Skipping @SKU as no parent data was found", array('@SKU' => $product['SKU'])));
               drupal_set_message(t("Skipping @SKU as no parent data was found", array('@SKU' => $product['SKU'])));
               $_SESSION['import_errors'][$_SESSION['commerce_xls_import_current_row']]['has_errors'] = TRUE;
               $_errors['import_errors'][$_SESSION['commerce_xls_import_current_row']]['has_errors'] = TRUE;
@@ -601,7 +599,6 @@ function acro_commerce_xls_import_import($op, $file = NULL) {
               ) {
                 $parent['failed'] = TRUE;
                 drupal_set_message(t("@title failed creation, aborting creation of children entities and skipping to next available product", array('@title' => $product['title'])), "warning");
-                watchdog('Import', t("@title failed creation, aborting creation of children entities and skipping to next available product", array('@title' => $product['title'])));
               }
             }
           }
@@ -1474,7 +1471,8 @@ function acro_commerce_xls_import_phpexcel_export($op, &$data, &$phpexcel, $opti
 function acro_commerce_xls_import_get_column_status($column, $row) {
   $result = NULL;
   if (isset($_SESSION['import_errors'][$row]['has_errors'])) {
-    // We know there are errors, see if there is a problem with the current column.
+    // We know there are errors, see if there is a problem with the current
+    // column.
     if (isset($_SESSION['import_errors'][$row]['parent_info']) || isset($_SESSION['import_errors'][$row]['nid_conflict'])) {
       $result = ACRO_COMMERCE_XLS_IMPORT_DATA_ERROR;
     }
@@ -1615,9 +1613,10 @@ function acro_commerce_xls_import_get_possible_fields($product_type) {
     if ((isset($field['bundles']['commerce_product']) && in_array($product_type, $field['bundles']['commerce_product']))
       || (isset($field['bundles']['node']) && in_array($product_type, $field['bundles']['node']))
     ) {
-      // We don't want to include the product reference since the import will take care of that for us
-      // Also don't want to include the field rating since it's based off user comments and isn't something that can
-      // be set by a simple value.
+      // We don't want to include the product reference since the import will
+      // take care of that for us.
+      // Also don't want to include the field rating since it's based off user
+      // comments and isn't something that can be set by a simple value.
       if ($key != 'field_product' && $key != 'field_rating') {
         $result[$key] = $key;
       }
