@@ -447,7 +447,7 @@ function acro_commerce_xls_import_export($op, $product_info = NULL, $product_typ
         drupal_set_message(t('Import results generated'));
       }
       else {
-        drupal_set_message(t('PHPExcel error @result', array('@result' => check_plain($result))), 'error');
+        drupal_set_message(t('PHPExcel error @result', array('@result' => $result)), 'error');
         drupal_set_message(t('There was an error generating the import result document. Please try again. If this problem persists, contact the system administrator'), 'error');
       }
 
@@ -467,7 +467,7 @@ function acro_commerce_xls_import_export($op, $product_info = NULL, $product_typ
         drupal_set_message(t('Template generation successful'));
       }
       else {
-        drupal_set_message(t('PHPExcel error @result', array('@result' => check_plain($result))), 'error');
+        drupal_set_message(t('PHPExcel error @result', array('@result' => $result)), 'error');
         drupal_set_message(t('There was an error generating the template. If this persists, contact the system administrator'), 'error');
       }
 
@@ -574,8 +574,8 @@ function acro_commerce_xls_import_import($op, $file = NULL) {
           if (!$has_errors) {
             if (!$is_parent && isset($parent['failed'])) {
               // Skip this entity as the parent product was not created.
-              watchdog('Import', t("Skipping @SKU as no parent data was found", array('@SKU' => check_plain($product['SKU']))));
-              drupal_set_message(t("Skipping @SKU as no parent data was found", array('@SKU' => check_plain($product['SKU']))));
+              watchdog('Import', t("Skipping @SKU as no parent data was found", array('@SKU' => $product['SKU'])));
+              drupal_set_message(t("Skipping @SKU as no parent data was found", array('@SKU' => $product['SKU'])));
               $_SESSION['import_errors'][$_SESSION['commerce_xls_import_current_row']]['has_errors'] = TRUE;
               $_errors['import_errors'][$_SESSION['commerce_xls_import_current_row']]['has_errors'] = TRUE;
 
@@ -598,8 +598,8 @@ function acro_commerce_xls_import_import($op, $file = NULL) {
                 && $is_parent
               ) {
                 $parent['failed'] = TRUE;
-                drupal_set_message(t("@title failed creation, aborting creation of children entities and skipping to next available product", array('@title' => check_plain($product['title']))), "warning");
-                watchdog('Import', t("@title failed creation, aborting creation of children entities and skipping to next available product", array('@title' => check_plain($product['title']))));
+                drupal_set_message(t("@title failed creation, aborting creation of children entities and skipping to next available product", array('@title' => $product['title'])), "warning");
+                watchdog('Import', t("@title failed creation, aborting creation of children entities and skipping to next available product", array('@title' => $product['title'])));
               }
             }
           }
@@ -609,7 +609,7 @@ function acro_commerce_xls_import_import($op, $file = NULL) {
             $errors['import_errors'][$_SESSION['commerce_xls_import_current_row']]['has_errors'] = TRUE;
             $parent['failed'] = TRUE;
             $title = isset($product['title']) && $product['title'] != NULL ? $product['title'] : $product['SKU'];
-            drupal_set_message(t("@title failed creation, aborting creation of children entities", array('@title' => check_plain($title))), "warning");
+            drupal_set_message(t("@title failed creation, aborting creation of children entities", array('@title' => $title)), "warning");
           }
           $has_errors = FALSE;
         }
@@ -855,7 +855,7 @@ function acro_commerce_xls_import_create_product($values, $entity_info, $product
       $_SESSION['import_errors'][$current_row]['has_errors'] = TRUE;
 
       $_SESSION['import_info']['node'][$current_row]['nid'] = $nid;
-      drupal_set_message(t("Multiple  product matches found for the SKU -- @SKU", array("@SKU" => check_plain($sku))), 'warning');
+      drupal_set_message(t("Multiple  product matches found for the SKU -- @SKU", array("@SKU" => $sku)), 'warning');
       return FALSE;
     }
     elseif ($nid == NULL) {
@@ -991,7 +991,7 @@ function acro_commerce_xls_import_create_product($values, $entity_info, $product
         $_SESSION['import_errors'][$current_row]['SKU']['value'] = ACRO_COMMERCE_XLS_IMPORT_DATA_ERROR;
         $_SESSION['import_errors'][$current_row]['SKU']['message'] = t("SKU is in an invalid format");
         $_SESSION['import_errors'][$current_row]['has_errors'] = TRUE;
-        drupal_set_message(t("@SKU is not a valid SKU", array("@SKU" => check_plain($product->sku))));
+        drupal_set_message(t("@SKU is not a valid SKU", array("@SKU" => $product->sku)));
       }
 
       $product->created = time();
@@ -999,7 +999,7 @@ function acro_commerce_xls_import_create_product($values, $entity_info, $product
       commerce_product_save($product);
     }
 
-    $node->field_product['und'][]['product_id'] = $product->product_id;
+    $node->field_product[LANGUAGE_NONE][]['product_id'] = $product->product_id;
   }
   $form['node'] = $node;
 
@@ -1497,7 +1497,6 @@ function acro_commerce_xls_import_get_column_status($column, $row) {
  */
 function acro_commerce_xls_import_extract_zip() {
   $dir = realpath(".") . "/" . variable_get('file_public_path', conf_path() . '/files');
-  $filenames = array();
 
   $import_successful = acro_commerce_xls_import_unpack_zip($dir, 'import_images/product_images', "$dir");
 
@@ -1585,12 +1584,12 @@ function acro_commerce_xls_import_unpack_zip($zip_dir, $filename, $save_dir) {
   $error_message = implode("\r\n", $output);
 
   if ($result != 0) {
-    drupal_set_message(t("There was an error extracting @filename.zip. Please try again, if the problem persists contact the system administrator", array("@filename" => check_plain($filename))), "error");
+    drupal_set_message(t("There was an error extracting @filename.zip. Please try again, if the problem persists contact the system administrator", array("@filename" => $filename)), "error");
     watchdog('commerce_xls_import_error', $error_message);
     return FALSE;
   }
   else {
-    drupal_set_message(t("@filename.zip extracted successfully to @save_dir", array("!filename" => check_plain($filename), "@save_dir" => check_plain($save_dir))));
+    drupal_set_message(t("@filename.zip extracted successfully to @save_dir", array("!filename" => $filename, "@save_dir" => $save_dir)));
     return TRUE;
   }
 }
@@ -1689,7 +1688,7 @@ function acro_commerce_xls_import_current_status() {
     variable_set('import_completed', 1);
   }
   else {
-    $message = t("Import status : !current/!total products evaluated", array("!current" => check_plain($current['completed']), "!total" => check_plain($current['total'])));
+    $message = t("Import status : !current/!total products evaluated", array("!current" => $current['completed'], "!total" => $current['total']));
     $status = 0;
   }
 
