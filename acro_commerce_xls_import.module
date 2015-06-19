@@ -1,7 +1,9 @@
 <?php
 /**
+ * @file
  * Imports Drupal Commerce Entities from an XLS file.
- * @file acro_commerce_xls_import.module.
+ *
+ *  Acro_commerce_xls_import.module.
  *
  * Returns an XLS file highlighting success and failures.
  */
@@ -827,7 +829,7 @@ function acro_commerce_xls_import_create_product($values, $entity_info, $product
         $nid = acro_commerce_xls_import_get_product_nid($entity_info['title']);
       }
       else {
-        // SKU already exists, probably exists
+        // SKU already exists, probably exists.
         $nid = acro_commerce_xls_import_get_product_nid($entity_info['title'], $sku);
         watchdog('Create Product', "Product/Variation Already Exists");
         // Multiple possible nid's mark warning and do not proceed any further.
