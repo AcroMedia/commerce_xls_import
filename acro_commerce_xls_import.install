@@ -1,16 +1,12 @@
 <?php
 
 /**
- * @file Acro_commerce_xls_import.install
+ * @file acro_commerce_xls_import.install
  * Install, update, and uninstall functions for the acro_commerce_xls_import.
  */
 
-function acro_commerce_xls_import_install() {
-
-}
-
 /**
- *
+ * Uninstall Function.
  */
 function acro_commerce_xls_import_uninstall() {
   variable_del('import_count_status');
