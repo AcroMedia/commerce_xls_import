@@ -3,7 +3,8 @@
 /**
  * @file acro_commerce_xls_import.module
  *
- * Imports Drupal Commerce Entities from an XLS file and returns an XLS file highlighting success and failures.
+ * Imports Drupal Commerce Entities from an XLS file and returns an XLS file
+ * highlighting success and failures.
  */
 
 
@@ -41,7 +42,8 @@ function acro_commerce_xls_import_menu() {
 }
 
 /**
- * Menu Form that just contains the buttons to begin the import or to generate example headers.
+ * Menu Form that just contains the buttons to begin the import or to generate
+ * example headers.
  */
 function acro_commerce_xls_import_settings() {
   $form = array();
@@ -860,9 +862,10 @@ function acro_commerce_xls_import_create_product($values, $entity_info, $product
     }
     elseif ($nid == NULL) {
 
-      // TODO | This is a super ugly fix. This is the same code from the if($is_parent)
-      // TODO | statement from above. But it fixes the problem where a new product wouldn't
-      // TODO | be created if it didn't already exist.
+      // TODO | This is a super ugly fix. This is the same code from the
+      // TODO | if($is_parent)statement from above. But it fixes the problem
+      // TODO | where a new product wouldn't be created if it didn't already
+      // TODO | exist.
       watchdog('Create Product', "No matching products found");
 
       if (!isset($entity_info['nid']) || $entity_info['nid'] == NULL) {
@@ -1126,7 +1129,8 @@ function acro_commerce_xls_import_get_product_nid($title, $sku = NULL) {
 
 
 /**
- * Function to use a comma separated list of category names to retrieve the taxonomy terms.
+ * Function to use a comma separated list of category names to retrieve the
+ * taxonomy terms.
  */
 function acro_commerce_xls_import_get_category_id($category_names) {
   $term_list = explode(',', $category_names);
@@ -1461,10 +1465,11 @@ function acro_commerce_xls_import_phpexcel_export($op, &$data, &$phpexcel, $opti
 }
 
 /**
- * A function to retrieve the columns status (warning, error, success) for the phpexport export hook to
- * color code warnings and errors.
+ * A function to retrieve the columns status (warning, error, success) for the
+ * phpexport export hook to color code warnings and errors.
  *
- * If whole line is good, mark green, else mark white and highlite warnings and errors.
+ * If whole line is good, mark green, else mark white and highlite warnings and
+ * errors.
  */
 function acro_commerce_xls_import_get_column_status($column, $row) {
   $result = NULL;
@@ -1570,7 +1575,8 @@ function acro_commerce_xls_import_file_entry_exists($uri) {
 
 /**
  * Base function for unpacking a zip
- * Uses the command line to unpack .zip files and move to public files directory.
+ * Uses the command line to unpack .zip files and move to public files
+ * directory.
  */
 function acro_commerce_xls_import_unpack_zip($zip_dir, $filename, $save_dir) {
   $file_directory = $save_dir;
