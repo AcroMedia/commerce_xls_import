@@ -16,7 +16,7 @@ function acro_commerce_xls_import_uninstall() {
 }
 
 /**
- * Table to keep track of whether an attempted stop has occured.
+ * Table to keep track of whether an attempted stop has occurred.
  */
 function acro_commerce_xls_import_schema() {
   $schema = array();

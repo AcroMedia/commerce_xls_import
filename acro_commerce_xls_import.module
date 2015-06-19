@@ -1082,7 +1082,7 @@ function acro_commerce_xls_import_create_product($values, $entity_info, $product
 
 /**
  * Tries to find a product matching this title
- * Returns the nid of the product, or multiple nids if multiple possiblities.
+ * Returns the nid of the product, or multiple nids if multiple possibilities.
  */
 function acro_commerce_xls_import_get_product_nid($title, $sku = NULL) {
   $nids = array();
@@ -1126,7 +1126,7 @@ function acro_commerce_xls_import_get_product_nid($title, $sku = NULL) {
 
 
 /**
- * Function to use a comma seperated list of category names to retrieve the taxonomy terms.
+ * Function to use a comma separated list of category names to retrieve the taxonomy terms.
  */
 function acro_commerce_xls_import_get_category_id($category_names) {
   $term_list = explode(',', $category_names);
