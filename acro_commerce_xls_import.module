@@ -41,7 +41,8 @@ function acro_commerce_xls_import_menu() {
 }
 
 /**
- * Import Menu Form
+ * Import Menu Form.
+ *
  * Just contains the buttons to begin the import or to generate example headers.
  */
 function acro_commerce_xls_import_settings() {
@@ -257,6 +258,7 @@ function acro_commerce_xls_import_permission() {
 
 /**
  * Determines whether an import is currently running in the background.
+ *
  * Returns True if one is running, otherwise false.
  */
 function acro_commerce_xls_import_is_running() {
@@ -544,7 +546,10 @@ function acro_commerce_xls_import_import($op, $file = NULL) {
               $_SESSION['import_errors']['stopped_row'] = $entity_number;
               watchdog('import_stopped', 'Import Stopped before creating ' . $product['title']);
               variable_del('import_count_status');
-              variable_set('last_import', array('completed' => time(), 'row' => $entity_number - 1, 'total' => count($sheet)));
+              variable_set('last_import', array(
+                'completed' => time(),
+                'row' => $entity_number - 1,
+                'total' => count($sheet)));
               acro_commerce_xls_import_export('errors', $result, $product_type, $_SESSION['import_errors'], TRUE);
               return;
             }
@@ -591,7 +596,8 @@ function acro_commerce_xls_import_import($op, $file = NULL) {
               // There are errors if this session variable is set.
               $_SESSION['import_errors'][$_SESSION['commerce_xls_import_current_row']]['has_errors'] = TRUE;
               $_errors['import_errors'][$_SESSION['commerce_xls_import_current_row']]['has_errors'] = TRUE;
-              // Check to see whether it was a parent node that was not made due to errors.
+              // Check to see whether it was a parent node that was not made
+              // due to errors.
               if (isset($_SESSION['import_errors'][$_SESSION['commerce_xls_import_current_row']]['parent_info']['value']) &&
                 $_SESSION['import_errors'][$_SESSION['commerce_xls_import_current_row']]['parent_info']['value'] == ACRO_COMMERCE_XLS_IMPORT_DATA_ERROR
                 && $is_parent
@@ -665,6 +671,7 @@ function acro_commerce_xls_import_process_result($product, $image_info, $is_pare
 
 /**
  * Checks whether the import image path exists
+ *
  * Returns true if the path exists, false if it doesn't.
  */
 function acro_commerce_xls_import_validate_image_path($filename) {
@@ -674,8 +681,9 @@ function acro_commerce_xls_import_validate_image_path($filename) {
 
 
 /**
- * Checks to see if the language table exists, if it does then it checks
- * the languages table for a corresponding language.
+ * Checks to see if the language table exists.
+ *
+ * If it does then it checks the languages table for a corresponding language.
  *
  * Returns the language if a match is found, false if the table does not
  * exist or no language match found.
@@ -963,7 +971,8 @@ function acro_commerce_xls_import_create_product($values, $entity_info, $product
         foreach ($values as $field => $value) {
           if (strpos($key, $field) === 0 || strpos($key, $field > 0)) {
 
-            // Hackey fix, category was giving a validation error even though the data was entered correctly and displaying in node correctly
+            // Hackey fix, category was giving a validation error even though
+            // the data was entered correctly and displaying in node correctly
             // it is validated manually above anyway.
             if ($field != "field_product_category") {
               $_SESSION['import_errors'][$current_row][$field]['value'] = ACRO_COMMERCE_XLS_IMPORT_DATA_ERROR;
@@ -977,7 +986,8 @@ function acro_commerce_xls_import_create_product($values, $entity_info, $product
 
     $data_errors = $_SESSION['messages']['error'];
 
-    // Mark any errors that were missed in form validation, most likely image related.
+    // Mark any errors that were missed in form validation, most likely image
+    // related.
     foreach ($data_errors as $error) {
       if (strpos($error, "file_field_widget") > 0) {
         foreach ($values as $key => $field) {
@@ -993,7 +1003,8 @@ function acro_commerce_xls_import_create_product($values, $entity_info, $product
       }
     }
 
-    // Unset the errors so the user isn't bombarded with red that is already noted.
+    // Unset the errors so the user isn't bombarded with red that is already
+    // noted.
     unset($_SESSION['messages']['error']);
 
     // Only save the node if there were no errors reported with it.
@@ -1003,7 +1014,8 @@ function acro_commerce_xls_import_create_product($values, $entity_info, $product
       return $node->nid;
     }
     else {
-      // Mark the parent as an error so the children entities aren't attached to a bad node.
+      // Mark the parent as an error so the children entities aren't attached
+      // to a bad node.
       $_SESSION['import_errors'][$current_row]['parent_info']['value'] = ACRO_COMMERCE_XLS_IMPORT_DATA_ERROR;
       $_SESSION['import_errors'][$current_row]['parent_info']['message'] = t('Invalid node created, not creating children entities');
       $_SESSION['import_errors'][$current_row]['has_errors'] = TRUE;
@@ -1072,6 +1084,8 @@ function acro_commerce_xls_import_get_product_nid($title, $sku = NULL) {
 
 
 /**
+ * Gets an array of category terms.
+ *
  * Function to use a comma separated list of category names to retrieve the
  * taxonomy terms.
  */
@@ -1408,7 +1422,9 @@ function acro_commerce_xls_import_phpexcel_export($op, &$data, &$phpexcel, $opti
 }
 
 /**
- * A function to retrieve the columns status (warning, error, success) for the
+ * Gets the columns status.
+ *
+ * Determines the column status (warning, error, success) for the
  * phpexport export hook to color code warnings and errors.
  *
  * If whole line is good, mark green, else mark white and highlite warnings and
@@ -1521,7 +1537,8 @@ function acro_commerce_xls_import_file_entry_exists($uri) {
 
 
 /**
- * Base function for unpacking a zip
+ * Base function for unpacking a zip.
+ *
  * Uses the command line to unpack .zip files and move to public files
  * directory.
  */
@@ -1594,6 +1611,7 @@ function acro_commerce_xls_import_generate_headers($nid = NULL, $product_type = 
 
 /**
  * Gets the owner of the form field.
+ *
  * @param $field_name
  * @return string
  */
