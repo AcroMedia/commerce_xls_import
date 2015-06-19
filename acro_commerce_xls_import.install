@@ -1,14 +1,17 @@
 <?php
 
 /**
- * @file acro_commerce_xls_import.install
- * Install, update, and uninstall functions for the acro_commerce_xls_import
+ * @file Acro_commerce_xls_import.install
+ * Install, update, and uninstall functions for the acro_commerce_xls_import.
  */
 
 function acro_commerce_xls_import_install() {
 
 }
 
+/**
+ *
+ */
 function acro_commerce_xls_import_uninstall() {
   variable_del('import_count_status');
   variable_del('import_completed');
@@ -17,7 +20,7 @@ function acro_commerce_xls_import_uninstall() {
 }
 
 /**
- * Table to keep track of whether an attempted stop has occured
+ * Table to keep track of whether an attempted stop has occured.
  */
 function acro_commerce_xls_import_schema() {
   $schema = array();
@@ -44,4 +47,3 @@ function acro_commerce_xls_import_schema() {
 
   return $schema;
 }
-
