@@ -1,14 +1,14 @@
 <?php
 
 /**
- * @file acro_commerce_xls_import.install
- * Install, update, and uninstall functions for the acro_commerce_xls_import.
+ * @file commerce_xls_import.install
+ * Install, update, and uninstall functions for the commerce_xls_import.
  */
 
 /**
  * Uninstall Function.
  */
-function acro_commerce_xls_import_uninstall() {
+function commerce_xls_import_uninstall() {
   variable_del('import_count_status');
   variable_del('import_completed');
   variable_del('last_import');
@@ -18,7 +18,7 @@ function acro_commerce_xls_import_uninstall() {
 /**
  * Table to keep track of whether an attempted stop has occurred.
  */
-function acro_commerce_xls_import_schema() {
+function commerce_xls_import_schema() {
   $schema = array();
 
   $schema['current_xls_imports'] = array(

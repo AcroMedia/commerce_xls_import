@@ -1,10 +1,10 @@
 name = Commerce XLS Import
 description = Functionality to import  commerce products/entities from an xls file
 core = 7.x
-package = Acro Media Inc.
+package = Commerce (contrib)
 dependencies[] = phpexcel (7.x-3.9)
 dependencies[] = background_process
 dependencies[] = commerce_product
 
-stylesheets[all][] = acro_commerce_xls_import.css
-scripts[] = acro_commerce_xls_import.js
+stylesheets[all][] = commerce_xls_import.css
+scripts[] = commerce_xls_import.js
