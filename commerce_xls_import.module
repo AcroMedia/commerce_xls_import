@@ -1107,7 +1107,7 @@ function commerce_xls_import_update_entity_info($product, $entity_info, $values,
   if (!$a_node) {
     // Set the price and currency.
     if (isset($values['commerce_price']) && $values['commerce_price'] != NULL) {
-      if(is_numeric($values['commerce_price'])){
+      if (is_numeric($values['commerce_price'])) {
         $price = array(
           "$language" => array(
             0 => array(
