@@ -890,13 +890,14 @@ function commerce_xls_import_create_product($values, $entity_info, $product_type
   else {
     // Sku doesn't exist, create a new product.
     $product = commerce_product_new($product_type);
-    // Validate sku.
-    $sku_check = commerce_product_validate_sku($product->sku);
-    if (!$sku_check) {
+    // Validate sku. The "a" is added because commerce_product_validate_sku()
+    // returns a false positive if the first character of $sku is a ','
+    if (!commerce_product_validate_sku("a" . $sku)) {
       $_SESSION['import_errors'][$current_row]['SKU']['value'] = COMMERCE_XLS_IMPORT_DATA_ERROR;
       $_SESSION['import_errors'][$current_row]['SKU']['message'] = t("SKU is in an invalid format");
       $_SESSION['import_errors'][$current_row]['has_errors'] = TRUE;
       drupal_set_message(t("@SKU is not a valid SKU", array("@SKU" => $product->sku)));
+      return FALSE;
     }
 
     $product->created = time();
