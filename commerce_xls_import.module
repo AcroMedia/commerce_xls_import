@@ -848,11 +848,11 @@ function commerce_xls_import_create_product($values, $entity_info, $product_type
 
       }
       else {
-          $form_state['values'][$key] = array(
-            "$language" => array(
-              0 => $field,
-            ),
-          );
+        $form_state['values'][$key] = array(
+          "$language" => array(
+            0 => $field,
+          ),
+        );
       }
     }
 
@@ -899,7 +899,7 @@ function commerce_xls_import_create_product($values, $entity_info, $product_type
       commerce_product_save($product);
     }
     else {
-      // Don't create product or variation if there are errors
+      // Don't create product or variation if there are errors.
     }
   }
 
@@ -907,16 +907,16 @@ function commerce_xls_import_create_product($values, $entity_info, $product_type
 
   $form['node'] = $node;
 
-    if(!$_SESSION['import_errors'][$current_row]['has_errors']) {
-      $node->language = $new_language;
-      node_save($node);
-      $_SESSION['import_info']['node'][$current_row]['nid'] = $node->nid;
-      return $node->nid;
-    }
-    else {
-      return FALSE;
-    }
+  if (!$_SESSION['import_errors'][$current_row]['has_errors']) {
+    $node->language = $new_language;
+    node_save($node);
+    $_SESSION['import_info']['node'][$current_row]['nid'] = $node->nid;
+    return $node->nid;
   }
+  else {
+    return FALSE;
+  }
+}
 
 
 /**
