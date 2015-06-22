@@ -752,10 +752,45 @@ function commerce_xls_import_create_product($values, $entity_info, $product_type
   $form['#values'] = $form_state['values'];
 
   $values['language'] = $language;
-  if ($is_parent) {
-    // TODO Might be able to get rid of all of this. It never seems to
-    // TODO get called anymore.
-    watchdog("THIS IS A PARENT", "IT'S A PARENT!!!!");
+
+  if (!isset($entity_info['nid']) || $entity_info['nid'] == NULL) {
+    if (commerce_product_validate_sku_unique($sku, NULL)) {
+      $nid = commerce_xls_import_get_product_nid($entity_info['title']);
+    }
+    else {
+      // SKU already exists, probably exists.
+      $nid = commerce_xls_import_get_product_nid($entity_info['title'], $sku);
+      watchdog('Create Product', "Product/Variation Already Exists");
+      // Multiple possible nid's mark warning and do not proceed any further.
+      $_SESSION['import_errors'][$current_row]['nid_conflict']['value'] = COMMERCE_XLS_IMPORT_DATA_WARNING;
+      $_SESSION['import_errors'][$current_row]['nid_conflict']['message'] = t("Multiple product matches found");
+      $_SESSION['import_errors'][$current_row]['has_errors'] = TRUE;
+
+      $_SESSION['import_info']['node'][$current_row]['nid'] = $nid;
+      drupal_set_message(t("Multiple  product matches found for the SKU -- @SKU", array("@SKU" => $sku)), 'warning');
+      return FALSE;
+    }
+  }
+  else {
+    $nid = $entity_info['nid'];
+  }
+
+  if (is_array($nid)) {
+
+    watchdog('Create Product', "Product/Variation Already Exists");
+    // Multiple possible nid's mark warning and do not proceed any further.
+    $_SESSION['import_errors'][$current_row]['nid_conflict']['value'] = COMMERCE_XLS_IMPORT_DATA_WARNING;
+    $_SESSION['import_errors'][$current_row]['nid_conflict']['message'] = t("Multiple product matches found");
+    $_SESSION['import_errors'][$current_row]['has_errors'] = TRUE;
+
+    $_SESSION['import_info']['node'][$current_row]['nid'] = $nid;
+    drupal_set_message(t("Multiple  product matches found for the SKU -- @SKU", array("@SKU" => $sku)), 'warning');
+    return FALSE;
+  }
+  elseif ($nid == NULL) {
+
+    watchdog('Create Product', "No matching products found");
+
     if (!isset($entity_info['nid']) || $entity_info['nid'] == NULL) {
       $node->type = $product_type;
       node_object_prepare($node);
@@ -811,247 +846,75 @@ function commerce_xls_import_create_product($values, $entity_info, $product_type
 
       }
       else {
-        $form_state['values'][$key] = array(
-          "$language" => array(
-            0 => $field,
-          ),
-        );
+          $form_state['values'][$key] = array(
+            "$language" => array(
+              0 => $field,
+            ),
+          );
       }
     }
 
     $form_state['values']['language'] = $language;
   }
   else {
-    if (!isset($entity_info['nid']) || $entity_info['nid'] == NULL) {
-      if (commerce_product_validate_sku_unique($sku, NULL)) {
-        $nid = commerce_xls_import_get_product_nid($entity_info['title']);
-      }
-      else {
-        // SKU already exists, probably exists.
-        $nid = commerce_xls_import_get_product_nid($entity_info['title'], $sku);
-        watchdog('Create Product', "Product/Variation Already Exists");
-        // Multiple possible nid's mark warning and do not proceed any further.
-        $_SESSION['import_errors'][$current_row]['nid_conflict']['value'] = COMMERCE_XLS_IMPORT_DATA_WARNING;
-        $_SESSION['import_errors'][$current_row]['nid_conflict']['message'] = t("Multiple product matches found");
-        $_SESSION['import_errors'][$current_row]['has_errors'] = TRUE;
-
-        $_SESSION['import_info']['node'][$current_row]['nid'] = $nid;
-        drupal_set_message(t("Multiple  product matches found for the SKU -- @SKU", array("@SKU" => $sku)), 'warning');
-        return FALSE;
-      }
-    }
-    else {
-      $nid = $entity_info['nid'];
-    }
-
-    if (is_array($nid)) {
-
-      watchdog('Create Product', "Product/Variation Already Exists");
-      // Multiple possible nid's mark warning and do not proceed any further.
-      $_SESSION['import_errors'][$current_row]['nid_conflict']['value'] = COMMERCE_XLS_IMPORT_DATA_WARNING;
-      $_SESSION['import_errors'][$current_row]['nid_conflict']['message'] = t("Multiple product matches found");
-      $_SESSION['import_errors'][$current_row]['has_errors'] = TRUE;
-
-      $_SESSION['import_info']['node'][$current_row]['nid'] = $nid;
-      drupal_set_message(t("Multiple  product matches found for the SKU -- @SKU", array("@SKU" => $sku)), 'warning');
-      return FALSE;
-    }
-    elseif ($nid == NULL) {
-
-      // TODO | This is a super ugly fix. This is the same code from the
-      // TODO | if($is_parent)statement from above. But it fixes the problem
-      // TODO | where a new product wouldn't be created if it didn't already
-      // TODO | exist.
-      watchdog('Create Product', "No matching products found");
-
-      if (!isset($entity_info['nid']) || $entity_info['nid'] == NULL) {
-        $node->type = $product_type;
-        node_object_prepare($node);
-        $node->title = $entity_info['title'];
-        $node->language = $new_language;
-      }
-      else {
-        $node = node_load($entity_info['nid'], NULL, TRUE);
-        if (!$node) {
-          // Node doesn't exist make a new one to avoid an error.
-          $node = new stdClass();
-          $node->type = $product_type;
-          node_object_prepare($node);
-          $node->title = $entity_info['title'];
-          $node->language = $new_language;
-        }
-      }
-
-      $node->body = array(
-        "$language" => array(
-          0 => array(
-            'value' => $entity_info["body"],
-            'format' => 'full_html',
-          ),
-        ),
-      );
-
-      commerce_xls_import_update_entity_info($node, $entity_info, $values, $image_info, TRUE);
-
-      // Create the form_state to use node validation.
-      foreach ($values as $key => $field) {
-        $field_info = field_info_field($key);
-        if ($field_info['type'] == 'image') {
-          // it's an image, check whether multiple uploads.
-          $filenames = array($field);
-          if (strpos($field, ',')) {
-            $filenames = explode(',', $field);
-          }
-
-          foreach ($filenames as $filename) {
-            if ($filename == "" || pathinfo($filename, PATHINFO_EXTENSION) == "") {
-
-              watchdog('Create Product', "Invalid image data entered");
-              $_SESSION['import_errors'][$current_row][$key]['value'] = COMMERCE_XLS_IMPORT_DATA_ERROR;
-              $_SESSION['import_errors'][$current_row][$key]['message'] = t("Invalid Image data entered");
-              $_SESSION['import_errors'][$current_row]['has_errors'] = TRUE;
-            }
-            else {
-              $file = file_load($image_info[trim($filename)]);
-              $form_state['values'][$key][$language] = get_object_vars($file);
-            }
-          }
-
-        }
-        else {
-          $form_state['values'][$key] = array(
-            "$language" => array(
-              0 => $field,
-            ),
-          );
-        }
-      }
-      $form_state['values']['language'] = $language;
-    }
-    else {
-      // Single nid found.
-      $node = node_load($nid, NULL, TRUE);
-      $node->language = $new_language;
-    }
-
-    if ($sku == NULL) {
-      // Sku doesn't exist, mark this product as an error.
-      $_SESSION['import_errors'][$current_row]['SKU']['value'] = COMMERCE_XLS_IMPORT_DATA_ERROR;
-      $_SESSION['import_errors'][$current_row]['SKU']['message'] = t("SKU required");
-      $_SESSION['import_errors'][$current_row]['has_errors'] = TRUE;
-      return FALSE;
-    }
-    else {
-      $sku_exists = commerce_product_validate_sku_unique($sku, NULL);
-    }
-
-    if (!$sku_exists) {
-      // Sku already exists, update existing product.
-      $product = commerce_product_load_by_sku($sku);
-      commerce_xls_import_update_entity_info($product, $entity_info, $values, $image_info);
-      commerce_product_save($product);
-    }
-    else {
-      // Sku doesn't exist, create a new product.
-      $product = commerce_product_new($product_type);
-      // Validate sku.
-      $sku_check = commerce_product_validate_sku($product->sku);
-      if (!$sku_check) {
-        $_SESSION['import_errors'][$current_row]['SKU']['value'] = COMMERCE_XLS_IMPORT_DATA_ERROR;
-        $_SESSION['import_errors'][$current_row]['SKU']['message'] = t("SKU is in an invalid format");
-        $_SESSION['import_errors'][$current_row]['has_errors'] = TRUE;
-        drupal_set_message(t("@SKU is not a valid SKU", array("@SKU" => $product->sku)));
-      }
-
-      $product->created = time();
-      commerce_xls_import_update_entity_info($product, $entity_info, $values, $image_info);
-      commerce_product_save($product);
-    }
-
-    $node->field_product[LANGUAGE_NONE][]['product_id'] = $product->product_id;
+    // Single nid found.
+    $node = node_load($nid, NULL, TRUE);
+    $node->language = $new_language;
   }
+
+  if ($sku == NULL) {
+    // Sku doesn't exist, mark this product as an error.
+    $_SESSION['import_errors'][$current_row]['SKU']['value'] = COMMERCE_XLS_IMPORT_DATA_ERROR;
+    $_SESSION['import_errors'][$current_row]['SKU']['message'] = t("SKU required");
+    $_SESSION['import_errors'][$current_row]['has_errors'] = TRUE;
+    return FALSE;
+  }
+  else {
+    $sku_exists = commerce_product_validate_sku_unique($sku, NULL);
+  }
+
+  if (!$sku_exists) {
+    // Sku already exists, update existing product.
+    $product = commerce_product_load_by_sku($sku);
+    commerce_xls_import_update_entity_info($product, $entity_info, $values, $image_info);
+    commerce_product_save($product);
+  }
+  else {
+    // Sku doesn't exist, create a new product.
+    $product = commerce_product_new($product_type);
+    // Validate sku.
+    $sku_check = commerce_product_validate_sku($product->sku);
+    if (!$sku_check) {
+      $_SESSION['import_errors'][$current_row]['SKU']['value'] = COMMERCE_XLS_IMPORT_DATA_ERROR;
+      $_SESSION['import_errors'][$current_row]['SKU']['message'] = t("SKU is in an invalid format");
+      $_SESSION['import_errors'][$current_row]['has_errors'] = TRUE;
+      drupal_set_message(t("@SKU is not a valid SKU", array("@SKU" => $product->sku)));
+    }
+
+    $product->created = time();
+    commerce_xls_import_update_entity_info($product, $entity_info, $values, $image_info);
+    if (!$_SESSION['import_errors'][$current_row]['has_errors']) {
+      commerce_product_save($product);
+    }
+    else {
+      // Don't create product or variation if there are errors
+    }
+  }
+
+  $node->field_product[LANGUAGE_NONE][]['product_id'] = $product->product_id;
+
   $form['node'] = $node;
 
-  if ($is_parent) {
-    $form_state['language'] = $new_language;
-    $node->language = $new_language;
-    // Only validate node if it's a parent, there are no node changes if it's
-    // an entity.
-    drupal_form_submit("$product_type" . "_node_form", $form_state, $node);
-    $errors = form_get_errors();
-
-    if (is_array($errors)) {
-      // Mark any form validation errors.
-      foreach ($errors as $key => $error) {
-        // Check the errors for any fields matching the error.
-        foreach ($values as $field => $value) {
-          if (strpos($key, $field) === 0 || strpos($key, $field > 0)) {
-
-            // Hackey fix, category was giving a validation error even though
-            // the data was entered correctly and displaying in node correctly
-            // it is validated manually above anyway.
-            if ($field != "field_product_category") {
-              $_SESSION['import_errors'][$current_row][$field]['value'] = COMMERCE_XLS_IMPORT_DATA_ERROR;
-              $_SESSION['import_errors'][$current_row][$field]['message'] = $error;
-              $_SESSION['import_errors'][$current_row]['has_errors'] = TRUE;
-            }
-          }
-        }
-      }
-    }
-
-    $data_errors = $_SESSION['messages']['error'];
-
-    // Mark any errors that were missed in form validation, most likely image
-    // related.
-    foreach ($data_errors as $error) {
-      if (strpos($error, "file_field_widget") > 0) {
-        foreach ($values as $key => $field) {
-          $field_info = field_info_field($key);
-          if ($field_info['type'] == 'image') {
-            if ($field == "" || pathinfo($field, PATHINFO_EXTENSION) == "") {
-              $_SESSION['import_errors'][$current_row][$key]['value'] = COMMERCE_XLS_IMPORT_DATA_ERROR;
-              $_SESSION['import_errors'][$current_row][$key]['message'] = t("Invalid Image data entered");
-              $_SESSION['import_errors'][$current_row]['has_errors'] = TRUE;
-            }
-          }
-        }
-      }
-    }
-
-    // Unset the errors so the user isn't bombarded with red that is already
-    // noted.
-    unset($_SESSION['messages']['error']);
-
-    // Only save the node if there were no errors reported with it.
-    if (!isset($_SESSION['import_errors'][$current_row]['has_errors'])) {
+    if(!$_SESSION['import_errors'][$current_row]['has_errors']) {
+      $node->language = $new_language;
       node_save($node);
       $_SESSION['import_info']['node'][$current_row]['nid'] = $node->nid;
       return $node->nid;
     }
     else {
-      // Mark the parent as an error so the children entities aren't attached
-      // to a bad node.
-      $_SESSION['import_errors'][$current_row]['parent_info']['value'] = COMMERCE_XLS_IMPORT_DATA_ERROR;
-      $_SESSION['import_errors'][$current_row]['parent_info']['message'] = t('Invalid node created, not creating children entities');
-      $_SESSION['import_errors'][$current_row]['has_errors'] = TRUE;
       return FALSE;
     }
   }
-  else {
-    $node->language = $new_language;
-    node_save($node);
-    $_SESSION['import_info']['node'][$current_row]['nid'] = $node->nid;
-    return $node->nid;
-  }
-
-  if (isset($product->product_id)) {
-    return $product->product_id;
-  }
-  else {
-    return FALSE;
-  }
-}
 
 
 /**
@@ -1282,6 +1145,11 @@ function commerce_xls_import_update_entity_info($product, $entity_info, $values,
         ),
       );
       $product->commerce_price = $price;
+    }
+    else {
+      $_SESSION['import_errors'][$_SESSION['commerce_xls_import_current_row']]['commerce_price']['value'] = COMMERCE_XLS_IMPORT_DATA_ERROR;
+      $_SESSION['import_errors'][$_SESSION['commerce_xls_import_current_row']]['commerce_price']['message'] = t("No Price Entered!");
+      $_SESSION['import_errors'][$_SESSION['commerce_xls_import_current_row']]['has_errors'] = TRUE;
     }
   }
 }
