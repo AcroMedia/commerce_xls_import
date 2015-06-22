@@ -990,48 +990,6 @@ function commerce_xls_import_get_category_id($category_names) {
   return $terms;
 }
 
-
-/**
- * Updates the node info.
- */
-function commerce_xls_import_update_node_info($node, $entity_info, $values, $image_info) {
-  $language = $values['language'];
-
-  // Check for added fields.
-  foreach ($values as $key => $field) {
-    if (strpos($key, "field_product_image") === 0) {
-      // it's an added field.
-      if (array_key_exists($field, $image_info)) {
-        // This field contains an image.
-        $field = file_load($image_info[$field]);
-
-        $product->$key = array(
-          "$language" => array(
-            0 => get_object_vars($field),
-          ),
-        );
-      }
-      else {
-        // Could still be an image without an extension.
-        if (strpos($key, "product_image") === 0 || strpos($key, "product_image") > 0) {
-          $_SESSION['import_errors'][$_SESSION['commerce_xls_import_current_row']][$key]['value'] = COMMERCE_XLS_IMPORT_DATA_ERROR;
-          $_SESSION['import_errors'][$_SESSION['commerce_xls_import_current_row']][$key]['message'] = t("Extension required");
-          $_SESSION['import_errors'][$_SESSION['commerce_xls_import_current_row']]['has_errors'] = TRUE;
-        }
-        else {
-          $product->$key = array(
-            "$language" => array(
-              0 => array(
-                'value' => $field,
-              ),
-            ),
-          );
-        }
-      }
-    }
-  }
-}
-
 /**
  * Updates the entity info.
  */
