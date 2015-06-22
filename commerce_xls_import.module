@@ -831,11 +831,13 @@ function commerce_xls_import_create_product($values, $entity_info, $product_type
         }
 
         foreach ($filenames as $filename) {
-          if ($filename == "" || pathinfo($filename, PATHINFO_EXTENSION) == "") {
-
-            watchdog('Create Product', "Invalid image data entered");
+          if ($filename == "") {
+            watchdog('Create Product', "No image entered");
+          }
+          elseif (pathinfo($filename, PATHINFO_EXTENSION) == "") {
+            watchdog('Create Product', "Entered image is missing extension");
             $_SESSION['import_errors'][$current_row][$key]['value'] = COMMERCE_XLS_IMPORT_DATA_ERROR;
-            $_SESSION['import_errors'][$current_row][$key]['message'] = t("Invalid Image data entered");
+            $_SESSION['import_errors'][$current_row][$key]['message'] = t("Entered image is missing extension");
             $_SESSION['import_errors'][$current_row]['has_errors'] = TRUE;
           }
           else {
@@ -1056,9 +1058,13 @@ function commerce_xls_import_update_entity_info($product, $entity_info, $values,
         // Reset all the images to only use the ones provided.
         $product->{$key}[$language] = array();
         foreach ($filenames as $filename) {
-          if ($filename == "" || pathinfo($filename, PATHINFO_EXTENSION) == "") {
+          if ($filename == "") {
+            watchdog('Create Product', "No image entered");
+          }
+          elseif (pathinfo($filename, PATHINFO_EXTENSION) == "") {
+            watchdog('Create Product', "Entered image is missing extension");
             $_SESSION['import_errors'][$_SESSION['commerce_xls_import_current_row']][$key]['value'] = COMMERCE_XLS_IMPORT_DATA_ERROR;
-            $_SESSION['import_errors'][$_SESSION['commerce_xls_import_current_row']][$key]['message'] = t("Invalid Image data entered");
+            $_SESSION['import_errors'][$_SESSION['commerce_xls_import_current_row']]['message'] = t("Entered image is missing extension");
             $_SESSION['import_errors'][$_SESSION['commerce_xls_import_current_row']]['has_errors'] = TRUE;
           }
           else {
