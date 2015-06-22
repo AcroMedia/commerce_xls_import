@@ -530,6 +530,12 @@ function commerce_xls_import_import($op, $file = NULL) {
             $_SESSION['import_errors'][$entity_number]['parent_info']['message'] = t('No parent product speficied');
             $_SESSION['import_errors'][$_SESSION['commerce_xls_import_current_row']]['has_errors'] = TRUE;
 
+            watchdog('Create Product', "Product doesn't have a title");
+
+            $_SESSION['import_errors'][$entity_number]['title']['value'] = COMMERCE_XLS_IMPORT_DATA_ERROR;
+            $_SESSION['import_errors'][$entity_number]['title']['message'] = t("Product doesn't have a title");
+            $_SESSION['import_errors'][$entity_number]['has_errors'] = TRUE;
+
             $has_errors = TRUE;
             $is_parent = FALSE;
           }
