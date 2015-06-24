@@ -434,57 +434,74 @@ function commerce_xls_import_export($op, $product_info = NULL, $product_type = N
 
   switch ($op) {
     case 'errors':
-      // There are errors with this import.
-      $filename = "product_import_results.xls";
-      $options['errors'] = TRUE;
-
-      if (file_exists("$path/$filename")) {
-        $command = "rm $path/$filename 2>&1";
-        exec($command);
+      if(commerce_xls_import_generate_errors_xls($options, $path, $headers, $data)){
+        exit;
       }
-
-      $result = phpexcel_export($headers, $data, "$path/$filename", $options);
-
-      if ($result == PHPEXCEL_SUCCESS) {
-        drupal_set_message(t('Import results generated'));
-      }
-      else {
-        drupal_set_message(t('PHPExcel error @result', array('@result' => $result)), 'error');
-        drupal_set_message(t('There was an error generating the import result document. Please try again. If this problem persists, contact the system administrator'), 'error');
-      }
-
-      header('Content-Type: application/vnd.openxmlformats-officedocument.spreadsheetml.sheet');
-      header('Content-Disposition: attachment;filename="' . $filename . '"');
-      header('Cache-Control: max-age=0');
-
-      readfile("$path/$filename");
-      exit;
 
     break;
     case 'template':
-      $filename = $product_type . "_template.xls";
-      $result = phpexcel_export($headers, $data, "$path/$filename", $options);
-
-      if ($result == PHPEXCEL_SUCCESS) {
-        drupal_set_message(t('Template generation successful'));
+      if(commerce_xls_import_generate_template_xls($path, $product_type, $headers, $data, $options)) {
+        exit;
       }
-      else {
-        drupal_set_message(t('PHPExcel error @result', array('@result' => $result)), 'error');
-        drupal_set_message(t('There was an error generating the template. If this persists, contact the system administrator'), 'error');
-      }
-
-      header('Content-Type: application/vnd.openxmlformats-officedocument.spreadsheetml.sheet');
-      header('Content-Disposition: attachment;filename="' . $filename . '"');
-      header('Cache-Control: max-age=0');
-
-      readfile("$path/$filename");
-
-      exit;
 
     break;
   }
   drupal_goto("admin/commerce/products/import_commerce");
 
+}
+
+function commerce_xls_import_generate_template_xls($path, $product_type, $headers, $data, $options) {
+  $filename = $product_type . "_template.xls";
+  $result = phpexcel_export($headers, $data, "$path/$filename", $options);
+
+  if ($result == PHPEXCEL_SUCCESS) {
+    drupal_set_message(t('Template generation successful'));
+
+    header('Content-Type: application/vnd.openxmlformats-officedocument.spreadsheetml.sheet');
+    header('Content-Disposition: attachment;filename="' . $filename . '"');
+    header('Cache-Control: max-age=0');
+
+    readfile("$path/$filename");
+
+    return TRUE;
+  }
+  else {
+    drupal_set_message(t('PHPExcel error @result', array('@result' => $result)), 'error');
+    drupal_set_message(t('There was an error generating the template. If this persists, contact the system administrator'), 'error');
+
+    return FALSE;
+  }
+}
+
+function commerce_xls_import_generate_errors_xls($options, $path, $headers, $data) {
+  // There are errors with this import.
+  $filename = "product_import_results.xls";
+  $options['errors'] = TRUE;
+
+  if (file_exists("$path/$filename")) {
+    $command = "rm $path/$filename 2>&1";
+    exec($command);
+  }
+
+  $result = phpexcel_export($headers, $data, "$path/$filename", $options);
+
+  if ($result == PHPEXCEL_SUCCESS) {
+    drupal_set_message(t('Import results generated'));
+
+    header('Content-Type: application/vnd.openxmlformats-officedocument.spreadsheetml.sheet');
+    header('Content-Disposition: attachment;filename="' . $filename . '"');
+    header('Cache-Control: max-age=0');
+
+    readfile("$path/$filename");
+
+    return TRUE;
+  }
+  else {
+    drupal_set_message(t('PHPExcel error @result', array('@result' => $result)), 'error');
+    drupal_set_message(t('There was an error generating the import result document. Please try again. If this problem persists, contact the system administrator'), 'error');
+
+    return FALSE;
+  }
 }
 
 
