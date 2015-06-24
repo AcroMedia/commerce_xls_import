@@ -542,7 +542,9 @@ function commerce_xls_import_import($file = NULL) {
           if (!$has_errors) {
             watchdog('Import', $product['title'] . " has no errors, continuing import");
 
-            commerce_xls_import_process_result($product, $images_info, FALSE, $product_type);
+            $values = commerce_xls_import_get_product_values($product, $product_type);
+            $entity_info = commerce_xls_import_set_entity_values($product);
+            $nid = commerce_xls_import_create_product($values, $entity_info, $product_type, $images_info, FALSE);
 
             if (isset($_SESSION['import_errors'][$_SESSION['commerce_xls_import_current_row']])) {
               watchdog('Import', $product['title'] . " had import errors");
@@ -582,12 +584,16 @@ function commerce_xls_import_import($file = NULL) {
 
 
 /**
- * Sets entity variables and creates product.
+ * Sets entity values.
+ *
+ * @param $product
+ *   The product the entity is being created from.
+ *
+ * @return array
+ *   An array containing all of the set entity values for the product.
  */
-function commerce_xls_import_process_result($product, $image_info, $is_parent, $product_type = NULL) {
+function commerce_xls_import_set_entity_values($product) {
   global $user;
-
-  $values = commerce_xls_import_get_product_values($product, $product_type);
 
   $entity_info = array(
     'status' => isset($product['Status']) ? $product['Status'] : NULL,
@@ -600,18 +606,7 @@ function commerce_xls_import_process_result($product, $image_info, $is_parent, $
     'nid' => isset($product['NID']) ? $product['NID'] : NULL,
   );
 
-  if ($product_type == NULL) {
-    $product_type = "product";
-  }
-  watchdog('Process Result', "Results processed");
-
-  $nid = commerce_xls_import_create_product($values, $entity_info, $product_type, $image_info, $is_parent);
-
-  if($nid){
-    return $nid;
-  }
-
-  return FALSE;
+  return $entity_info;
 }
 
 /**
