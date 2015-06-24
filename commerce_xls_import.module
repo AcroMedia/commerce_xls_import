@@ -434,22 +434,29 @@ function commerce_xls_import_export($op, $product_info = NULL, $product_type = N
 
   switch ($op) {
     case 'errors':
-      if(commerce_xls_import_generate_errors_xls($options, $path, $headers, $data)){
+      if (commerce_xls_import_generate_errors_xls($options, $path, $headers, $data)) {
         exit;
       }
 
-    break;
+      break;
+
     case 'template':
-      if(commerce_xls_import_generate_template_xls($path, $product_type, $headers, $data, $options)) {
+      if (commerce_xls_import_generate_template_xls($path, $product_type, $headers, $data, $options)) {
         exit;
       }
 
-    break;
+      break;
   }
   drupal_goto("admin/commerce/products/import_commerce");
 
 }
 
+/**
+ * Generate template xls.
+ *
+ * @return bool
+ *    Returns TRUE upon success and False upon failure.
+ */
 function commerce_xls_import_generate_template_xls($path, $product_type, $headers, $data, $options) {
   $filename = $product_type . "_template.xls";
   $result = phpexcel_export($headers, $data, "$path/$filename", $options);
@@ -473,6 +480,12 @@ function commerce_xls_import_generate_template_xls($path, $product_type, $header
   }
 }
 
+/**
+ * Generate product_import_results.xls.
+ *
+ * @return bool
+ *    Returns TRUE upon success and False upon failure.
+ */
 function commerce_xls_import_generate_errors_xls($options, $path, $headers, $data) {
   // There are errors with this import.
   $filename = "product_import_results.xls";
@@ -698,9 +711,6 @@ function commerce_xls_import_validate_languages($language) {
  * If one or no products with the same name exists, return nid. Otherwise
  * return false.
  *
- * @param $entity_info
- *    The entity info array of the product variation.
- *
  * @return bool
  *    True if product is valid.
  */
@@ -734,17 +744,6 @@ function commerce_xls_import_validate_product($entity_info) {
 
 /**
  * Checks image validity and sets it in the form_state if valid.
- *
- * @param $field
- *   The product field containing image filenames.
- * @param $form_state
- *   The form state of current product.
- * @param $image_info
- *   Image info received from commerce_xls_import_extract_zip().
- * @param $key
- *   The key or name of the current product field.
- * @param $language
- *   The language for this product variation.
  */
 function commerce_xls_import_check_set_images($field, &$form_state, $image_info, $key, $language) {
   $current_row = $_SESSION['commerce_xls_import_current_row'];
@@ -767,7 +766,7 @@ function commerce_xls_import_check_set_images($field, &$form_state, $image_info,
     }
     else {
       $file = file_load($image_info[trim($filename)]);
-      if($file !== FALSE){
+      if ($file !== FALSE) {
         $form_state['values'][$key][$language] = get_object_vars($file);
       }
       else {
@@ -787,7 +786,7 @@ function commerce_xls_import_check_set_images($field, &$form_state, $image_info,
  * commerce sku, return false. If the sku is already in use, return false.
  * Otherwise, return true.
  *
- * @param $sku
+ * @param string $sku
  *   The SKU of the variation being created.
  *
  * @return bool
@@ -981,7 +980,7 @@ function commerce_xls_import_create_product($values, $entity_info, $product_type
  * the NIDs of all matching products. Otherwise, if no products exist, return
  * null.
  *
- * @param $title
+ * @param string $title
  *   The title of the product to be queried.
  *
  * @return int|array|null
@@ -1020,8 +1019,6 @@ function commerce_xls_import_get_product_nid($title) {
  *
  * Function to use a comma separated list of category names to retrieve the
  * taxonomy terms.
- *
- * @param $category_names
  *
  * @return array
  *    An array containing category terms.
@@ -1177,7 +1174,7 @@ function commerce_xls_import_update_entity_info($product, $entity_info, $values,
  * @return bool
  *    False if no price entered or invalid price entered. Otherwise true.
  */
-function commerce_xls_import_validate_price($values) {
+function commerce_xls_import_validate_price(array $values) {
   if (!isset($values['commerce_price']) || $values['commerce_price'] == NULL) {
     $_SESSION['import_errors'][$_SESSION['commerce_xls_import_current_row']]['commerce_price']['value'] = COMMERCE_XLS_IMPORT_DATA_ERROR;
     $_SESSION['import_errors'][$_SESSION['commerce_xls_import_current_row']]['commerce_price']['message'] = t("No Price Entered!");
