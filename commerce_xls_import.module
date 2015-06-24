@@ -544,7 +544,7 @@ function commerce_xls_import_import($file = NULL) {
 
             $values = commerce_xls_import_get_product_values($product, $product_type);
             $entity_info = commerce_xls_import_set_entity_values($product);
-            $nid = commerce_xls_import_create_product($values, $entity_info, $product_type, $images_info, FALSE);
+            $nid = commerce_xls_import_create_product($values, $entity_info, $product_type, $images_info);
 
             if (isset($_SESSION['import_errors'][$_SESSION['commerce_xls_import_current_row']])) {
               watchdog('Import', $product['title'] . " had import errors");
@@ -676,11 +676,47 @@ function commerce_xls_import_validate_languages($language) {
   return FALSE;
 }
 
+/**
+ * Validates the product by title and returns NID if it exists.
+ *
+ * If one or no products with the same name exists, return nid. Otherwise
+ * return false.
+ *
+ * @param $entity_info
+ * @return bool
+ */
+function commerce_xls_import_validate_product_unique($entity_info){
+  $current_row = $_SESSION['commerce_xls_import_current_row'];
+  $sku = $entity_info['sku'];
+  $nid = NULL;
+
+  if (!isset($entity_info['nid']) || $entity_info['nid'] == NULL) {
+    $nid = commerce_xls_import_get_product_nid($entity_info['title']);
+  }
+  else {
+    $nid = $entity_info['nid'];
+  }
+
+  // Validate NID
+  if (is_array($nid)) {
+    watchdog('Create Product', "Multiple NID matches found");
+    // Multiple possible nid's mark warning and do not proceed any further.
+    $_SESSION['import_errors'][$current_row]['nid_conflict']['value'] = COMMERCE_XLS_IMPORT_DATA_WARNING;
+    $_SESSION['import_errors'][$current_row]['nid_conflict']['message'] = t("Multiple product matches found");
+    $_SESSION['import_errors'][$current_row]['has_errors'] = TRUE;
+
+    $_SESSION['import_info']['node'][$current_row]['nid'] = $nid;
+    drupal_set_message(t("Multiple  product matches found for the SKU -- @SKU", array("@SKU" => $sku)), 'warning');
+    return FALSE;
+  }
+
+  return $nid;
+}
 
 /**
- * Validates and creates the product.
+ * Creates the product.
  */
-function commerce_xls_import_create_product($values, $entity_info, $product_type, $image_info = array(), $is_parent = FALSE) {
+function commerce_xls_import_create_product($values, $entity_info, $product_type, $image_info = array()) {
   module_load_include('inc', 'node');
   module_load_include('inc', 'node', 'node.pages');
   global $user;
@@ -723,43 +759,14 @@ function commerce_xls_import_create_product($values, $entity_info, $product_type
 
   $values['language'] = $language;
 
-  if (!isset($entity_info['nid']) || $entity_info['nid'] == NULL) {
-    if (commerce_product_validate_sku_unique($sku, NULL)) {
-      $nid = commerce_xls_import_get_product_nid($entity_info['title']);
-    }
-    else {
-      // SKU already exists, probably exists.
-      $nid = commerce_xls_import_get_product_nid($entity_info['title'], $sku);
-      watchdog('Create Product', "Product/Variation Already Exists");
-      // Multiple possible nid's mark warning and do not proceed any further.
-      $_SESSION['import_errors'][$current_row]['nid_conflict']['value'] = COMMERCE_XLS_IMPORT_DATA_WARNING;
-      $_SESSION['import_errors'][$current_row]['nid_conflict']['message'] = t("Multiple product matches found");
-      $_SESSION['import_errors'][$current_row]['has_errors'] = TRUE;
+  $nid = commerce_xls_import_validate_product_unique($entity_info);
 
-      $_SESSION['import_info']['node'][$current_row]['nid'] = $nid;
-      drupal_set_message(t("Multiple  product matches found for the SKU -- @SKU", array("@SKU" => $sku)), 'warning');
-      return FALSE;
-    }
-  }
-  else {
-    $nid = $entity_info['nid'];
-  }
-
-  if (is_array($nid)) {
-
-    watchdog('Create Product', "Product/Variation Already Exists");
-    // Multiple possible nid's mark warning and do not proceed any further.
-    $_SESSION['import_errors'][$current_row]['nid_conflict']['value'] = COMMERCE_XLS_IMPORT_DATA_WARNING;
-    $_SESSION['import_errors'][$current_row]['nid_conflict']['message'] = t("Multiple product matches found");
-    $_SESSION['import_errors'][$current_row]['has_errors'] = TRUE;
-
-    $_SESSION['import_info']['node'][$current_row]['nid'] = $nid;
-    drupal_set_message(t("Multiple  product matches found for the SKU -- @SKU", array("@SKU" => $sku)), 'warning');
+  if($nid === FALSE){
     return FALSE;
   }
   elseif ($nid == NULL) {
 
-    watchdog('Create Product', "No matching products found");
+    watchdog('Create Product', "No matching products found, creating product");
 
     if (!isset($entity_info['nid']) || $entity_info['nid'] == NULL) {
       $node->type = $product_type;
@@ -800,6 +807,7 @@ function commerce_xls_import_create_product($values, $entity_info, $product_type
           $filenames = explode(',', $field);
         }
 
+        // Validate Images
         foreach ($filenames as $filename) {
           if ($filename == "") {
             watchdog('Create Product', "No image entered");
@@ -829,11 +837,11 @@ function commerce_xls_import_create_product($values, $entity_info, $product_type
     $form_state['values']['language'] = $language;
   }
   else {
-    // Single nid found.
     $node = node_load($nid, NULL, TRUE);
     $node->language = $new_language;
   }
 
+  // Validate SKU
   if ($sku == NULL) {
     // Sku doesn't exist, mark this product as an error.
     $_SESSION['import_errors'][$current_row]['SKU']['value'] = COMMERCE_XLS_IMPORT_DATA_ERROR;
@@ -847,9 +855,10 @@ function commerce_xls_import_create_product($values, $entity_info, $product_type
 
   if (!$sku_exists) {
     // Sku already exists, update existing product.
-    $product = commerce_product_load_by_sku($sku);
-    commerce_xls_import_update_entity_info($product, $entity_info, $values, $image_info);
-    commerce_product_save($product);
+    $_SESSION['import_errors'][$current_row]['SKU']['value'] = COMMERCE_XLS_IMPORT_DATA_ERROR;
+    $_SESSION['import_errors'][$current_row]['SKU']['message'] = t("SKU already in use");
+    $_SESSION['import_errors'][$current_row]['has_errors'] = TRUE;
+    return FALSE;
   }
   else {
     // Sku doesn't exist, create a new product.
