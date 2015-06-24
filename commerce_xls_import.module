@@ -716,10 +716,12 @@ function commerce_xls_import_validate_product($entity_info) {
 }
 
 /**
- * Validates product images.
+ * Checks image validity and sets it in the form_state if valid.
  *
  * @param $field
  *   The product field containing image filenames.
+ * @param $form_state
+ *   The form state of current product.
  * @param $image_info
  *   Image info received from commerce_xls_import_extract_zip().
  * @param $key
@@ -727,7 +729,7 @@ function commerce_xls_import_validate_product($entity_info) {
  * @param $language
  *   The language for this product variation.
  */
-function commerce_xls_import_validate_images($field, $image_info, $key, $language) {
+function commerce_xls_import_check_set_images($field, &$form_state, $image_info, $key, $language) {
   $current_row = $_SESSION['commerce_xls_import_current_row'];
 
   // it's an image, check whether multiple uploads.
@@ -748,7 +750,15 @@ function commerce_xls_import_validate_images($field, $image_info, $key, $languag
     }
     else {
       $file = file_load($image_info[trim($filename)]);
-      $form_state['values'][$key][$language] = get_object_vars($file);
+      if($file !== FALSE){
+        $form_state['values'][$key][$language] = get_object_vars($file);
+      }
+      else {
+        watchdog('Create Product', "File could not be loaded.");
+        $_SESSION['import_errors'][$current_row][$key]['value'] = COMMERCE_XLS_IMPORT_DATA_ERROR;
+        $_SESSION['import_errors'][$current_row][$key]['message'] = t("File could not be loaded");
+        $_SESSION['import_errors'][$current_row]['has_errors'] = TRUE;
+      }
     }
   }
 }
@@ -893,7 +903,7 @@ function commerce_xls_import_create_product($values, $entity_info, $product_type
       if ($field_info['type'] == 'image') {
 
         // Validate Images.
-        commerce_xls_import_validate_images($field, $image_info, $key, $language);
+        commerce_xls_import_check_set_images($field, $form_state, $image_info, $key, $language);
 
       }
       else {
