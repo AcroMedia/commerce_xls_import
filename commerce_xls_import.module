@@ -582,20 +582,12 @@ function commerce_xls_import_import($file = NULL) {
 
 
 /**
- * Organizes the data retrieved from the xls file.
+ * Sets entity variables and creates product.
  */
 function commerce_xls_import_process_result($product, $image_info, $is_parent, $product_type = NULL) {
   global $user;
 
-  $possible_fields = commerce_xls_import_get_possible_fields($product_type);
-
-  $values = array(
-    'currency_code' => commerce_default_currency(),
-  );
-
-  foreach ($possible_fields as $field) {
-    $values[$field] = $product[$field];
-  }
+  $values = commerce_xls_import_get_product_Values($product, $product_type);
 
   $entity_info = array(
     'status' => isset($product['Status']) ? $product['Status'] : NULL,
@@ -612,7 +604,47 @@ function commerce_xls_import_process_result($product, $image_info, $is_parent, $
     $product_type = "product";
   }
   watchdog('Process Result', "Results processed");
-  return commerce_xls_import_create_product($values, $entity_info, $product_type, $image_info, $is_parent);
+
+  $nid = commerce_xls_import_create_product($values, $entity_info, $product_type, $image_info, $is_parent);
+
+  if($nid){
+    return $nid;
+  }
+
+  return FALSE;
+}
+
+/**
+ * Gets an array containing the set values of the product.
+ *
+ * Gets the field data from the product type and then creates an array that
+ * contains the set data from the given product.
+ *
+ * @param $product
+ *   Product to be imported.
+ *
+ * @param $product_type
+ *   The product type.
+ *
+ * @return null array
+ *   Returns the set values that correspond to the possible fields of the
+ *   product type. Returns null if no fields exist in the product that match
+ *   the possible fields.
+ */
+function commerce_xls_import_get_product_values($product, $product_type) {
+  $values = NULL;
+
+  $possible_fields = commerce_xls_import_get_possible_fields($product_type);
+
+  $values = array(
+    'currency_code' => commerce_default_currency(),
+  );
+
+  foreach ($possible_fields as $field) {
+    $values[$field] = $product[$field];
+  }
+
+  return $values;
 }
 
 
