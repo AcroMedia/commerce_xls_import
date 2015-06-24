@@ -991,6 +991,9 @@ function commerce_xls_import_get_product_nid($title) {
  *
  * Function to use a comma separated list of category names to retrieve the
  * taxonomy terms.
+ *
+ * @param $category_names
+ * @return array
  */
 function commerce_xls_import_get_category_id($category_names) {
   $term_list = explode(',', $category_names);
