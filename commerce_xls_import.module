@@ -495,7 +495,7 @@ function commerce_xls_import_export($op, $product_info = NULL, $product_type = N
  * successful the results will then be processed and the import will be started.
  *
  * @param null $file
- *  The XLS file containing product data to be imported.
+ *   The XLS file containing product data to be imported.
  */
 function commerce_xls_import_import($file = NULL) {
   module_load_include('inc', 'phpexcel', 'phpexcel');
@@ -514,7 +514,7 @@ function commerce_xls_import_import($file = NULL) {
   // Extract product images.
   $images_info = commerce_xls_import_extract_zip();
 
-  // Import XLS
+  // Import XLS.
   $result = phpexcel_import($file['uri']);
 
   // If an array, import function was successful.
@@ -586,13 +586,13 @@ function commerce_xls_import_import($file = NULL) {
 /**
  * Sets entity values.
  *
- * @param $product
- *   The product the entity is being created from.
+ * @param array $product
+ *   The product array the entity is being created from.
  *
  * @return array
  *   An array containing all of the set entity values for the product.
  */
-function commerce_xls_import_set_entity_values($product) {
+function commerce_xls_import_set_entity_values(array $product) {
   global $user;
 
   $entity_info = array(
@@ -615,10 +615,9 @@ function commerce_xls_import_set_entity_values($product) {
  * Gets the field data from the product type and then creates an array that
  * contains the set data from the given product.
  *
- * @param $product
+ * @param array $product
  *   Product to be imported.
- *
- * @param $product_type
+ * @param string $product_type
  *   The product type.
  *
  * @return null array
@@ -626,7 +625,7 @@ function commerce_xls_import_set_entity_values($product) {
  *   product type. Returns null if no fields exist in the product that match
  *   the possible fields.
  */
-function commerce_xls_import_get_product_values($product, $product_type) {
+function commerce_xls_import_get_product_values(array $product, $product_type) {
   $values = NULL;
 
   $possible_fields = commerce_xls_import_get_possible_fields($product_type);
@@ -683,9 +682,12 @@ function commerce_xls_import_validate_languages($language) {
  * return false.
  *
  * @param $entity_info
+ *    The entity info array of the product variation.
+ *
  * @return bool
+ *    True if product is valid.
  */
-function commerce_xls_import_validate_product($entity_info){
+function commerce_xls_import_validate_product($entity_info) {
   $current_row = $_SESSION['commerce_xls_import_current_row'];
   $sku = $entity_info['sku'];
   $nid = NULL;
@@ -697,7 +699,7 @@ function commerce_xls_import_validate_product($entity_info){
     $nid = $entity_info['nid'];
   }
 
-  // Validate NID
+  // Validate NID.
   if (is_array($nid)) {
     watchdog('Create Product', "Multiple NID matches found");
     // Multiple possible nid's mark warning and do not proceed any further.
@@ -725,7 +727,7 @@ function commerce_xls_import_validate_product($entity_info){
  * @param $language
  *   The language for this product variation.
  */
-function commerce_xls_import_validate_images($field, $image_info, $key, $language){
+function commerce_xls_import_validate_images($field, $image_info, $key, $language) {
   $current_row = $_SESSION['commerce_xls_import_current_row'];
 
   // it's an image, check whether multiple uploads.
@@ -847,8 +849,8 @@ function commerce_xls_import_create_product($values, $entity_info, $product_type
 
   $nid = commerce_xls_import_validate_product($entity_info);
 
-  if($nid === FALSE){
-    // Product failed validation
+  if ($nid === FALSE) {
+    // Product failed validation.
     return FALSE;
   }
   elseif ($nid == NULL) {
@@ -890,7 +892,7 @@ function commerce_xls_import_create_product($values, $entity_info, $product_type
       $field_info = field_info_field($key);
       if ($field_info['type'] == 'image') {
 
-        // Validate Images
+        // Validate Images.
         commerce_xls_import_validate_images($field, $image_info, $key, $language);
 
       }
@@ -910,7 +912,7 @@ function commerce_xls_import_create_product($values, $entity_info, $product_type
     $node->language = $new_language;
   }
 
-  // Validate SKU
+  // Validate SKU.
   commerce_xls_import_validate_sku($sku);
 
   $product = commerce_product_new($product_type);
@@ -993,7 +995,9 @@ function commerce_xls_import_get_product_nid($title) {
  * taxonomy terms.
  *
  * @param $category_names
+ *
  * @return array
+ *    An array containing category terms.
  */
 function commerce_xls_import_get_category_id($category_names) {
   $term_list = explode(',', $category_names);
