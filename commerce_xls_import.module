@@ -310,7 +310,7 @@ function commerce_xls_import_settings_submit($form, &$form_state) {
 
     foreach ($form_state['files'] as $file) {
       if (!commerce_xls_import_is_running()) {
-        $handle = background_process_start('commerce_xls_import_import', 'import', $file);
+        $handle = background_process_start('commerce_xls_import_import', $file);
 
         $result = db_insert('current_xls_imports')
           ->fields(array(
@@ -490,12 +490,16 @@ function commerce_xls_import_export($op, $product_info = NULL, $product_type = N
 
 /**
  * Main function for the drupal commerce XLS import.
+ *
+ * Extracts product_images.zip, then imports XLS file. If the XLS import is
+ * successful the results will then be processed and the import will be started.
+ *
+ * @param null $file
+ *  The XLS file containing product data to be imported.
  */
-function commerce_xls_import_import($op, $file = NULL) {
+function commerce_xls_import_import($file = NULL) {
   module_load_include('inc', 'phpexcel', 'phpexcel');
-  $parent = NULL;
   $entity_number = 1;
-  $is_parent = FALSE;
   $has_errors = FALSE;
   $errors = array();
 
@@ -510,6 +514,7 @@ function commerce_xls_import_import($op, $file = NULL) {
   // Extract product images.
   $images_info = commerce_xls_import_extract_zip();
 
+  // Import XLS
   $result = phpexcel_import($file['uri']);
 
   // If an array, import function was successful.
@@ -523,12 +528,7 @@ function commerce_xls_import_import($op, $file = NULL) {
           // Set the import completion status.
           variable_set('import_count_status', array('completed' => $entity_number - 1, 'total' => count($sheet)));
 
-          if ($parent == NULL && $product['title'] == NULL) {
-            // Not enough information to attach entity to product, mark full row
-            // as error.
-            $_SESSION['import_errors'][$entity_number]['parent_info']['value'] = COMMERCE_XLS_IMPORT_DATA_ERROR;
-            $_SESSION['import_errors'][$entity_number]['parent_info']['message'] = t('No parent product speficied');
-            $_SESSION['import_errors'][$_SESSION['commerce_xls_import_current_row']]['has_errors'] = TRUE;
+          if ($product['title'] == NULL) {
 
             watchdog('Create Product', "Product doesn't have a title");
 
@@ -537,91 +537,28 @@ function commerce_xls_import_import($op, $file = NULL) {
             $_SESSION['import_errors'][$entity_number]['has_errors'] = TRUE;
 
             $has_errors = TRUE;
-            $is_parent = FALSE;
-          }
-          elseif ($product['title'] != NULL && $product['SKU'] == NULL) {
-            // This is the parent product
-            // check to see whether process should be stopped.
-            $res = db_select('current_xls_imports', 'cxi')
-              ->fields('cxi', array('stopped', 'handle'))
-              ->condition('stopped', 1, '=')
-              ->execute();
-
-            if ($res->rowCount() > 0) {
-              $_SESSION['import_errors']['stopped_row'] = $entity_number;
-              watchdog('import_stopped', 'Import Stopped before creating ' . $product['title']);
-              variable_del('import_count_status');
-              variable_set('last_import', array(
-                'completed' => time(),
-                'row' => $entity_number - 1,
-                'total' => count($sheet),
-              ));
-              commerce_xls_import_export('errors', $result, $product_type, $_SESSION['import_errors'], TRUE);
-              return;
-            }
-            $parent = $product;
-            $is_parent = TRUE;
-            $product['title'] = $parent['title'];
-          }
-          else {
-            if (isset($parent['nid'])) {
-              $product['NID'] = $parent['nid'];
-            }
-            // Set the language.
-            if (isset($parent['Language'])) {
-              $product['Language'] = $parent['Language'];
-            }
-
-            $is_parent = FALSE;
-          }
-
-          // Set the product variation title.
-          if ($product['title'] == NULL) {
-            if (isset($parent['title'])) {
-              $product['title'] = $parent['title'];
-            }
           }
 
           if (!$has_errors) {
-            if (!$is_parent && isset($parent['failed'])) {
-              // Skip this entity as the parent product was not created.
-              drupal_set_message(t("Skipping @SKU as no parent data was found", array('@SKU' => $product['SKU'])));
-              $_SESSION['import_errors'][$_SESSION['commerce_xls_import_current_row']]['has_errors'] = TRUE;
-              $_errors['import_errors'][$_SESSION['commerce_xls_import_current_row']]['has_errors'] = TRUE;
+            watchdog('Import', $product['title'] . " has no errors, continuing import");
 
-            }
-            else {
-              watchdog('Import', $product['title'] . " has no errors, continuing import");
-              commerce_xls_import_process_result($product, $images_info, $is_parent, $product_type);
-              if ($is_parent && isset($_SESSION['import_info']['node'][$_SESSION['commerce_xls_import_current_row']]['nid'])) {
-                $parent['nid'] = $_SESSION['import_info']['node'][$_SESSION['commerce_xls_import_current_row']]['nid'];
-              }
-            }
+            commerce_xls_import_process_result($product, $images_info, FALSE, $product_type);
+
             if (isset($_SESSION['import_errors'][$_SESSION['commerce_xls_import_current_row']])) {
               watchdog('Import', $product['title'] . " had import errors");
+
               // There are errors if this session variable is set.
               $_SESSION['import_errors'][$_SESSION['commerce_xls_import_current_row']]['has_errors'] = TRUE;
               $_errors['import_errors'][$_SESSION['commerce_xls_import_current_row']]['has_errors'] = TRUE;
-              // Check to see whether it was a parent node that was not made
-              // due to errors.
-              if (isset($_SESSION['import_errors'][$_SESSION['commerce_xls_import_current_row']]['parent_info']['value']) &&
-                $_SESSION['import_errors'][$_SESSION['commerce_xls_import_current_row']]['parent_info']['value'] == COMMERCE_XLS_IMPORT_DATA_ERROR
-                && $is_parent
-              ) {
-                $parent['failed'] = TRUE;
-                drupal_set_message(t("@title failed creation, aborting creation of children entities and skipping to next available product", array('@title' => $product['title'])), "warning");
-              }
             }
           }
           else {
             watchdog('Import', $product['title'] . " has errors");
             $_SESSION['import_errors'][$_SESSION['commerce_xls_import_current_row']]['has_errors'] = TRUE;
             $errors['import_errors'][$_SESSION['commerce_xls_import_current_row']]['has_errors'] = TRUE;
-            $parent['failed'] = TRUE;
             $title = isset($product['title']) && $product['title'] != NULL ? $product['title'] : $product['SKU'];
             drupal_set_message(t("@title failed creation, aborting creation of children entities", array('@title' => $title)), "warning");
           }
-          $has_errors = FALSE;
         }
       }
     }
