@@ -714,6 +714,44 @@ function commerce_xls_import_validate_product($entity_info){
 }
 
 /**
+ * Validates product images.
+ *
+ * @param $field
+ *   The product field containing image filenames.
+ * @param $image_info
+ *   Image info received from commerce_xls_import_extract_zip().
+ * @param $key
+ *   The key or name of the current product field.
+ * @param $language
+ *   The language for this product variation.
+ */
+function commerce_xls_import_validate_images($field, $image_info, $key, $language){
+  $current_row = $_SESSION['commerce_xls_import_current_row'];
+
+  // it's an image, check whether multiple uploads.
+  $filenames = array($field);
+  if (strpos($field, ',')) {
+    $filenames = explode(',', $field);
+  }
+
+  foreach ($filenames as $filename) {
+    if ($filename == "") {
+      watchdog('Create Product', "No image entered");
+    }
+    elseif (pathinfo($filename, PATHINFO_EXTENSION) == "") {
+      watchdog('Create Product', "Entered image is missing extension");
+      $_SESSION['import_errors'][$current_row][$key]['value'] = COMMERCE_XLS_IMPORT_DATA_ERROR;
+      $_SESSION['import_errors'][$current_row][$key]['message'] = t("Entered image is missing extension");
+      $_SESSION['import_errors'][$current_row]['has_errors'] = TRUE;
+    }
+    else {
+      $file = file_load($image_info[trim($filename)]);
+      $form_state['values'][$key][$language] = get_object_vars($file);
+    }
+  }
+}
+
+/**
  * Creates the product.
  */
 function commerce_xls_import_create_product($values, $entity_info, $product_type, $image_info = array()) {
@@ -770,6 +808,7 @@ function commerce_xls_import_create_product($values, $entity_info, $product_type
     watchdog('Create Product', "No matching products found, creating product");
 
     if (!isset($entity_info['nid']) || $entity_info['nid'] == NULL) {
+      // Prepare node.
       $node->type = $product_type;
       node_object_prepare($node);
       $node->title = $entity_info['title'];
@@ -802,28 +841,9 @@ function commerce_xls_import_create_product($values, $entity_info, $product_type
     foreach ($values as $key => $field) {
       $field_info = field_info_field($key);
       if ($field_info['type'] == 'image') {
-        // it's an image, check whether multiple uploads.
-        $filenames = array($field);
-        if (strpos($field, ',')) {
-          $filenames = explode(',', $field);
-        }
 
         // Validate Images
-        foreach ($filenames as $filename) {
-          if ($filename == "") {
-            watchdog('Create Product', "No image entered");
-          }
-          elseif (pathinfo($filename, PATHINFO_EXTENSION) == "") {
-            watchdog('Create Product', "Entered image is missing extension");
-            $_SESSION['import_errors'][$current_row][$key]['value'] = COMMERCE_XLS_IMPORT_DATA_ERROR;
-            $_SESSION['import_errors'][$current_row][$key]['message'] = t("Entered image is missing extension");
-            $_SESSION['import_errors'][$current_row]['has_errors'] = TRUE;
-          }
-          else {
-            $file = file_load($image_info[trim($filename)]);
-            $form_state['values'][$key][$language] = get_object_vars($file);
-          }
-        }
+        commerce_xls_import_validate_images($field, $image_info, $key, $language);
 
       }
       else {
