@@ -685,7 +685,7 @@ function commerce_xls_import_validate_languages($language) {
  * @param $entity_info
  * @return bool
  */
-function commerce_xls_import_validate_product_unique($entity_info){
+function commerce_xls_import_validate_product($entity_info){
   $current_row = $_SESSION['commerce_xls_import_current_row'];
   $sku = $entity_info['sku'];
   $nid = NULL;
@@ -759,9 +759,10 @@ function commerce_xls_import_create_product($values, $entity_info, $product_type
 
   $values['language'] = $language;
 
-  $nid = commerce_xls_import_validate_product_unique($entity_info);
+  $nid = commerce_xls_import_validate_product($entity_info);
 
   if($nid === FALSE){
+    // Product failed validation
     return FALSE;
   }
   elseif ($nid == NULL) {
