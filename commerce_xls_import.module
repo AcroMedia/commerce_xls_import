@@ -587,7 +587,7 @@ function commerce_xls_import_import($file = NULL) {
 function commerce_xls_import_process_result($product, $image_info, $is_parent, $product_type = NULL) {
   global $user;
 
-  $values = commerce_xls_import_get_product_Values($product, $product_type);
+  $values = commerce_xls_import_get_product_values($product, $product_type);
 
   $entity_info = array(
     'status' => isset($product['Status']) ? $product['Status'] : NULL,
