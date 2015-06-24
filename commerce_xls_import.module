@@ -945,39 +945,35 @@ function commerce_xls_import_create_product($values, $entity_info, $product_type
 
 
 /**
- * Tries to find a product matching this title.
+ * Gets the NID(s) of a product if it already exists.
  *
- * Returns the nid of the product, or multiple nids if multiple possibilities.
+ * If a product with the given title already exists, return it's NID. If
+ * multiple products with the given title exist, return an array containing
+ * the NIDs of all matching products. Otherwise, if no products exist, return
+ * null.
+ *
+ * @param $title
+ *   The title of the product to be queried.
+ *
+ * @return int|array|null
+ *   Returns single NID if one product found.
+ *   Returns array of NIDs if multiple products found.
+ *   Returns null if no products found.
  */
-function commerce_xls_import_get_product_nid($title, $sku = NULL) {
+function commerce_xls_import_get_product_nid($title) {
   $nids = array();
   $count = 0;
 
-  if ($sku == NULL) {
-    $result = db_select('node', 'n')
-      ->fields('n', array('nid'))
-      ->condition('n.title', $title, '=')
-      ->execute();
+  $result = db_select('node', 'n')
+    ->fields('n', array('nid'))
+    ->condition('n.title', $title, '=')
+    ->execute();
 
-    while ($record = $result->fetchAssoc()) {
-      $nids[$count] = $record['nid'];
-      $count++;
-    }
+  while ($record = $result->fetchAssoc()) {
+    $nids[$count] = $record['nid'];
+    $count++;
   }
-  else {
-    // Updating a product, get it's sku.
-    $query = db_select('field_data_field_product', 'fdfp');
-    $query->join('commerce_product', 'cp', 'cp.product_id = fdfp.field_product_product_id');
-    $result = $query
-      ->fields('fdfp', array("entity_id"))
-      ->condition('cp.sku', $sku, '=')
-      ->execute();
 
-    while ($record = $result->fetchAssoc()) {
-      $nids[$count] = $record['entity_id'];
-      $count++;
-    }
-  }
   if (count($nids) == 1) {
     return $nids[0];
   }
