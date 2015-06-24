@@ -752,6 +752,54 @@ function commerce_xls_import_validate_images($field, $image_info, $key, $languag
 }
 
 /**
+ * Validates the product's SKU.
+ *
+ * If the product does not have a sku, return false. If the sku is not a valid
+ * commerce sku, return false. If the sku is already in use, return false.
+ * Otherwise, return true.
+ *
+ * @param $sku
+ *   The SKU of the variation being created.
+ *
+ * @return bool
+ *   True if valid.
+ */
+function commerce_xls_import_validate_sku($sku) {
+  $current_row = $_SESSION['commerce_xls_import_current_row'];
+
+  if ($sku == NULL) {
+    // Sku doesn't exist, mark this product as an error.
+    $_SESSION['import_errors'][$current_row]['SKU']['value'] = COMMERCE_XLS_IMPORT_DATA_ERROR;
+    $_SESSION['import_errors'][$current_row]['SKU']['message'] = t("SKU required");
+    $_SESSION['import_errors'][$current_row]['has_errors'] = TRUE;
+    return FALSE;
+  }
+
+  // Validate sku. The "a" is added because commerce_product_validate_sku()
+  // returns a false positive if the first character of $sku is a ','
+  $sku_is_valid = commerce_product_validate_sku("a" . $sku);
+
+  if (!$sku_is_valid) {
+    $_SESSION['import_errors'][$current_row]['SKU']['value'] = COMMERCE_XLS_IMPORT_DATA_ERROR;
+    $_SESSION['import_errors'][$current_row]['SKU']['message'] = t("SKU is in an invalid format");
+    $_SESSION['import_errors'][$current_row]['has_errors'] = TRUE;
+    return FALSE;
+  }
+
+  $sku_exists = commerce_product_validate_sku_unique($sku, NULL);
+
+  if (!$sku_exists) {
+    // Sku already exists, update existing product.
+    $_SESSION['import_errors'][$current_row]['SKU']['value'] = COMMERCE_XLS_IMPORT_DATA_ERROR;
+    $_SESSION['import_errors'][$current_row]['SKU']['message'] = t("SKU already in use");
+    $_SESSION['import_errors'][$current_row]['has_errors'] = TRUE;
+    return FALSE;
+  }
+
+  return TRUE;
+}
+
+/**
  * Creates the product.
  */
 function commerce_xls_import_create_product($values, $entity_info, $product_type, $image_info = array()) {
@@ -863,44 +911,17 @@ function commerce_xls_import_create_product($values, $entity_info, $product_type
   }
 
   // Validate SKU
-  if ($sku == NULL) {
-    // Sku doesn't exist, mark this product as an error.
-    $_SESSION['import_errors'][$current_row]['SKU']['value'] = COMMERCE_XLS_IMPORT_DATA_ERROR;
-    $_SESSION['import_errors'][$current_row]['SKU']['message'] = t("SKU required");
-    $_SESSION['import_errors'][$current_row]['has_errors'] = TRUE;
-    return FALSE;
-  }
-  else {
-    $sku_exists = commerce_product_validate_sku_unique($sku, NULL);
-  }
-
-  if (!$sku_exists) {
-    // Sku already exists, update existing product.
-    $_SESSION['import_errors'][$current_row]['SKU']['value'] = COMMERCE_XLS_IMPORT_DATA_ERROR;
-    $_SESSION['import_errors'][$current_row]['SKU']['message'] = t("SKU already in use");
-    $_SESSION['import_errors'][$current_row]['has_errors'] = TRUE;
-    return FALSE;
-  }
-  else {
-    // Sku doesn't exist, create a new product.
+  if(commerce_xls_import_validate_sku($sku)) {
     $product = commerce_product_new($product_type);
-    // Validate sku. The "a" is added because commerce_product_validate_sku()
-    // returns a false positive if the first character of $sku is a ','
-    if (!commerce_product_validate_sku("a" . $sku)) {
-      $_SESSION['import_errors'][$current_row]['SKU']['value'] = COMMERCE_XLS_IMPORT_DATA_ERROR;
-      $_SESSION['import_errors'][$current_row]['SKU']['message'] = t("SKU is in an invalid format");
-      $_SESSION['import_errors'][$current_row]['has_errors'] = TRUE;
-      drupal_set_message(t("@SKU is not a valid SKU", array("@SKU" => $product->sku)));
-      return FALSE;
-    }
-
     $product->created = time();
     commerce_xls_import_update_entity_info($product, $entity_info, $values, $image_info);
     if (!$_SESSION['import_errors'][$current_row]['has_errors']) {
+      // If no errors exist, save product.
       commerce_product_save($product);
     }
     else {
       // Don't create product or variation if there are errors.
+      return FALSE;
     }
   }
 
@@ -909,12 +930,14 @@ function commerce_xls_import_create_product($values, $entity_info, $product_type
   $form['node'] = $node;
 
   if (!$_SESSION['import_errors'][$current_row]['has_errors']) {
+    // If no errors exist, save node.
     $node->language = $new_language;
     node_save($node);
     $_SESSION['import_info']['node'][$current_row]['nid'] = $node->nid;
     return $node->nid;
   }
   else {
+    // Don't save node if errors exist.
     return FALSE;
   }
 }
