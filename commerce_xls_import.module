@@ -911,18 +911,18 @@ function commerce_xls_import_create_product($values, $entity_info, $product_type
   }
 
   // Validate SKU
-  if(commerce_xls_import_validate_sku($sku)) {
+  commerce_xls_import_validate_sku($sku);
+
+  if (!$_SESSION['import_errors'][$current_row]['has_errors']) {
+    // If no errors exist, create new product and save it.
     $product = commerce_product_new($product_type);
     $product->created = time();
     commerce_xls_import_update_entity_info($product, $entity_info, $values, $image_info);
-    if (!$_SESSION['import_errors'][$current_row]['has_errors']) {
-      // If no errors exist, save product.
-      commerce_product_save($product);
-    }
-    else {
-      // Don't create product or variation if there are errors.
-      return FALSE;
-    }
+    commerce_product_save($product);
+  }
+  else {
+    // Don't create product or variation if there are errors.
+    return FALSE;
   }
 
   $node->field_product[LANGUAGE_NONE][]['product_id'] = $product->product_id;
