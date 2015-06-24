@@ -836,9 +836,9 @@ function commerce_xls_import_create_product($values, $entity_info, $product_type
   $new_language = $language;
   $language = LANGUAGE_NONE;
 
+  // Set up form state.
   $form_state['values']['title'] = $entity_info['title'];
   $form_state['values']['language'] = $language;
-  // Substitute for the language of the node.
   $form_state['values']['name'] = $user->name;
   $form_state['values']['body'] = array(
     "$language" => array(
@@ -1137,31 +1137,46 @@ function commerce_xls_import_update_entity_info($product, $entity_info, $values,
   }
   if (!$a_node) {
     // Set the price and currency.
-    if (isset($values['commerce_price']) && $values['commerce_price'] != NULL) {
-      if (is_numeric($values['commerce_price'])) {
-        $price = array(
-          "$language" => array(
-            0 => array(
-              'amount' => $values['commerce_price'] * 100,
-              'currency_code' => $values['currency_code'],
-            ),
+    if (commerce_xls_import_validate_price($values)) {
+      $price = array(
+        "$language" => array(
+          0 => array(
+            'amount' => $values['commerce_price'] * 100,
+            'currency_code' => $values['currency_code'],
           ),
-        );
-        $product->commerce_price = $price;
-      }
-      else {
-        watchdog('Update Entity Info', $values['commerce_price'] . " is not numeric");
-        $_SESSION['import_errors'][$_SESSION['commerce_xls_import_current_row']]['commerce_price']['value'] = COMMERCE_XLS_IMPORT_DATA_ERROR;
-        $_SESSION['import_errors'][$_SESSION['commerce_xls_import_current_row']]['commerce_price']['message'] = t("Invalid Price Entered!");
-        $_SESSION['import_errors'][$_SESSION['commerce_xls_import_current_row']]['has_errors'] = TRUE;
-      }
-    }
-    else {
-      $_SESSION['import_errors'][$_SESSION['commerce_xls_import_current_row']]['commerce_price']['value'] = COMMERCE_XLS_IMPORT_DATA_ERROR;
-      $_SESSION['import_errors'][$_SESSION['commerce_xls_import_current_row']]['commerce_price']['message'] = t("No Price Entered!");
-      $_SESSION['import_errors'][$_SESSION['commerce_xls_import_current_row']]['has_errors'] = TRUE;
+        ),
+      );
+      $product->commerce_price = $price;
     }
   }
+}
+
+/**
+ * Validates that the products price.
+ *
+ * @param array $values
+ *    An array containing the product values.
+ *
+ * @return bool
+ *    False if no price entered or invalid price entered. Otherwise true.
+ */
+function commerce_xls_import_validate_price($values) {
+  if (!isset($values['commerce_price']) || $values['commerce_price'] == NULL) {
+    $_SESSION['import_errors'][$_SESSION['commerce_xls_import_current_row']]['commerce_price']['value'] = COMMERCE_XLS_IMPORT_DATA_ERROR;
+    $_SESSION['import_errors'][$_SESSION['commerce_xls_import_current_row']]['commerce_price']['message'] = t("No Price Entered!");
+    $_SESSION['import_errors'][$_SESSION['commerce_xls_import_current_row']]['has_errors'] = TRUE;
+    return FALSE;
+  }
+
+  if (!is_numeric($values['commerce_price'])) {
+    watchdog('Update Entity Info', $values['commerce_price'] . " is not numeric");
+    $_SESSION['import_errors'][$_SESSION['commerce_xls_import_current_row']]['commerce_price']['value'] = COMMERCE_XLS_IMPORT_DATA_ERROR;
+    $_SESSION['import_errors'][$_SESSION['commerce_xls_import_current_row']]['commerce_price']['message'] = t("Invalid Price Entered!");
+    $_SESSION['import_errors'][$_SESSION['commerce_xls_import_current_row']]['has_errors'] = TRUE;
+    return FALSE;
+  }
+
+  return TRUE;
 }
 
 
