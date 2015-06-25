@@ -568,13 +568,23 @@ function commerce_xls_import_import($file = NULL) {
 
             $has_errors = TRUE;
           }
+          else {
+            $has_errors = FALSE;
+          }
 
           if (!$has_errors) {
             watchdog('Import', $product['title'] . " has no errors, continuing import");
 
             $values = commerce_xls_import_get_product_values($product, $product_type);
-            $entity_info = commerce_xls_import_set_entity_values($product);
-            $nid = commerce_xls_import_create_product($values, $entity_info, $product_type, $images_info);
+            if(!isset($product['NID']) || $product['NID'] == NULL){
+              // This is a line from a resubmitted results.xls.
+              // If NID is set, ignore already successfully imported product.
+              $entity_info = commerce_xls_import_set_entity_values($product);
+              $nid = commerce_xls_import_create_product($values, $entity_info, $product_type, $images_info);
+            }
+            else {
+              $_SESSION['import_info']['node'][$_SESSION['commerce_xls_import_current_row']]['nid'] = $product['NID'];
+            }
 
             if (isset($_SESSION['import_errors'][$_SESSION['commerce_xls_import_current_row']])) {
               watchdog('Import', $product['title'] . " had import errors");
