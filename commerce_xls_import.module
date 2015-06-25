@@ -152,8 +152,8 @@ function commerce_xls_import_settings() {
     '#value' => t('Retrieve Latest Import Results'),
   );
 
-  //@TODO - not critical but we could probably move a whole bunch of this formatting stuff into some templates called through theme functions, all this markup screams template
-  //https://www.drupal.org/node/715160
+  // @TODO - not critical but we could probably move a whole bunch of this formatting stuff into some templates called through theme functions, all this markup screams template
+  // https://www.drupal.org/node/715160
   $description = "<h3>" . t('Commerce Import') . "</h2>";
   $description .= "<h5>" . t('Instructions') . "</h5>";
   $description .= "<p>" . t('There are 2 main functions for the Commerce Import, which are:') . "</p>";
@@ -231,7 +231,7 @@ function commerce_xls_import_settings() {
       $info = field_info_instance('node', $field, $product);
 
       if (isset($info['description']) && $info['description'] != NULL) {
-        // Only display description if it exists
+        // Only display description if it exists.
         $form['legend']['field-legend'][$product][$field] = array(
           '#markup' => '<div class="product-field"><h6>' . $field . '</h6><span class="product-field-description">' . $info['description'] . '</span></div><div style="clear:both;"></div>',
         );
@@ -435,14 +435,16 @@ function commerce_xls_import_export($op, $product_info = NULL, $product_type = N
         if ($headers['Products'][$array_pos] == 'NID') {
           if (commerce_xls_import_errors_get_product_nid($count)) {
             $new_data_array[$array_pos] = commerce_xls_import_errors_get_product_nid($count);
-          } else {
+          }
+          else {
             $new_data_array[$array_pos] = "";
           }
         }
         else {
           if (commerce_xls_import_errors_get_product_nid($count)) {
             $new_data_array[] = commerce_xls_import_errors_get_product_nid($count);
-          } else {
+          }
+          else {
             $new_data_array[] = "";
           }
         }
@@ -453,7 +455,7 @@ function commerce_xls_import_export($op, $product_info = NULL, $product_type = N
 
   switch ($op) {
     case 'errors':
-      if(!commerce_xls_import_generate_errors_xls($options, $path, $headers, $data)) {
+      if (!commerce_xls_import_generate_errors_xls($options, $path, $headers, $data)) {
         // If error, refresh page to display error.
         drupal_goto("admin/commerce/products/import_commerce");
       }
@@ -462,7 +464,7 @@ function commerce_xls_import_export($op, $product_info = NULL, $product_type = N
 
     case 'template':
 
-      if(!commerce_xls_import_generate_template_xls($path, $product_type, $headers, $data, $options)) {
+      if (!commerce_xls_import_generate_template_xls($path, $product_type, $headers, $data, $options)) {
         // If error, refresh page to display error.
         drupal_goto("admin/commerce/products/import_commerce");
       }
@@ -582,7 +584,7 @@ function commerce_xls_import_import($file = NULL) {
             watchdog('commerce_xls_import', $product['title'] . " has no errors, continuing import");
 
             $values = commerce_xls_import_get_product_values($product, $product_type);
-            if(!isset($product['NID']) || $product['NID'] == NULL){
+            if (!isset($product['NID']) || $product['NID'] == NULL) {
               // This is a line from a resubmitted results.xls.
               // If NID is set, ignore already successfully imported product.
               $entity_info = commerce_xls_import_set_entity_values($product);
@@ -1141,10 +1143,6 @@ function commerce_xls_import_validate_price(array $values) {
 
 /**
  * Sets the given $field as having an error.
- *
- * @param $field
- * @param $value
- * @param $message
  */
 function commerce_xls_import_set_product_error($field, $value, $message) {
   $GLOBALS['errors']['import_errors'][$GLOBALS['errors']['current_row']][$field]['value'] = $value;
@@ -1164,8 +1162,6 @@ function commerce_xls_import_product_has_errors() {
 
 /**
  * Sets the NID of the product in the errors variable.
- *
- * @param $nid
  */
 function commerce_xls_import_errors_set_product_nid($nid) {
   $GLOBALS['errors']['import_info']['node'][$GLOBALS['errors']['current_row']]['nid'] = $nid;
@@ -1175,12 +1171,10 @@ function commerce_xls_import_errors_set_product_nid($nid) {
  * Gets the NID in the errors array of the current product.
  *
  * If the NID has not been set, return FALSE.
- *
- * @return bool|string
  */
 function commerce_xls_import_errors_get_product_nid($count = NULL) {
-  if($count == NULL){
-    if(isset($GLOBALS['errors']['import_info']['node'][$GLOBALS['errors']['current_row']]['nid'])){
+  if ($count == NULL) {
+    if (isset($GLOBALS['errors']['import_info']['node'][$GLOBALS['errors']['current_row']]['nid'])) {
       return $GLOBALS['errors']['import_info']['node'][$GLOBALS['errors']['current_row']]['nid'];
     }
     else {
@@ -1188,7 +1182,7 @@ function commerce_xls_import_errors_get_product_nid($count = NULL) {
     }
   }
   else {
-    if(isset($GLOBALS['errors']['import_info']['node'][$count]['nid'])) {
+    if (isset($GLOBALS['errors']['import_info']['node'][$count]['nid'])) {
       return $GLOBALS['errors']['import_info']['node'][$count]['nid'];
     }
     else {
