@@ -30,8 +30,7 @@ function commerce_xls_import_menu() {
     'type' => MENU_LOCAL_TASK,
   );
 
-  //@TODO this should be all underscores if we want to keep with drupal convention
-  $items['admin/commerce/products/import_commerce/get-import-status'] = array(
+  $items['admin/commerce/products/import_commerce/get_import_status'] = array(
     'title' => 'Commerce Import Status Update',
     'description' => 'Update the status of the current commerce xls import',
     'page callback' => 'commerce_xls_import_current_status',
@@ -229,13 +228,13 @@ function commerce_xls_import_settings() {
     $fields = commerce_xls_import_get_possible_fields($product);
     foreach ($fields as $field) {
       $info = field_info_instance('node', $field, $product);
-      //@TODO - is this helpful? isn't leaving it blank or just not even outputting the field description if there is nothing better?
-      if (!isset($info['description']) || $info['description'] == NULL) {
-        $info['description'] = t('No help text provided');
+
+      if (isset($info['description']) && $info['description'] != NULL) {
+        // Only display description if it exists
+        $form['legend']['field-legend'][$product][$field] = array(
+          '#markup' => '<div class="product-field"><h6>' . $field . '</h6><span class="product-field-description">' . $info['description'] . '</span></div><div style="clear:both;"></div>',
+        );
       }
-      $form['legend']['field-legend'][$product][$field] = array(
-        '#markup' => '<div class="product-field"><h6>' . $field . '</h6><span class="product-field-description">' . $info['description'] . '</span></div><div style="clear:both;"></div>',
-      );
     }
   }
 
@@ -270,8 +269,7 @@ function commerce_xls_import_is_running() {
     ->condition('callback', '%commerce_xls_import_import%', 'LIKE')
     ->execute();
 
-  //@TODO haha don't need a loop here, just check if a result is returned, don't need to fetch the whole array or loop through it
-  while ($record = $result->fetchAssoc()) {
+  if ($result->rowCount()) {
     return TRUE;
   }
 
@@ -298,8 +296,6 @@ function commerce_xls_import_settings_validate($form, &$form_state) {
     foreach ($_FILES['files']['tmp_name'] as $field_name) {
       form_set_error($field_name, t('No files to import'));
     }
-    //@TODO - don't really understand the point of this return, and why is it in the if statement
-    return;
   }
 }
 
@@ -317,8 +313,7 @@ function commerce_xls_import_settings_submit($form, &$form_state) {
       if (!commerce_xls_import_is_running()) {
         $handle = background_process_start('commerce_xls_import_import', $file);
 
-        //@TODO - any reason we're saving this result?
-        $result = db_insert('current_xls_imports')
+        db_insert('current_xls_imports')
           ->fields(array(
             'stopped' => 0,
             'handle' => $handle,
@@ -353,6 +348,8 @@ function commerce_xls_import_settings_submit($form, &$form_state) {
       header('Content-Disposition: attachment;filename="' . $filename . '"');
       header('Cache-Control: max-age=0');
       readfile("$path/$filename");
+
+      // Exit is used to keep page from refreshing which would prevent download.
       exit;
     }
     else {
@@ -363,7 +360,15 @@ function commerce_xls_import_settings_submit($form, &$form_state) {
   else {
     // it's something from an individual product type template download.
     $product_type = $form_state['clicked_button']['#attributes']['product_type'];
+
     commerce_xls_import_export('template', NULL, $product_type);
+
+    $path = realpath(".") . "/" . variable_get('file_public_path', conf_path() . '/files');
+    $filename = $product_type . "_template.xls";
+    readfile("$path/$filename");
+
+    // Exit is used to keep page from refreshing which would prevent download.
+    exit;
   }
 }
 
@@ -379,8 +384,7 @@ function commerce_xls_import_stop_import() {
     ))
     ->execute();
 
-  //@TODO - I think if($result) is slightly more correct here?
-  if ($result > 0) {
+  if ($result) {
     return TRUE;
   }
   return FALSE;
@@ -395,8 +399,6 @@ function commerce_xls_import_export($op, $product_info = NULL, $product_type = N
   // with its export functionality.
   error_reporting(E_ALL ^ E_STRICT);
 
-  //@TODO - headers variable just set later, this is pointless
-  $headers = array();
   $data = array();
 
   $path = realpath(".") . "/" . variable_get('file_public_path', conf_path() . '/files');
@@ -444,20 +446,22 @@ function commerce_xls_import_export($op, $product_info = NULL, $product_type = N
 
   switch ($op) {
     case 'errors':
-      if (commerce_xls_import_generate_errors_xls($options, $path, $headers, $data)) {
-        exit;
+      if(!commerce_xls_import_generate_errors_xls($options, $path, $headers, $data)) {
+        // If error, refresh page to display error.
+        drupal_goto("admin/commerce/products/import_commerce");
       }
-      //@TODO - if we're exiting, these breaks are not needed. Do we really want to exit here or just return?
+
       break;
 
     case 'template':
-      if (commerce_xls_import_generate_template_xls($path, $product_type, $headers, $data, $options)) {
-        exit;
+
+      if(!commerce_xls_import_generate_template_xls($path, $product_type, $headers, $data, $options)) {
+        // If error, refresh page to display error.
+        drupal_goto("admin/commerce/products/import_commerce");
       }
 
       break;
   }
-  drupal_goto("admin/commerce/products/import_commerce");
 
 }
 
@@ -472,13 +476,9 @@ function commerce_xls_import_generate_template_xls($path, $product_type, $header
   $result = phpexcel_export($headers, $data, "$path/$filename", $options);
 
   if ($result == PHPEXCEL_SUCCESS) {
-    drupal_set_message(t('Template generation successful'));
-
     header('Content-Type: application/vnd.openxmlformats-officedocument.spreadsheetml.sheet');
     header('Content-Disposition: attachment;filename="' . $filename . '"');
     header('Cache-Control: max-age=0');
-
-    readfile("$path/$filename");
 
     return TRUE;
   }
@@ -497,10 +497,6 @@ function commerce_xls_import_generate_template_xls($path, $product_type, $header
  *    Returns TRUE upon success and False upon failure.
  */
 function commerce_xls_import_generate_errors_xls($options, $path, $headers, $data) {
-  //@TODO - don't understand this comment, this function doesn't determine if there were errors or not, that happens before this
-  //the function is named generate_errors, so we kind of already know it is something about errors
-
-  // There are errors with this import.
   $filename = "product_import_results.xls";
   $options['errors'] = TRUE;
 
@@ -512,13 +508,9 @@ function commerce_xls_import_generate_errors_xls($options, $path, $headers, $dat
   $result = phpexcel_export($headers, $data, "$path/$filename", $options);
 
   if ($result == PHPEXCEL_SUCCESS) {
-    drupal_set_message(t('Import results generated'));
-
     header('Content-Type: application/vnd.openxmlformats-officedocument.spreadsheetml.sheet');
     header('Content-Disposition: attachment;filename="' . $filename . '"');
     header('Cache-Control: max-age=0');
-
-    readfile("$path/$filename");
 
     return TRUE;
   }
@@ -542,8 +534,6 @@ function commerce_xls_import_generate_errors_xls($options, $path, $headers, $dat
 function commerce_xls_import_import($file = NULL) {
   module_load_include('inc', 'phpexcel', 'phpexcel');
   $entity_number = 1;
-  //@TODO - we set this down below, but as far as I can tell we never use it
-  $has_errors = FALSE;
   $errors = array();
 
   // Create session variable to mark errors.
@@ -552,10 +542,7 @@ function commerce_xls_import_import($file = NULL) {
   // Get the product type.
   $product_type = $file['product_type'];
 
-  //@TODO - watchdog category is the first parameter, i think it's being treated as a title here
-  //should probably all just be 'commerce_xls_import'
-  //I think this happens a bunch, check all watchdogs
-  watchdog('import started', "A commerce import was started for $product_type's");
+  watchdog('commerce_xls_import', "A commerce import was started for $product_type's");
 
   // Extract product images.
   $images_info = commerce_xls_import_extract_zip();
@@ -576,7 +563,7 @@ function commerce_xls_import_import($file = NULL) {
 
           if ($product['title'] == NULL) {
 
-            watchdog('Create Product', "Product doesn't have a title");
+            watchdog('commerce_xls_import', "Product doesn't have a title");
 
             //@TODO - again, fix all this session nonsense
             $_SESSION['import_errors'][$entity_number]['title']['value'] = COMMERCE_XLS_IMPORT_DATA_ERROR;
@@ -590,7 +577,7 @@ function commerce_xls_import_import($file = NULL) {
           }
 
           if (!$has_errors) {
-            watchdog('Import', $product['title'] . " has no errors, continuing import");
+            watchdog('commerce_xls_import', $product['title'] . " has no errors, continuing import");
 
             $values = commerce_xls_import_get_product_values($product, $product_type);
             if(!isset($product['NID']) || $product['NID'] == NULL){
@@ -604,7 +591,7 @@ function commerce_xls_import_import($file = NULL) {
             }
 
             if (isset($_SESSION['import_errors'][$_SESSION['commerce_xls_import_current_row']])) {
-              watchdog('Import', $product['title'] . " had import errors");
+              watchdog('commerce_xls_import', $product['title'] . " had import errors");
 
               // There are errors if this session variable is set.
               $_SESSION['import_errors'][$_SESSION['commerce_xls_import_current_row']]['has_errors'] = TRUE;
@@ -612,7 +599,7 @@ function commerce_xls_import_import($file = NULL) {
             }
           }
           else {
-            watchdog('Import', $product['title'] . " has errors");
+            watchdog('commerce_xls_import', $product['title'] . " has errors");
             $_SESSION['import_errors'][$_SESSION['commerce_xls_import_current_row']]['has_errors'] = TRUE;
             $errors['import_errors'][$_SESSION['commerce_xls_import_current_row']]['has_errors'] = TRUE;
             $title = isset($product['title']) && $product['title'] != NULL ? $product['title'] : $product['SKU'];
@@ -676,37 +663,22 @@ function commerce_xls_import_set_entity_values(array $product) {
  * @param string $product_type
  *   The product type.
  *
- * @return null array
+ * @return array
  *   Returns the set values that correspond to the possible fields of the
- *   product type. Returns null if no fields exist in the product that match
- *   the possible fields.
+ *   product type.
  */
 function commerce_xls_import_get_product_values(array $product, $product_type) {
-  //@TODO - why do we set this now if we're just gotta set it below
-  $values = NULL;
-
-  //@TODO - probably move this to match up with it's foreach below, have that current code values part in the middle doesn't really make sense
-  $possible_fields = commerce_xls_import_get_possible_fields($product_type);
-
   $values = array(
     'currency_code' => commerce_default_currency(),
   );
+
+  $possible_fields = commerce_xls_import_get_possible_fields($product_type);
 
   foreach ($possible_fields as $field) {
     $values[$field] = $product[$field];
   }
 
   return $values;
-}
-
-/**
- * Checks whether the import image path exists.
- *
- * Returns true if the path exists, false if it doesn't.
- */
-function commerce_xls_import_validate_image_path($filename) {
-  $dir = file_stream_wrapper_get_instance_by_uri('public://')->realpath();
-  return file_exists("$dir/$filename");
 }
 
 /**
@@ -754,7 +726,7 @@ function commerce_xls_import_validate_product($entity_info) {
 
   // Validate NID.
   if (is_array($nid)) {
-    watchdog('Create Product', "Multiple NID matches found");
+    watchdog('commerce_xls_import', "Multiple NID matches found");
     // Multiple possible nid's mark warning and do not proceed any further.
     //@TODO ARGH MORE SESSIONS!
     $_SESSION['import_errors'][$current_row]['nid_conflict']['value'] = COMMERCE_XLS_IMPORT_DATA_WARNING;
@@ -783,10 +755,10 @@ function commerce_xls_import_check_set_images($field, &$form_state, $image_info,
 
   foreach ($filenames as $filename) {
     if ($filename == "") {
-      watchdog('Create Product', "No image entered");
+      watchdog('commerce_xls_import', "No image entered");
     }
     elseif (pathinfo($filename, PATHINFO_EXTENSION) == "") {
-      watchdog('Create Product', "Entered image is missing extension");
+      watchdog('commerce_xls_import', "Entered image is missing extension");
       $_SESSION['import_errors'][$current_row][$key]['value'] = COMMERCE_XLS_IMPORT_DATA_ERROR;
       $_SESSION['import_errors'][$current_row][$key]['message'] = t("Entered image is missing extension");
       $_SESSION['import_errors'][$current_row]['has_errors'] = TRUE;
@@ -797,7 +769,7 @@ function commerce_xls_import_check_set_images($field, &$form_state, $image_info,
         $form_state['values'][$key][$language] = get_object_vars($file);
       }
       else {
-        watchdog('Create Product', "File could not be loaded.");
+        watchdog('commerce_xls_import', "File could not be loaded.");
         $_SESSION['import_errors'][$current_row][$key]['value'] = COMMERCE_XLS_IMPORT_DATA_ERROR;
         $_SESSION['import_errors'][$current_row][$key]['message'] = t("File could not be loaded");
         $_SESSION['import_errors'][$current_row]['has_errors'] = TRUE;
@@ -909,27 +881,13 @@ function commerce_xls_import_create_product($values, $entity_info, $product_type
   }
   elseif ($nid == NULL) {
 
-    watchdog('Create Product', "No matching products found, creating product");
+    watchdog('commerce_xls_import', "No matching products found, creating product");
 
-    if (!isset($entity_info['nid']) || $entity_info['nid'] == NULL) {
-      // Prepare node.
-      $node->type = $product_type;
-      node_object_prepare($node);
-      $node->title = $entity_info['title'];
-      $node->language = $new_language;
-    }
-    else {
-      //@TODO - huh? are we loading a product or creating it?!
-      $node = node_load($entity_info['nid'], NULL, TRUE);
-      if (!$node) {
-        // Node doesn't exist make a new one to avoid an error.
-        $node = new stdClass();
-        $node->type = $product_type;
-        node_object_prepare($node);
-        $node->title = $entity_info['title'];
-        $node->language = $new_language;
-      }
-    }
+    // Prepare node.
+    $node->type = $product_type;
+    node_object_prepare($node);
+    $node->title = $entity_info['title'];
+    $node->language = $new_language;
 
     $node->body = array(
       "$language" => array(
@@ -1030,11 +988,10 @@ function commerce_xls_import_get_product_nid($title) {
     $count++;
   }
 
-  //@TODO - can't we just use the $count variable we track above, same some CPU
-  if (count($nids) == 1) {
+  if ($count == 1) {
     return $nids[0];
   }
-  elseif (count($nids) > 1) {
+  elseif ($count > 1) {
     return $nids;
   }
   else {
@@ -1097,10 +1054,10 @@ function commerce_xls_import_update_entity_info($product, $entity_info, $values,
         $product->{$key}[$language] = array();
         foreach ($filenames as $filename) {
           if ($filename == "") {
-            watchdog('Create Product', "No image entered");
+            watchdog('commerce_xls_import', "No image entered");
           }
           elseif (pathinfo($filename, PATHINFO_EXTENSION) == "") {
-            watchdog('Create Product', "Entered image is missing extension");
+            watchdog('commerce_xls_import', "Entered image is missing extension");
             $_SESSION['import_errors'][$_SESSION['commerce_xls_import_current_row']][$key]['value'] = COMMERCE_XLS_IMPORT_DATA_ERROR;
             $_SESSION['import_errors'][$_SESSION['commerce_xls_import_current_row']]['message'] = t("Entered image is missing extension");
             $_SESSION['import_errors'][$_SESSION['commerce_xls_import_current_row']]['has_errors'] = TRUE;
@@ -1211,7 +1168,7 @@ function commerce_xls_import_validate_price(array $values) {
   }
 
   if (!is_numeric($values['commerce_price'])) {
-    watchdog('Update Entity Info', $values['commerce_price'] . " is not numeric");
+    watchdog('commerce_xls_import', $values['commerce_price'] . " is not numeric");
     $_SESSION['import_errors'][$_SESSION['commerce_xls_import_current_row']]['commerce_price']['value'] = COMMERCE_XLS_IMPORT_DATA_ERROR;
     $_SESSION['import_errors'][$_SESSION['commerce_xls_import_current_row']]['commerce_price']['message'] = t("Invalid Price Entered!");
     $_SESSION['import_errors'][$_SESSION['commerce_xls_import_current_row']]['has_errors'] = TRUE;
@@ -1448,7 +1405,7 @@ function commerce_xls_import_create_image_database_entries($base_path) {
         $results[$filename] = $fid;
       }
       else {
-        watchdog('Create Image DB Entries', "Creating img file entry");
+        watchdog('commerce_xls_import', "Creating img file entry");
         // doesn't exist, create file entry.
         $file = new stdClass();
         $file->uid = $user->uid;
@@ -1496,7 +1453,7 @@ function commerce_xls_import_unpack_zip($zip_dir, $filename, $save_dir) {
 
   if ($result != 0) {
     drupal_set_message(t("There was an error extracting @filename.zip. Please try again, if the problem persists contact the system administrator", array("@filename" => $filename)), "error");
-    watchdog('commerce_xls_import_error', $error_message);
+    watchdog('commerce_xls_import', "Error: " . $error_message);
     return FALSE;
   }
   else {
