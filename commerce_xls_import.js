@@ -14,8 +14,6 @@ var timer;
         $('#edit-import-stop').click(function() {
           $('#import_status').val(0);
           clearTimeout(timer);
-          //@TODO - is the below comment like a todo or explaining something missing or what?
-          // Some code to update the message.
         });
 
         if ($('input[name="import_status"]').val() == 1) {
@@ -28,7 +26,7 @@ var timer;
   }
   function periodic_update_import_status() {
     $.ajax({
-      url: Drupal.settings.basePath + "?q=admin/commerce/products/import_commerce/get-import-status",
+      url: Drupal.settings.basePath + "?q=admin/commerce/products/import_commerce/get_import_status",
       type: "POST",
       dataType: "json",
       data: {},

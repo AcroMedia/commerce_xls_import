@@ -11,6 +11,7 @@ define('COMMERCE_XLS_IMPORT_DATA_SUCCESS', 1);
 define('COMMERCE_XLS_IMPORT_DATA_WARNING', 2);
 define('COMMERCE_XLS_IMPORT_DATA_NONE', 3);
 
+$errors = array();
 
 /**
  * Implements hook_menu().
@@ -406,9 +407,7 @@ function commerce_xls_import_export($op, $product_info = NULL, $product_type = N
   $headers = commerce_xls_import_generate_headers($nids, $product_type);
   $options = array('format' => 'xls', 'title' => t('Product Import Template'));
 
-  //@TODO - no way this needs to be a session does it? we can't save it as a variable or even a static or something, or even in a custom database table
-  //@TODO - I think this note applies to all session variables in this module
-  $_SESSION['export_field_mapping'] = array();
+  $GLOBALS['errors']['export_field_mapping'] = array();
   if ($product_info == NULL || $op == 'template') {
     $data['Products'][] = array();
   }
@@ -422,7 +421,7 @@ function commerce_xls_import_export($op, $product_info = NULL, $product_type = N
       if ($mapped) {
         foreach ($row as $key => $new) {
           $new_data_array[] = $new;
-          $_SESSION['export_field_mapping'][] = $key;
+          $GLOBALS['errors']['export_field_mapping'][] = $key;
         }
       }
       else {
@@ -431,13 +430,21 @@ function commerce_xls_import_export($op, $product_info = NULL, $product_type = N
         }
         $mapped = TRUE;
       }
-      if ($nids || isset($_SESSION['import_info']['node'][$count]['nid'])) {
+      if ($nids || commerce_xls_import_errors_get_product_nid($count)) {
         $array_pos = count($new_data_array) - 1;
         if ($headers['Products'][$array_pos] == 'NID') {
-          $new_data_array[$array_pos] = isset($_SESSION['import_info']['node'][$count]['nid']) ? $_SESSION['import_info']['node'][$count]['nid'] : "";
+          if (commerce_xls_import_errors_get_product_nid($count)) {
+            $new_data_array[$array_pos] = commerce_xls_import_errors_get_product_nid($count);
+          } else {
+            $new_data_array[$array_pos] = "";
+          }
         }
         else {
-          $new_data_array[] = isset($_SESSION['import_info']['node'][$count]['nid']) ? $_SESSION['import_info']['node'][$count]['nid'] : "";
+          if (commerce_xls_import_errors_get_product_nid($count)) {
+            $new_data_array[] = commerce_xls_import_errors_get_product_nid($count);
+          } else {
+            $new_data_array[] = "";
+          }
         }
       }
       $data['Products'][] = $new_data_array;
@@ -534,10 +541,9 @@ function commerce_xls_import_generate_errors_xls($options, $path, $headers, $dat
 function commerce_xls_import_import($file = NULL) {
   module_load_include('inc', 'phpexcel', 'phpexcel');
   $entity_number = 1;
-  $errors = array();
 
   // Create session variable to mark errors.
-  $_SESSION['import_errors'] = NULL;
+  $GLOBALS['errors']['import_errors'] = NULL;
 
   // Get the product type.
   $product_type = $file['product_type'];
@@ -556,7 +562,7 @@ function commerce_xls_import_import($file = NULL) {
       foreach ($result as $sheet) {
         foreach ($sheet as $product) {
           $entity_number++;
-          $_SESSION['commerce_xls_import_current_row'] = $entity_number;
+          $GLOBALS['errors']['current_row'] = $entity_number;
 
           // Set the import completion status.
           variable_set('import_count_status', array('completed' => $entity_number - 1, 'total' => count($sheet)));
@@ -564,11 +570,7 @@ function commerce_xls_import_import($file = NULL) {
           if ($product['title'] == NULL) {
 
             watchdog('commerce_xls_import', "Product doesn't have a title");
-
-            //@TODO - again, fix all this session nonsense
-            $_SESSION['import_errors'][$entity_number]['title']['value'] = COMMERCE_XLS_IMPORT_DATA_ERROR;
-            $_SESSION['import_errors'][$entity_number]['title']['message'] = t("Product doesn't have a title");
-            $_SESSION['import_errors'][$entity_number]['has_errors'] = TRUE;
+            commerce_xls_import_set_product_error('title', COMMERCE_XLS_IMPORT_DATA_ERROR, "Product doesn't have a title");
 
             $has_errors = TRUE;
           }
@@ -587,23 +589,8 @@ function commerce_xls_import_import($file = NULL) {
               $nid = commerce_xls_import_create_product($values, $entity_info, $product_type, $images_info);
             }
             else {
-              $_SESSION['import_info']['node'][$_SESSION['commerce_xls_import_current_row']]['nid'] = $product['NID'];
+              commerce_xls_import_errors_set_product_nid($product['NID']);
             }
-
-            if (isset($_SESSION['import_errors'][$_SESSION['commerce_xls_import_current_row']])) {
-              watchdog('commerce_xls_import', $product['title'] . " had import errors");
-
-              // There are errors if this session variable is set.
-              $_SESSION['import_errors'][$_SESSION['commerce_xls_import_current_row']]['has_errors'] = TRUE;
-              $_errors['import_errors'][$_SESSION['commerce_xls_import_current_row']]['has_errors'] = TRUE;
-            }
-          }
-          else {
-            watchdog('commerce_xls_import', $product['title'] . " has errors");
-            $_SESSION['import_errors'][$_SESSION['commerce_xls_import_current_row']]['has_errors'] = TRUE;
-            $errors['import_errors'][$_SESSION['commerce_xls_import_current_row']]['has_errors'] = TRUE;
-            $title = isset($product['title']) && $product['title'] != NULL ? $product['title'] : $product['SKU'];
-            drupal_set_message(t("@title failed creation, aborting creation of children entities", array('@title' => $title)), "warning");
           }
         }
       }
@@ -616,9 +603,9 @@ function commerce_xls_import_import($file = NULL) {
       'total' => $import_counts['total'],
     ));
     variable_del('import_count_status');
-    commerce_xls_import_export('errors', $result, $product_type, $_SESSION['import_errors'], TRUE);
-    unset($_SESSION['import_errors']);
-    unset($_SESSION['import_info']);
+    commerce_xls_import_export('errors', $result, $product_type, $GLOBALS['errors']['import_errors'], TRUE);
+    unset($GLOBALS['errors']['import_errors']);
+    unset($GLOBALS['errors']['import_info']);
 
   }
   else {
@@ -713,12 +700,11 @@ function commerce_xls_import_validate_languages($language) {
  *    True if product is valid.
  */
 function commerce_xls_import_validate_product($entity_info) {
-  $current_row = $_SESSION['commerce_xls_import_current_row'];
   $sku = $entity_info['sku'];
   $nid = NULL;
 
   if (!isset($entity_info['nid']) || $entity_info['nid'] == NULL) {
-    $nid = commerce_xls_import_get_product_nid($entity_info['title']);
+    $nid = commerce_xls_import_search_for_product($entity_info['title']);
   }
   else {
     $nid = $entity_info['nid'];
@@ -726,14 +712,11 @@ function commerce_xls_import_validate_product($entity_info) {
 
   // Validate NID.
   if (is_array($nid)) {
-    watchdog('commerce_xls_import', "Multiple NID matches found");
     // Multiple possible nid's mark warning and do not proceed any further.
-    //@TODO ARGH MORE SESSIONS!
-    $_SESSION['import_errors'][$current_row]['nid_conflict']['value'] = COMMERCE_XLS_IMPORT_DATA_WARNING;
-    $_SESSION['import_errors'][$current_row]['nid_conflict']['message'] = t("Multiple product matches found");
-    $_SESSION['import_errors'][$current_row]['has_errors'] = TRUE;
+    watchdog('commerce_xls_import', "Multiple NID matches found");
+    commerce_xls_import_set_product_error('nid_conflict', COMMERCE_XLS_IMPORT_DATA_WARNING, "Multiple product matches found");
+    commerce_xls_import_errors_set_product_nid($nid);
 
-    $_SESSION['import_info']['node'][$current_row]['nid'] = $nid;
     drupal_set_message(t("Multiple  product matches found for the SKU -- @SKU", array("@SKU" => $sku)), 'warning');
     return FALSE;
   }
@@ -745,7 +728,6 @@ function commerce_xls_import_validate_product($entity_info) {
  * Checks image validity and sets it in the form_state if valid.
  */
 function commerce_xls_import_check_set_images($field, &$form_state, $image_info, $key, $language) {
-  $current_row = $_SESSION['commerce_xls_import_current_row'];
 
   // it's an image, check whether multiple uploads.
   $filenames = array($field);
@@ -759,9 +741,7 @@ function commerce_xls_import_check_set_images($field, &$form_state, $image_info,
     }
     elseif (pathinfo($filename, PATHINFO_EXTENSION) == "") {
       watchdog('commerce_xls_import', "Entered image is missing extension");
-      $_SESSION['import_errors'][$current_row][$key]['value'] = COMMERCE_XLS_IMPORT_DATA_ERROR;
-      $_SESSION['import_errors'][$current_row][$key]['message'] = t("Entered image is missing extension");
-      $_SESSION['import_errors'][$current_row]['has_errors'] = TRUE;
+      commerce_xls_import_set_product_error($key, COMMERCE_XLS_IMPORT_DATA_ERROR, "Entered image is missing extension");
     }
     else {
       $file = file_load($image_info[trim($filename)]);
@@ -770,9 +750,7 @@ function commerce_xls_import_check_set_images($field, &$form_state, $image_info,
       }
       else {
         watchdog('commerce_xls_import', "File could not be loaded.");
-        $_SESSION['import_errors'][$current_row][$key]['value'] = COMMERCE_XLS_IMPORT_DATA_ERROR;
-        $_SESSION['import_errors'][$current_row][$key]['message'] = t("File could not be loaded");
-        $_SESSION['import_errors'][$current_row]['has_errors'] = TRUE;
+        commerce_xls_import_set_product_error($key, COMMERCE_XLS_IMPORT_DATA_ERROR, "File could not be loaded");
       }
     }
   }
@@ -792,13 +770,10 @@ function commerce_xls_import_check_set_images($field, &$form_state, $image_info,
  *   True if valid.
  */
 function commerce_xls_import_validate_sku($sku) {
-  $current_row = $_SESSION['commerce_xls_import_current_row'];
 
   if ($sku == NULL) {
     // Sku doesn't exist, mark this product as an error.
-    $_SESSION['import_errors'][$current_row]['SKU']['value'] = COMMERCE_XLS_IMPORT_DATA_ERROR;
-    $_SESSION['import_errors'][$current_row]['SKU']['message'] = t("SKU required");
-    $_SESSION['import_errors'][$current_row]['has_errors'] = TRUE;
+    commerce_xls_import_set_product_error('SKU', COMMERCE_XLS_IMPORT_DATA_ERROR, "SKU required");
     return FALSE;
   }
 
@@ -807,19 +782,14 @@ function commerce_xls_import_validate_sku($sku) {
   $sku_is_valid = commerce_product_validate_sku("a" . $sku);
 
   if (!$sku_is_valid) {
-    $_SESSION['import_errors'][$current_row]['SKU']['value'] = COMMERCE_XLS_IMPORT_DATA_ERROR;
-    $_SESSION['import_errors'][$current_row]['SKU']['message'] = t("SKU is in an invalid format");
-    $_SESSION['import_errors'][$current_row]['has_errors'] = TRUE;
+    commerce_xls_import_set_product_error('SKU', COMMERCE_XLS_IMPORT_DATA_ERROR, "SKU format invalid");
     return FALSE;
   }
 
-  $sku_exists = commerce_product_validate_sku_unique($sku, NULL);
+  $sku_available = commerce_product_validate_sku_unique($sku, NULL);
 
-  if (!$sku_exists) {
-    // Sku already exists, update existing product.
-    $_SESSION['import_errors'][$current_row]['SKU']['value'] = COMMERCE_XLS_IMPORT_DATA_ERROR;
-    $_SESSION['import_errors'][$current_row]['SKU']['message'] = t("SKU already in use");
-    $_SESSION['import_errors'][$current_row]['has_errors'] = TRUE;
+  if (!$sku_available) {
+    commerce_xls_import_set_product_error('SKU', COMMERCE_XLS_IMPORT_DATA_ERROR, "SKU already in use");
     return FALSE;
   }
 
@@ -836,7 +806,6 @@ function commerce_xls_import_create_product($values, $entity_info, $product_type
   global $user;
   $form = array();
   $form_state = array();
-  $current_row = $_SESSION['commerce_xls_import_current_row'];
 
   $form['#parents'] = array();
   $sku = $entity_info['sku'];
@@ -932,7 +901,7 @@ function commerce_xls_import_create_product($values, $entity_info, $product_type
   $product->created = time();
   commerce_xls_import_update_entity_info($product, $entity_info, $values, $image_info);
 
-  if (!$_SESSION['import_errors'][$current_row]['has_errors']) {
+  if (!commerce_xls_import_product_has_errors()) {
     // If no errors exist, save the product.
     commerce_product_save($product);
   }
@@ -945,11 +914,11 @@ function commerce_xls_import_create_product($values, $entity_info, $product_type
 
   $form['node'] = $node;
 
-  if (!$_SESSION['import_errors'][$current_row]['has_errors']) {
+  if (!commerce_xls_import_product_has_errors()) {
     // If no errors exist, save node.
     $node->language = $new_language;
     node_save($node);
-    $_SESSION['import_info']['node'][$current_row]['nid'] = $node->nid;
+    commerce_xls_import_errors_set_product_nid($node->nid);
     return $node->nid;
   }
   else {
@@ -959,7 +928,7 @@ function commerce_xls_import_create_product($values, $entity_info, $product_type
 }
 
 /**
- * Gets the NID(s) of a product if it already exists.
+ * Searches to see if the product if it already exists.
  *
  * If a product with the given title already exists, return it's NID. If
  * multiple products with the given title exist, return an array containing
@@ -974,7 +943,7 @@ function commerce_xls_import_create_product($values, $entity_info, $product_type
  *   Returns array of NIDs if multiple products found.
  *   Returns null if no products found.
  */
-function commerce_xls_import_get_product_nid($title) {
+function commerce_xls_import_search_for_product($title) {
   $nids = array();
   $count = 0;
 
@@ -1058,9 +1027,7 @@ function commerce_xls_import_update_entity_info($product, $entity_info, $values,
           }
           elseif (pathinfo($filename, PATHINFO_EXTENSION) == "") {
             watchdog('commerce_xls_import', "Entered image is missing extension");
-            $_SESSION['import_errors'][$_SESSION['commerce_xls_import_current_row']][$key]['value'] = COMMERCE_XLS_IMPORT_DATA_ERROR;
-            $_SESSION['import_errors'][$_SESSION['commerce_xls_import_current_row']]['message'] = t("Entered image is missing extension");
-            $_SESSION['import_errors'][$_SESSION['commerce_xls_import_current_row']]['has_errors'] = TRUE;
+            commerce_xls_import_set_product_error($key, COMMERCE_XLS_IMPORT_DATA_ERROR, "Image is missing extension");
           }
           else {
             $file = file_load($image_info[trim($filename)]);
@@ -1070,9 +1037,7 @@ function commerce_xls_import_update_entity_info($product, $entity_info, $values,
               file_usage_add($file, 'commerce_xls_import', 'user', 1);
             }
             else {
-              $_SESSION['import_errors'][$_SESSION['commerce_xls_import_current_row']][$key]['value'] = COMMERCE_XLS_IMPORT_DATA_ERROR;
-              $_SESSION['import_errors'][$_SESSION['commerce_xls_import_current_row']][$key]['message'] = t("Invalid Image data entered");
-              $_SESSION['import_errors'][$_SESSION['commerce_xls_import_current_row']]['has_errors'] = TRUE;
+              commerce_xls_import_set_product_error($key, COMMERCE_XLS_IMPORT_DATA_ERROR, "Invalid image data entered");
             }
           }
         }
@@ -1161,21 +1126,75 @@ function commerce_xls_import_update_entity_info($product, $entity_info, $values,
  */
 function commerce_xls_import_validate_price(array $values) {
   if (!isset($values['commerce_price']) || $values['commerce_price'] == NULL) {
-    $_SESSION['import_errors'][$_SESSION['commerce_xls_import_current_row']]['commerce_price']['value'] = COMMERCE_XLS_IMPORT_DATA_ERROR;
-    $_SESSION['import_errors'][$_SESSION['commerce_xls_import_current_row']]['commerce_price']['message'] = t("No Price Entered!");
-    $_SESSION['import_errors'][$_SESSION['commerce_xls_import_current_row']]['has_errors'] = TRUE;
+    commerce_xls_import_set_product_error('commerce_price', COMMERCE_XLS_IMPORT_DATA_ERROR, "No Price Entered!");
     return FALSE;
   }
 
   if (!is_numeric($values['commerce_price'])) {
     watchdog('commerce_xls_import', $values['commerce_price'] . " is not numeric");
-    $_SESSION['import_errors'][$_SESSION['commerce_xls_import_current_row']]['commerce_price']['value'] = COMMERCE_XLS_IMPORT_DATA_ERROR;
-    $_SESSION['import_errors'][$_SESSION['commerce_xls_import_current_row']]['commerce_price']['message'] = t("Invalid Price Entered!");
-    $_SESSION['import_errors'][$_SESSION['commerce_xls_import_current_row']]['has_errors'] = TRUE;
+    commerce_xls_import_set_product_error('commerce_price', COMMERCE_XLS_IMPORT_DATA_ERROR, "Invalid Price Entered!");
     return FALSE;
   }
 
   return TRUE;
+}
+
+/**
+ * Sets the given $field as having an error.
+ *
+ * @param $field
+ * @param $value
+ * @param $message
+ */
+function commerce_xls_import_set_product_error($field, $value, $message) {
+  $GLOBALS['errors']['import_errors'][$GLOBALS['errors']['current_row']][$field]['value'] = $value;
+  $GLOBALS['errors']['import_errors'][$GLOBALS['errors']['current_row']]['commerce_price']['message'] = t($message);
+  $GLOBALS['errors']['import_errors'][$GLOBALS['errors']['current_row']]['has_errors'] = TRUE;
+}
+
+/**
+ * Checks to see if product contains errors.
+ *
+ * @return bool
+ *    True if product has errors. Otherwise false.
+ */
+function commerce_xls_import_product_has_errors() {
+  return isset($GLOBALS['errors']['import_errors'][$GLOBALS['errors']['current_row']]);
+}
+
+/**
+ * Sets the NID of the product in the errors variable.
+ *
+ * @param $nid
+ */
+function commerce_xls_import_errors_set_product_nid($nid) {
+  $GLOBALS['errors']['import_info']['node'][$GLOBALS['errors']['current_row']]['nid'] = $nid;
+}
+
+/**
+ * Gets the NID in the errors array of the current product.
+ *
+ * If the NID has not been set, return FALSE.
+ *
+ * @return bool|string
+ */
+function commerce_xls_import_errors_get_product_nid($count = NULL) {
+  if($count == NULL){
+    if(isset($GLOBALS['errors']['import_info']['node'][$GLOBALS['errors']['current_row']]['nid'])){
+      return $GLOBALS['errors']['import_info']['node'][$GLOBALS['errors']['current_row']]['nid'];
+    }
+    else {
+      return FALSE;
+    }
+  }
+  else {
+    if(isset($GLOBALS['errors']['import_info']['node'][$count]['nid'])) {
+      return $GLOBALS['errors']['import_info']['node'][$count]['nid'];
+    }
+    else {
+      return FALSE;
+    }
+  }
 }
 
 /**
@@ -1260,7 +1279,7 @@ function commerce_xls_import_phpexcel_export($op, &$data, &$phpexcel, $options, 
             ),
           );
         }
-        if ($_SESSION['import_errors']['nid_column_row']['column'] != $column) {
+        if ($GLOBALS['errors']['import_errors']['nid_column_row']['column'] != $column) {
           $phpexcel->getStyleByColumnAndRow($column, $row)->getProtection()->setLocked(PHPExcel_Style_Protection::PROTECTION_UNPROTECTED);
         }
         else {
@@ -1275,7 +1294,7 @@ function commerce_xls_import_phpexcel_export($op, &$data, &$phpexcel, $options, 
 
         // Mark NID row for locking.
         if ($data == 'NID') {
-          $_SESSION['import_errors']['nid_column_row'] = array('column' => $column, 'row' => $row);
+          $GLOBALS['errors']['import_errors']['nid_column_row'] = array('column' => $column, 'row' => $row);
         }
 
         if ($owner == 'variation') {
@@ -1339,21 +1358,21 @@ function commerce_xls_import_phpexcel_export($op, &$data, &$phpexcel, $options, 
 function commerce_xls_import_get_column_status($column, $row) {
   $result = NULL;
 
-  if (isset($_SESSION['import_errors'][$row]['has_errors'])) {
+  if (isset($GLOBALS['errors']['import_errors'][$row]['has_errors'])) {
     // We know there are errors, see if there is a problem with the current
     // column.
-    if (isset($_SESSION['import_errors'][$row]['parent_info']) || isset($_SESSION['import_errors'][$row]['nid_conflict'])) {
+    if (isset($GLOBALS['errors']['import_errors'][$row]['parent_info']) || isset($GLOBALS['errors']['import_errors'][$row]['nid_conflict'])) {
       $result = COMMERCE_XLS_IMPORT_DATA_ERROR;
     }
-    if (isset($_SESSION['import_errors'][$row][$_SESSION['export_field_mapping'][$column]]['value'])) {
-      $result = $_SESSION['import_errors'][$row][$_SESSION['export_field_mapping'][$column]]['value'];
+    if (isset($GLOBALS['errors']['import_errors'][$row][$GLOBALS['errors']['export_field_mapping'][$column]]['value'])) {
+      $result = $GLOBALS['errors']['import_errors'][$row][$GLOBALS['errors']['export_field_mapping'][$column]]['value'];
     }
     else {
       $result = COMMERCE_XLS_IMPORT_DATA_NONE;
     }
   }
   else {
-    if (isset($_SESSION['import_errors']['stopped_row']) && $row >= $_SESSION['import_errors']['stopped_row']) {
+    if (isset($GLOBALS['errors']['import_errors']['stopped_row']) && $row >= $GLOBALS['errors']['import_errors']['stopped_row']) {
       $result = COMMERCE_XLS_IMPORT_DATA_WARNING;
     }
     else {
@@ -1545,7 +1564,7 @@ function commerce_xls_import_current_status() {
 
   $is_running = commerce_xls_import_is_running();
 
-  if (($current == '' && $is_running) || isset($_SESSION['import_errors']['stopped_row'])) {
+  if (($current == '' && $is_running) || isset($GLOBALS['errors']['import_errors']['stopped_row'])) {
     $message = t('Creating result document');
     $status = 0;
   }
