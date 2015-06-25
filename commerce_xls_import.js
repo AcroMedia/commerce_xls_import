@@ -14,6 +14,7 @@ var timer;
         $('#edit-import-stop').click(function() {
           $('#import_status').val(0);
           clearTimeout(timer);
+          //@TODO - is the below comment like a todo or explaining something missing or what?
           // Some code to update the message.
         });
 
