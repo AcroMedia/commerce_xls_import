@@ -551,7 +551,7 @@ function commerce_xls_import_import(array $file = NULL) {
   // Get the product type.
   $product_type = $file['product_type'];
 
-  watchdog('commerce_xls_import', "A commerce import was started for $product_type's");
+  watchdog('commerce_xls_import', "Commerce import for '$product_type' has started");
 
   // Extract product images.
   $images_info = commerce_xls_import_extract_zip();
@@ -582,8 +582,6 @@ function commerce_xls_import_import(array $file = NULL) {
           }
 
           if (!$has_errors) {
-            watchdog('commerce_xls_import', $product['title'] . " has no errors, continuing import");
-
             $values = commerce_xls_import_get_product_values($product, $product_type);
             if (!isset($product['NID']) || $product['NID'] == NULL) {
               // If NID is set it is a line from a resubmitted results.xls.
@@ -610,6 +608,7 @@ function commerce_xls_import_import(array $file = NULL) {
     unset($GLOBALS['errors']['import_errors']);
     unset($GLOBALS['errors']['import_info']);
 
+    watchdog('commerce_xls_import', "Commerce import for '$product_type' has finished");
   }
   else {
     drupal_set_message(t("There was an error with the import, please try again. If this problem persists contact the system administrator"), "error");
@@ -853,8 +852,6 @@ function commerce_xls_import_create_product($values, $entity_info, $product_type
   }
   elseif ($nid == NULL) {
 
-    watchdog('commerce_xls_import', "No matching products found, creating product");
-
     // Prepare node.
     $node->type = $product_type;
     node_object_prepare($node);
@@ -910,6 +907,7 @@ function commerce_xls_import_create_product($values, $entity_info, $product_type
   }
   else {
     // Don't create product or variation if there are errors.
+    watchdog('commerce_xls_import', $entity_info['title'] . " has errors and will not be created");
     return FALSE;
   }
 
@@ -926,6 +924,7 @@ function commerce_xls_import_create_product($values, $entity_info, $product_type
   }
   else {
     // Don't save node if errors exist.
+    watchdog('commerce_xls_import', $entity_info['title'] . " has errors and will not be created");
     return FALSE;
   }
 }
@@ -1026,7 +1025,7 @@ function commerce_xls_import_update_entity_info($product, $entity_info, $values,
         $product->{$key}[$language] = array();
         foreach ($filenames as $filename) {
           if ($filename == "") {
-            watchdog('commerce_xls_import', "No image entered");
+            // No image entered.
           }
           elseif (pathinfo($filename, PATHINFO_EXTENSION) == "") {
             watchdog('commerce_xls_import', "Entered image is missing extension");
@@ -1173,7 +1172,7 @@ function commerce_xls_import_product_has_errors($row = NULL) {
     return isset($GLOBALS['errors']['import_errors'][$GLOBALS['current_row']]);
   }
 
-  return isset($GLOBALS['errors']['import_errors'][$row]);
+  return isset($GLOBALS['errors']['import_errors'][$row]['has_errors']);
 }
 
 /**
@@ -1585,12 +1584,22 @@ function commerce_xls_import_current_status() {
     $status = 0;
   }
 
-  $output = array(
-    'completed' => $current['completed'],
-    'total' => $current['total'],
-    'message' => $message,
-    'status' => $status,
-  );
+  if ($current == '') {
+    $output = array(
+      'completed' => 0,
+      'total' => 0,
+      'message' => $message,
+      'status' => $status,
+    );
+  }
+  else {
+    $output = array(
+      'completed' => $current['completed'],
+      'total' => $current['total'],
+      'message' => $message,
+      'status' => $status,
+    );
+  }
 
   print json_encode($output);
 }
