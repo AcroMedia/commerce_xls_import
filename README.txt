@@ -13,6 +13,8 @@ INTRODUCTION
 The Commerce XLS Import module is a Drupal Commerce module that allows the
 import of Drupal Commerce Products from an XLS file.
 
+This module is meant to be used on sites built using Commerce Kickstart.
+
 
  * For a full description of the module, visit the project page:
    https://www.drupal.org/sandbox/cbanman/2504005
@@ -35,6 +37,9 @@ FEATURES
 
 REQUIREMENTS
 ------------
+
+This module was built and tested to work with Commerce Kickstart and may not
+work properly with Drupal Commerce depending on your set-up.
 
  - Modules -
 
