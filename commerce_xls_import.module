@@ -538,10 +538,10 @@ function commerce_xls_import_generate_errors_xls($options, $path, $headers, $dat
  * Extracts product_images.zip, then imports XLS file. If the XLS import is
  * successful the results will then be processed and the import will be started.
  *
- * @param null $file
- *   The XLS file containing product data to be imported.
+ * @param null|array $file
+ *   The XLS file info array containing product data to be imported.
  */
-function commerce_xls_import_import($file = NULL) {
+function commerce_xls_import_import(array $file = NULL) {
   module_load_include('inc', 'phpexcel', 'phpexcel');
   $entity_number = 1;
 
@@ -1145,11 +1145,11 @@ function commerce_xls_import_validate_price(array $values) {
 /**
  * Sets the given $field of the current product as having the specified error.
  *
- * @param $field
+ * @param string $field
  *    The name of the field that contains the error.
- * @param $value
- *    The value of the error. (e.g. COMMERCE_XLS_IMPORT_DATA_ERROR)
- * @param $message
+ * @param mixed $value
+ *    The value of the error (e.g. COMMERCE_XLS_IMPORT_DATA_ERROR).
+ * @param string $message
  *    What is the cause of the error.
  */
 function commerce_xls_import_set_product_error($field, $value, $message) {
@@ -1161,7 +1161,7 @@ function commerce_xls_import_set_product_error($field, $value, $message) {
 /**
  * Checks to see if the current or specified product contains errors.
  *
- * @param null $row
+ * @param null|int $row
  *    If $row is set, check if errors have been set for that row. Otherwise
  *    check current row.
  *
@@ -1169,7 +1169,7 @@ function commerce_xls_import_set_product_error($field, $value, $message) {
  *    True if product has errors. Otherwise false.
  */
 function commerce_xls_import_product_has_errors($row = NULL) {
-  if($row == NULL){
+  if ($row == NULL) {
     return isset($GLOBALS['errors']['import_errors'][$GLOBALS['current_row']]);
   }
 
@@ -1186,7 +1186,7 @@ function commerce_xls_import_errors_set_product_nid($nid) {
 /**
  * Gets the NID in the errors array of the current product.
  *
- * @param null $row
+ * @param null|int $row
  *    If $row is set, return check for NID of that row. Otherwise check the NID
  *    of the current row.
  *
