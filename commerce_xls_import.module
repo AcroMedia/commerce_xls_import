@@ -1159,13 +1159,21 @@ function commerce_xls_import_set_product_error($field, $value, $message) {
 }
 
 /**
- * Checks to see if the current product contains errors.
+ * Checks to see if the current or specified product contains errors.
+ *
+ * @param null $row
+ *    If $row is set, check if errors have been set for that row. Otherwise
+ *    check current row.
  *
  * @return bool
  *    True if product has errors. Otherwise false.
  */
-function commerce_xls_import_product_has_errors() {
-  return isset($GLOBALS['errors']['import_errors'][$GLOBALS['current_row']]);
+function commerce_xls_import_product_has_errors($row = NULL) {
+  if($row == NULL){
+    return isset($GLOBALS['errors']['import_errors'][$GLOBALS['current_row']]);
+  }
+
+  return isset($GLOBALS['errors']['import_errors'][$row]);
 }
 
 /**
@@ -1365,7 +1373,7 @@ function commerce_xls_import_phpexcel_export($op, &$data, &$phpexcel, $options, 
 function commerce_xls_import_get_column_status($column, $row) {
   $result = NULL;
 
-  if (isset($GLOBALS['errors']['import_errors'][$row]['has_errors'])) {
+  if (commerce_xls_import_product_has_errors($row)) {
     // We know there are errors, see if there is a problem with the current
     // column.
     if (isset($GLOBALS['errors']['import_errors'][$row][$GLOBALS['errors']['export_field_mapping'][$column]]['value'])) {
