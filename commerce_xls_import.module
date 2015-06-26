@@ -12,6 +12,7 @@ define('COMMERCE_XLS_IMPORT_DATA_WARNING', 2);
 define('COMMERCE_XLS_IMPORT_DATA_NONE', 3);
 
 $errors = array();
+$current_row = 0;
 
 /**
  * Implements hook_menu().
@@ -564,7 +565,7 @@ function commerce_xls_import_import($file = NULL) {
       foreach ($result as $sheet) {
         foreach ($sheet as $product) {
           $entity_number++;
-          $GLOBALS['errors']['current_row'] = $entity_number;
+          $GLOBALS['current_row'] = $entity_number;
 
           // Set the import completion status.
           variable_set('import_count_status', array('completed' => $entity_number - 1, 'total' => count($sheet)));
@@ -585,10 +586,10 @@ function commerce_xls_import_import($file = NULL) {
 
             $values = commerce_xls_import_get_product_values($product, $product_type);
             if (!isset($product['NID']) || $product['NID'] == NULL) {
-              // This is a line from a resubmitted results.xls.
+              // If NID is set it is a line from a resubmitted results.xls.
               // If NID is set, ignore already successfully imported product.
               $entity_info = commerce_xls_import_set_entity_values($product);
-              $nid = commerce_xls_import_create_product($values, $entity_info, $product_type, $images_info);
+              commerce_xls_import_create_product($values, $entity_info, $product_type, $images_info);
             }
             else {
               commerce_xls_import_errors_set_product_nid($product['NID']);
@@ -1145,9 +1146,9 @@ function commerce_xls_import_validate_price(array $values) {
  * Sets the given $field as having an error.
  */
 function commerce_xls_import_set_product_error($field, $value, $message) {
-  $GLOBALS['errors']['import_errors'][$GLOBALS['errors']['current_row']][$field]['value'] = $value;
-  $GLOBALS['errors']['import_errors'][$GLOBALS['errors']['current_row']]['commerce_price']['message'] = t($message);
-  $GLOBALS['errors']['import_errors'][$GLOBALS['errors']['current_row']]['has_errors'] = TRUE;
+  $GLOBALS['errors']['import_errors'][$GLOBALS['current_row']][$field]['value'] = $value;
+  $GLOBALS['errors']['import_errors'][$GLOBALS['current_row']]['commerce_price']['message'] = t($message);
+  $GLOBALS['errors']['import_errors'][$GLOBALS['current_row']]['has_errors'] = TRUE;
 }
 
 /**
@@ -1157,14 +1158,14 @@ function commerce_xls_import_set_product_error($field, $value, $message) {
  *    True if product has errors. Otherwise false.
  */
 function commerce_xls_import_product_has_errors() {
-  return isset($GLOBALS['errors']['import_errors'][$GLOBALS['errors']['current_row']]);
+  return isset($GLOBALS['errors']['import_errors'][$GLOBALS['current_row']]);
 }
 
 /**
  * Sets the NID of the product in the errors variable.
  */
 function commerce_xls_import_errors_set_product_nid($nid) {
-  $GLOBALS['errors']['import_info']['node'][$GLOBALS['errors']['current_row']]['nid'] = $nid;
+  $GLOBALS['errors']['import_info']['node'][$GLOBALS['current_row']]['nid'] = $nid;
 }
 
 /**
@@ -1172,18 +1173,18 @@ function commerce_xls_import_errors_set_product_nid($nid) {
  *
  * If the NID has not been set, return FALSE.
  */
-function commerce_xls_import_errors_get_product_nid($count = NULL) {
-  if ($count == NULL) {
-    if (isset($GLOBALS['errors']['import_info']['node'][$GLOBALS['errors']['current_row']]['nid'])) {
-      return $GLOBALS['errors']['import_info']['node'][$GLOBALS['errors']['current_row']]['nid'];
+function commerce_xls_import_errors_get_product_nid($row = NULL) {
+  if ($row == NULL) {
+    if (isset($GLOBALS['errors']['import_info']['node'][$GLOBALS['current_row']]['nid'])) {
+      return $GLOBALS['errors']['import_info']['node'][$GLOBALS['current_row']]['nid'];
     }
     else {
       return FALSE;
     }
   }
   else {
-    if (isset($GLOBALS['errors']['import_info']['node'][$count]['nid'])) {
-      return $GLOBALS['errors']['import_info']['node'][$count]['nid'];
+    if (isset($GLOBALS['errors']['import_info']['node'][$row]['nid'])) {
+      return $GLOBALS['errors']['import_info']['node'][$row]['nid'];
     }
     else {
       return FALSE;
@@ -1366,12 +1367,7 @@ function commerce_xls_import_get_column_status($column, $row) {
     }
   }
   else {
-    if (isset($GLOBALS['errors']['import_errors']['stopped_row']) && $row >= $GLOBALS['errors']['import_errors']['stopped_row']) {
-      $result = COMMERCE_XLS_IMPORT_DATA_WARNING;
-    }
-    else {
-      $result = COMMERCE_XLS_IMPORT_DATA_SUCCESS;
-    }
+    $result = COMMERCE_XLS_IMPORT_DATA_SUCCESS;
   }
 
   return $result;
@@ -1558,7 +1554,7 @@ function commerce_xls_import_current_status() {
 
   $is_running = commerce_xls_import_is_running();
 
-  if (($current == '' && $is_running) || isset($GLOBALS['errors']['import_errors']['stopped_row'])) {
+  if (($current == '' && $is_running)) {
     $message = t('Creating result document');
     $status = 0;
   }
