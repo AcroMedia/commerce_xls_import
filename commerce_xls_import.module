@@ -545,7 +545,7 @@ function commerce_xls_import_import($file = NULL) {
   module_load_include('inc', 'phpexcel', 'phpexcel');
   $entity_number = 1;
 
-  // Create session variable to mark errors.
+  // Create global variable to mark errors.
   $GLOBALS['errors']['import_errors'] = NULL;
 
   // Get the product type.
@@ -587,11 +587,11 @@ function commerce_xls_import_import($file = NULL) {
             $values = commerce_xls_import_get_product_values($product, $product_type);
             if (!isset($product['NID']) || $product['NID'] == NULL) {
               // If NID is set it is a line from a resubmitted results.xls.
-              // If NID is set, ignore already successfully imported product.
               $entity_info = commerce_xls_import_set_entity_values($product);
               commerce_xls_import_create_product($values, $entity_info, $product_type, $images_info);
             }
             else {
+              // If NID isn't null ignore it as it was already imported.
               commerce_xls_import_errors_set_product_nid($product['NID']);
             }
           }
@@ -1045,7 +1045,7 @@ function commerce_xls_import_update_entity_info($product, $entity_info, $values,
           }
         }
       }
-      elseif ($info['type'] == 'entityreference') {
+      elseif ($info['type'] == 'entity_reference') {
         // Get nid from given entity name.
         if ($field != "") {
           // Break them up since multiples are comma delimited.
@@ -1356,9 +1356,6 @@ function commerce_xls_import_get_column_status($column, $row) {
   if (isset($GLOBALS['errors']['import_errors'][$row]['has_errors'])) {
     // We know there are errors, see if there is a problem with the current
     // column.
-    if (isset($GLOBALS['errors']['import_errors'][$row]['parent_info']) || isset($GLOBALS['errors']['import_errors'][$row]['nid_conflict'])) {
-      $result = COMMERCE_XLS_IMPORT_DATA_ERROR;
-    }
     if (isset($GLOBALS['errors']['import_errors'][$row][$GLOBALS['errors']['export_field_mapping'][$column]]['value'])) {
       $result = $GLOBALS['errors']['import_errors'][$row][$GLOBALS['errors']['export_field_mapping'][$column]]['value'];
     }
