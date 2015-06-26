@@ -13,7 +13,7 @@
 #legend-swatches .swatch-container {
   float: left;
   width: 550px;
-  margin: 0px 10px 0px 10px;
+  margin: 0 10px;
 }
 
 .swatch-container .swatch {
@@ -61,7 +61,7 @@
 }
 
 .product-field h6 {
-  padding: 0px 15px 0px 0px;
+  padding: 0 15px 0 0;
   min-width: 250px;
   display: block;
   float: left;
