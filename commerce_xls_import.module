@@ -806,7 +806,6 @@ function commerce_xls_import_create_product($values, $entity_info, $product_type
   module_load_include('inc', 'node', 'node.pages');
 
   global $user;
-  $form = array();
   $form_state = array();
 
   $form['#parents'] = array();
