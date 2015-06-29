@@ -808,7 +808,6 @@ function commerce_xls_import_create_product($values, $entity_info, $product_type
   global $user;
   $form_state = array();
 
-  $form['#parents'] = array();
   $sku = $entity_info['sku'];
   $node = new stdClass();
 
@@ -838,8 +837,6 @@ function commerce_xls_import_create_product($values, $entity_info, $product_type
   $form_state['values']['promote'] = 0;
   $form_state['values']['sticky'] = 0;
   $form_state['values']['op'] = t('Save');
-
-  $form['#values'] = $form_state['values'];
 
   $values['language'] = $language;
 
@@ -911,8 +908,6 @@ function commerce_xls_import_create_product($values, $entity_info, $product_type
   }
 
   $node->field_product[LANGUAGE_NONE][]['product_id'] = $product->product_id;
-
-  $form['node'] = $node;
 
   if (!commerce_xls_import_product_has_errors()) {
     // If no errors exist, save node.
