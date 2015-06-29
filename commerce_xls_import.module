@@ -1153,7 +1153,7 @@ function commerce_xls_import_validate_price(array $values) {
  */
 function commerce_xls_import_set_product_error($field, $value, $message) {
   $GLOBALS['errors']['import_errors'][$GLOBALS['current_row']][$field]['value'] = $value;
-  $GLOBALS['errors']['import_errors'][$GLOBALS['current_row']]['commerce_price']['message'] = t($message);
+  $GLOBALS['errors']['import_errors'][$GLOBALS['current_row']]['commerce_price']['message'] = $message;
   $GLOBALS['errors']['import_errors'][$GLOBALS['current_row']]['has_errors'] = TRUE;
 }
 

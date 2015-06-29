@@ -1,7 +1,9 @@
 <?php
 
 /**
- * @file commerce_xls_import.install
+ * @file
+ * Commerce_xls_import.install.
+ *
  * Install, update, and uninstall functions for the commerce_xls_import.
  */
 

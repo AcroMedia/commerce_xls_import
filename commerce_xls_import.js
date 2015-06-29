@@ -1,6 +1,7 @@
 /**
- * @file commerce_xls_import.js
-
+ * @file
+ * commerce_xls_import.js
+ *
  *  Custom JavaScript for the Commerce xls import.
  */
 
