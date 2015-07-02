@@ -11,9 +11,6 @@ define('COMMERCE_XLS_IMPORT_DATA_SUCCESS', 1);
 define('COMMERCE_XLS_IMPORT_DATA_WARNING', 2);
 define('COMMERCE_XLS_IMPORT_DATA_NONE', 3);
 
-$errors = array();
-$current_row = 0;
-
 /**
  * Implements hook_menu().
  *
@@ -100,7 +97,7 @@ function commerce_xls_import_settings() {
 
   }
 
-  $last_import = variable_get('last_import', '');
+  $last_import = variable_get('commerce_xls_import_last_import', '');
   if ($last_import != '') {
     $last_import_message = '<h6>' . t('Last Import Completed: !time', array('!time' => date('F j, Y - h:i T', $last_import['completed']))) . '</h6>';
     $last_import_message .= t('!row/!total products evaluated during last import', array('!row' => $last_import['row'], '!total' => $last_import['total']));
@@ -568,7 +565,7 @@ function commerce_xls_import_import(array $file = NULL) {
           $GLOBALS['current_row'] = $entity_number;
 
           // Set the import completion status.
-          variable_set('import_count_status', array('completed' => $entity_number - 1, 'total' => count($sheet)));
+          variable_set('commerce_xls_import_import_count_status', array('completed' => $entity_number - 1, 'total' => count($sheet)));
 
           if ($product['title'] == NULL) {
 
@@ -597,13 +594,13 @@ function commerce_xls_import_import(array $file = NULL) {
       }
     }
 
-    $import_counts = variable_get('import_count_status', '');
-    variable_set('last_import', array(
+    $import_counts = variable_get('commerce_xls_import_import_count_status', '');
+    variable_set('commerce_xls_import_last_import', array(
       'completed' => time(),
       'row' => $import_counts['completed'],
       'total' => $import_counts['total'],
     ));
-    variable_del('import_count_status');
+    variable_del('commerce_xls_import_import_count_status');
     commerce_xls_import_export('errors', $result, $product_type, $GLOBALS['errors']['import_errors'], TRUE);
     unset($GLOBALS['errors']['import_errors']);
     unset($GLOBALS['errors']['import_info']);
@@ -1560,7 +1557,7 @@ function commerce_xls_import_get_field_owner($field_name) {
  * Checks the status of the current import.
  */
 function commerce_xls_import_current_status() {
-  $current = variable_get('import_count_status', '');
+  $current = variable_get('commerce_xls_import_import_count_status', '');
 
   $is_running = commerce_xls_import_is_running();
 
@@ -1595,5 +1592,5 @@ function commerce_xls_import_current_status() {
     );
   }
 
-  print json_encode($output);
+  drupal_json_output($output);
 }
