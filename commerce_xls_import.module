@@ -1535,6 +1535,9 @@ function commerce_xls_import_get_field_owner($field_name) {
   if ($field_name == 'title') {
     return 'parent';
   }
+  elseif ($field_name == 'variation_title') {
+    return 'variation';
+  }
   elseif ($field_name == 'SKU') {
     return 'variation';
   }
