@@ -68,8 +68,7 @@
   float: left;
 }
 
-.product-field .product-field-description {
-  display: block;
+.product-field {
   margin-top: 10px;
 }
 #edit-errors-button {
