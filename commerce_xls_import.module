@@ -629,6 +629,7 @@ function commerce_xls_import_set_entity_values(array $product) {
     'uid' => $user->uid,
     'sku' => isset($product['SKU']) ? $product['SKU'] : NULL,
     'title' => isset($product['title']) ? $product['title'] : NULL,
+    'variation_title' => isset($product['variation_title']) ? $product['variation_title'] : (isset($product['title']) ? $product['title'] : NULL),
     'language' => isset($product['Language']) ? $product['Language'] : NULL,
     'categories' => isset($product['field_product_category']) ? $product['field_product_category'] : NULL,
     'body' => isset($product['body']) ? $product['body'] : NULL,
@@ -996,7 +997,12 @@ function commerce_xls_import_update_entity_info($product, $entity_info, $values,
 
     $product->changed = time();
     $product->language = $language;
-    $product->title = $entity_info['title'];
+    if($entity_info['variation_title'] != NULL) {
+      $product->title = $entity_info['variation_title'];
+    }
+    else {
+      $procut->title = $entity_info['title'];
+    }
   }
 
   // Check for added fields.
@@ -1493,7 +1499,7 @@ function commerce_xls_import_get_possible_fields($product_type) {
       // take care of that for us.
       // Also don't want to include the field rating since it's based off user
       // comments and isn't something that can be set by a simple value.
-      if ($key != 'field_product' && $key != 'field_rating') {
+      if ($key != 'field_product' && $key != 'field_rating' && $key != 'title_field') {
         $result[$key] = $key;
       }
     }
@@ -1510,6 +1516,7 @@ function commerce_xls_import_generate_headers($nid = NULL, $product_type = NULL)
   $product = commerce_xls_import_get_possible_fields($product_type);
 
   $headers['Products'][] = "title";
+  $headers['Products'][] = "variation_title";
   $headers['Products'][] = "SKU";
   $headers['Products'] = array_merge($headers['Products'], array_keys($product));
   $headers['Products'][] = "Status";
