@@ -241,10 +241,6 @@ function commerce_xls_import_settings() {
     '#markup' => '<div class="product-field"><h6>' . 'Variation Title' . '</h6><span class="product-field-description">' . t('The title of the variation of the product you are creating. If left blank it will use the title of the base product.') . '</span></div><div style="clear:both;"></div>',
   );
 
-  $form['legend']['field-legend']['NID'] = array(
-    '#markup' => '<div class="product-field"><h6>' . 'NID' . '</h6><span class="product-field-description">' . t('This field is required by the system in order to update the correct product. Removing or modifying it in any way could result in an error or inaccurate data.') . '</span></div><div style="clear:both;"></div>',
-  );
-
   $form['#submit'][] = 'commerce_xls_import_settings_submit';
   return $form;
 }
