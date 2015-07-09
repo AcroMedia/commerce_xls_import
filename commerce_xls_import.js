@@ -7,21 +7,24 @@
 
 var timer;
 (function ($) {
-  $(document).ready(function(){
-    $('#edit-import-button').click(function(){
-      $('#import_status').val(1);
-    });
+    Drupal.behaviors.commerce_xls_import = {
+        attach: function (context, settings) {
+            $('#edit-import-stop', context).once('commerce_xls_import', function () {
 
-        $('#edit-import-stop').click(function() {
-          $('#import_status').val(0);
-          clearTimeout(timer);
-        });
+                $('#edit-import-stop').click(function () {
+                    $('#import_status').val(0);
+                    clearTimeout(timer);
+                });
 
-        if ($('input[name="import_status"]').val() == 1) {
-          // Start counting after 2 seconds;
-          timer = setInterval(function(){start_updates()}, 2000);
+                if ($('input[name="import_status"]').val() == 1) {
+                    // Start counting after 2 seconds;
+                    timer = setInterval(function () {
+                        start_updates()
+                    }, 2000);
+                }
+            });
         }
-  });
+    };
   function start_updates() {
     periodic_update_import_status();
   }

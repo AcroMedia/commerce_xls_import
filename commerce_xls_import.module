@@ -997,11 +997,11 @@ function commerce_xls_import_update_entity_info($product, $entity_info, $values,
 
     $product->changed = time();
     $product->language = $language;
-    if($entity_info['variation_title'] != NULL) {
+    if ($entity_info['variation_title'] != NULL) {
       $product->title = $entity_info['variation_title'];
     }
     else {
-      $procut->title = $entity_info['title'];
+      $product->title = $entity_info['title'];
     }
   }
 
