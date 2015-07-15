@@ -12,6 +12,67 @@ define('COMMERCE_XLS_IMPORT_DATA_WARNING', 2);
 define('COMMERCE_XLS_IMPORT_DATA_NONE', 3);
 
 /**
+ * Class containing variables used by Commerce XLS Import.
+ */
+class CommerceXlsImportVariables {
+  private static $validate;
+  private static $import;
+  private static $status;
+
+  /**
+   * Set $status.
+   */
+  public static function setValidate($value) {
+    CommerceXlsImportVariables::$validate = $value;
+    CommerceXlsImportVariables::$import = !$value;
+    CommerceXlsImportVariables::setStatus();
+  }
+
+  /**
+   * Set $import.
+   */
+  public static function setImport($value) {
+    CommerceXlsImportVariables::$import = $value;
+    CommerceXlsImportVariables::$validate = !value;
+    CommerceXlsImportVariables::setStatus();
+  }
+
+  /**
+   * Set the status message.
+   */
+  public static function setStatus() {
+    if (CommerceXlsImportVariables::$validate) {
+      CommerceXlsImportVariables::$status = "Validate";
+    }
+    elseif (CommerceXlsImportVariables::$import) {
+      CommerceXlsImportVariables::$status = "Import";
+    }
+  }
+
+  /**
+   * Get validate.
+   */
+  public static function isValidate() {
+    return CommerceXlsImportVariables::$validate;
+  }
+
+  /**
+   * Get import.
+   */
+  public static function isImport() {
+    return CommerceXlsImportVariables::$import;
+  }
+
+  /**
+   * Get the status message.
+   */
+  public static function getStatus() {
+    return CommerceXlsImportVariables::$status;
+  }
+
+}
+
+/**
  * Implements hook_menu().
  *
  * Adds menu items to generate the headers or begin the commerce XLS import.
@@ -50,9 +111,9 @@ function commerce_xls_import_settings() {
   $form = array();
   $types = array();
 
-  if (variable_get('import_completed', '') == 1) {
-    drupal_set_message(t('Import Complete'));
-    variable_del('import_completed');
+  if (variable_get('commerce_xls_import_completed', '') == 1) {
+    drupal_set_message(t('Import/Validate Complete'));
+    variable_del('commerce_xls_import_completed');
   }
 
   $form['message'] = array(
@@ -124,6 +185,10 @@ function commerce_xls_import_settings() {
       '#type' => 'submit',
       '#value' => t('Begin Full Import'),
     );
+    $form['buttons']['validate_xls'] = array(
+      '#type' => 'submit',
+      '#value' => t('Validate File'),
+    );
     $form['import_status'] = array(
       '#type' => 'hidden',
       '#value' => 0,
@@ -131,33 +196,34 @@ function commerce_xls_import_settings() {
   }
   else {
     $form['last-import-message'] = array(
-      '#markup' => '<div class="last-import-message"><h6>' . t('Import in progress') . '</h6></div>',
+      '#markup' => '<div class="last-import-message"><h6>' . t('Import/Validation in progress') . '</h6></div>',
       '#weight' => 9,
     );
     $form['buttons']['import_stop'] = array(
       '#type' => 'submit',
-      '#value' => t('Stop Import'),
+      '#value' => t('Stop Import/Validation'),
     );
 
     $form['import_status'] = array(
       '#type' => 'hidden',
       '#value' => 1,
     );
-    drupal_set_message(t('You are currently running an import, you will not be able to run another until it is finished or stopped manually'), 'warning', FALSE);
+    drupal_set_message(t('You are currently running an import or validation, you will not be able to run another until it is finished or stopped manually'), 'warning', FALSE);
   }
 
   $form['buttons']['errors_button'] = array(
     '#type' => 'submit',
-    '#value' => t('Retrieve Latest Import Results'),
+    '#value' => t('Retrieve Latest Results'),
   );
 
   // @TODO - not critical but we could probably move a whole bunch of this formatting stuff into some templates called through theme functions, all this markup screams template
   // https://www.drupal.org/node/715160
   $description = "<h3>" . t('Commerce Import') . "</h2>";
   $description .= "<h5>" . t('Instructions') . "</h5>";
-  $description .= "<p>" . t('There are 2 main functions for the Commerce Import, which are:') . "</p>";
+  $description .= "<p>" . t('There are 3 main functions for the Commerce Import, which are:') . "</p>";
   $description .= "<ul>";
   $description .= "<li>" . t('Import Products') . "</li>";
+  $description .= "<li>" . t('Validate Products Without Importing') . "</li>";
   $description .= "<li>" . t('Generate Product Templates') . "</li>";
   $description .= "</ul>";
   $description .= "<p>" . t("Using the product templates, a list of products to add may be uploaded using the appropriate file upload section which will then be added to the commerce catalogue. Use the legend below to figure out which fields belong to the base product, or each variation.") . "</p>";
@@ -295,7 +361,7 @@ function commerce_xls_import_settings_validate($form, &$form_state) {
     }
   }
 
-  if (!isset($form_state['files']) && ($form_state['clicked_button']['#id'] == 'edit-import-button')) {
+  if (!isset($form_state['files']) && ($form_state['clicked_button']['#id'] == 'edit-import-button' || $form_state['clicked_button']['#id'] == 'edit-validate-xls')) {
     foreach ($_FILES['files']['tmp_name'] as $field_name) {
       form_set_error($field_name, t('No files to import'));
     }
@@ -309,14 +375,17 @@ function commerce_xls_import_settings_submit($form, &$form_state) {
   global $user;
 
   if ($form_state['clicked_button']['#id'] == 'edit-import-button') {
+    $validate = FALSE;
+
     // Reset import table.
-    //@TODO - confirm there isn't currently an import running, this may need to be moved to the background process code instead?
+    db_delete('commerce_xls_import_imports')
+      ->execute();
 
     foreach ($form_state['files'] as $file) {
       if (!commerce_xls_import_is_running()) {
         $handle = background_process_start('commerce_xls_import_import', $file);
 
-        db_insert('commerce_xls_imports')
+        db_insert('commerce_xls_import_imports')
           ->fields(array(
             'status' => 'pending',
             'handle' => $handle,
@@ -325,7 +394,31 @@ function commerce_xls_import_settings_submit($form, &$form_state) {
           ->execute();
       }
       else {
-        drupal_set_message(t('You are already running an import. Please wait until it is finished or cancel the current one'), 'error', FALSE);
+        drupal_set_message(t('You are currently running an import. Please wait until it is finished or cancel the current one'), 'error', FALSE);
+      }
+    }
+  }
+  elseif ($form_state['clicked_button']['#id'] == 'edit-validate-xls') {
+    $validate = TRUE;
+
+    // Reset import table.
+    db_delete('commerce_xls_import')
+      ->execute();
+
+    foreach ($form_state['files'] as $file) {
+      if (!commerce_xls_import_is_running()) {
+        $handle = background_process_start('commerce_xls_import_import', $file, $validate);
+
+        db_insert('commerce_xls_import')
+          ->fields(array(
+            'status' => 'pending',
+            'handle' => $handle,
+            'uid' => $user->uid,
+          ))
+          ->execute();
+      }
+      else {
+        drupal_set_message(t('You are currently running an file validation. Please wait until it is finished or cancel the current one'), 'error', FALSE);
       }
     }
   }
@@ -388,8 +481,24 @@ function commerce_xls_import_stop_import() {
   if ($result) {
     return TRUE;
   }
-
   return FALSE;
+}
+
+/**
+ * Check to see if current import has been stopped.
+ */
+function commerce_xls_import_stopped() {
+  $result = db_select('commerce_xls_import', 'i')
+    ->fields('i', array('status'))
+    ->execute()
+    ->fetchAssoc();
+
+  if ($result['status'] == 'stopped') {
+    return TRUE;
+  }
+  else {
+    return FALSE;
+  }
 }
 
 /**
@@ -422,6 +531,7 @@ function commerce_xls_import_export($op, $product_info = NULL, $product_type = N
       if ($mapped) {
         foreach ($row as $key => $new) {
           $new_data_array[] = $new;
+
         }
       }
       else {
@@ -540,9 +650,13 @@ function commerce_xls_import_generate_errors_xls($options, $path, $headers, $dat
  *
  * @param null|array $file
  *   The XLS file info array containing product data to be imported.
+ * @param bool $validate
+ *   If true, don't create products. Otherwise create products.
  */
-function commerce_xls_import_import(array $file = NULL) {
+function commerce_xls_import_import(array $file = NULL, $validate = FALSE) {
   module_load_include('inc', 'phpexcel', 'phpexcel');
+
+  CommerceXlsImportVariables::setValidate($validate);
 
   // Get the product type.
   $product_type = $file['product_type'];
@@ -878,7 +992,8 @@ function commerce_xls_import_create_product($row, $values, $entity_info, $produc
   $product->created = time();
   commerce_xls_import_update_entity_info($row, $product, $entity_info, $values, $image_info);
 
-  if (!commerce_xls_import_get_row_error($row)) {
+  if (CommerceXlsImportVariables::isImport()) {  
+if (!commerce_xls_import_get_row_error($row)) {
     // If no errors exist, save the product.
     commerce_product_save($product);
   }
@@ -897,11 +1012,14 @@ function commerce_xls_import_create_product($row, $values, $entity_info, $produc
 
     return $node->nid;
   }
+    elseif (CommerceXlsImportVariables::isValidate()) {
+      // Only validating products.
+      return FALSE;
+    }
   else {
-    // Don't save node if errors exist.
-    watchdog('commerce_xls_import', $entity_info['title'] . " has errors and will not be created");
     return FALSE;
   }
+}
 }
 
 /**
@@ -1160,50 +1278,52 @@ function commerce_xls_import_phpexcel_export($op, &$data, &$phpexcel, $options, 
       if ($row > 1) {
         $error_status = commerce_xls_import_get_column_status($column, $row);
 
-        if ($error_status == COMMERCE_XLS_IMPORT_DATA_ERROR) {
-          $style_array = array(
-            'fill' => array(
-              'type' => PHPExcel_Style_Fill::FILL_SOLID,
-              'startcolor' => array('argb' => '00FF9999'),
-            ),
-            'borders' => array(
-              'allborders' => array(
-                'style' => PHPExcel_Style_Border::BORDER_THIN,
-                'color' => array('argb' => '00DA4141'),
+        //@TODO - I don't understand this piece, what are we checking for?
+        if ($row <= $GLOBALS['current_row']) {
+          if ($error_status == COMMERCE_XLS_IMPORT_DATA_ERROR) {
+            $style_array = array(
+              'fill' => array(
+                'type' => PHPExcel_Style_Fill::FILL_SOLID,
+                'startcolor' => array('argb' => '00FF9999'),
               ),
-            ),
-          );
-        }
-        elseif ($error_status == COMMERCE_XLS_IMPORT_DATA_WARNING) {
-          $style_array = array(
-            'fill' => array(
-              'type' => PHPExcel_Style_Fill::FILL_SOLID,
-              'startcolor' => array('argb' => '00ffeb9c'),
-            ),
-            'borders' => array(
-              'allborders' => array(
-                'style' => PHPExcel_Style_Border::BORDER_THIN,
-                'color' => array('argb' => '00EBEB51'),
+              'borders' => array(
+                'allborders' => array(
+                  'style' => PHPExcel_Style_Border::BORDER_THIN,
+                  'color' => array('argb' => '00DA4141'),
+                ),
               ),
-            ),
-          );
-        }
-        elseif ($error_status == COMMERCE_XLS_IMPORT_DATA_SUCCESS) {
-          $style_array = array(
-            'fill' => array(
-              'type' => PHPExcel_Style_Fill::FILL_SOLID,
-              'startcolor' => array('argb' => '0078FAA3'),
-            ),
-            'borders' => array(
-              'allborders' => array(
-                'style' => PHPExcel_Style_Border::BORDER_THIN,
-                'color' => array('argb' => '0000994C'),
+            );
+          }
+          elseif ($error_status == COMMERCE_XLS_IMPORT_DATA_WARNING) {
+            $style_array = array(
+              'fill' => array(
+                'type' => PHPExcel_Style_Fill::FILL_SOLID,
+                'startcolor' => array('argb' => '00ffeb9c'),
               ),
-            ),
-          );
+              'borders' => array(
+                'allborders' => array(
+                  'style' => PHPExcel_Style_Border::BORDER_THIN,
+                  'color' => array('argb' => '00EBEB51'),
+                ),
+              ),
+            );
+          }
+          elseif ($error_status == COMMERCE_XLS_IMPORT_DATA_SUCCESS) {
+            $style_array = array(
+              'fill' => array(
+                'type' => PHPExcel_Style_Fill::FILL_SOLID,
+                'startcolor' => array('argb' => '0078FAA3'),
+              ),
+              'borders' => array(
+                'allborders' => array(
+                  'style' => PHPExcel_Style_Border::BORDER_THIN,
+                  'color' => array('argb' => '0000994C'),
+                ),
+              ),
+            );
+          }
         }
-
-        if ($GLOBALS['nid_column'] != $column) {
+        if (CommerceXlsImportVariables::isImport() && $GLOBALS['nid_column'] != $column) {
           $phpexcel->getStyleByColumnAndRow($column, $row)->getProtection()->setLocked(PHPExcel_Style_Protection::PROTECTION_UNPROTECTED);
         }
         else {
@@ -1312,6 +1432,7 @@ function commerce_xls_import_create_image_database_entries($base_path) {
         $results[$filename] = $fid;
       }
       else {
+
         // doesn't exist, create file entry.
         $file = new stdClass();
         $file->uid = $user->uid;
@@ -1406,7 +1527,7 @@ function commerce_xls_import_generate_headers($nid = NULL, $product_type = NULL)
   $headers['Products'] = array_merge($headers['Products'], array_keys($product));
   $headers['Products'][] = "status";
   $headers['Products'][] = "language";
-  if ($nid != NULL) {
+  if (CommerceXlsImportVariables::isImport() && $nid != NULL) {
     $headers['Products'][] = "nid";
   }
 
@@ -1457,16 +1578,16 @@ function commerce_xls_import_current_status() {
   $is_running = commerce_xls_import_is_running();
 
   if (($current == '' && $is_running)) {
-    $message = t('Creating result document');
+    $message = t('Working...');
     $status = 0;
   }
   elseif ($current == '' && !$is_running) {
-    $message = t('Import Complete');
+    $message = t('Done!');
     $status = 1;
-    variable_set('import_completed', 1);
+    variable_set('commerce_xls_import_completed', 1);
   }
   else {
-    $message = t("Import status : !current/!total products evaluated", array("!current" => $current['completed'], "!total" => $current['total']));
+    $message = t("Status : !current/!total products evaluated", array("!current" => $current['completed'], "!total" => $current['total']));
     $status = 0;
   }
 

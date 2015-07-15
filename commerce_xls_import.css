@@ -92,7 +92,7 @@
   float: left;
 }
 #edit-errors-button {
-  float: none;
+  float: none !important;
 }
 .product-options .form-submit:hover,
 #edit-errors-button:hover {

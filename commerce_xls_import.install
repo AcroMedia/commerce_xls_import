@@ -22,7 +22,7 @@ function commerce_xls_import_uninstall() {
 function commerce_xls_import_schema() {
   $schema = array();
 
-  $schema['commerce_xls_import_imports'] = array(
+  $schema['commerce_xls_import'] = array(
     'fields' => array(
       'status' => array(
         'type' => 'varchar',
