@@ -25,13 +25,15 @@ var timer;
             });
         }
     };
+
   function start_updates() {
     periodic_update_import_status();
   }
+
   function periodic_update_import_status() {
     $.ajax({
       url: Drupal.settings.basePath + "?q=admin/commerce/products/import_commerce/get_import_status",
-      type: "POST",
+      type: "GET",
       dataType: "json",
       data: {},
       success: function(data){

@@ -22,11 +22,13 @@ function commerce_xls_import_uninstall() {
 function commerce_xls_import_schema() {
   $schema = array();
 
-  $schema['current_xls_imports'] = array(
+  $schema['commerce_xls_import_imports'] = array(
     'fields' => array(
-      'stopped' => array(
-        'type' => 'int',
-        'default' => 0,
+      'status' => array(
+        'type' => 'varchar',
+        'length' => '255',
+        'not null' => TRUE,
+        'default' => 'pending',
       ),
       'handle' => array(
         'type' => 'varchar',
@@ -39,7 +41,22 @@ function commerce_xls_import_schema() {
         'not null' => TRUE,
       ),
     ),
-    'primary key' => array('stopped'),
+    'primary key' => array('import_id'),
+  );
+
+  $schema['commerce_xls_import_errors'] = array(
+    'fields' => array(
+      'row' => array(
+        'type' => 'int',
+      ),
+      'column' => array(
+        'type' => 'int',
+      ),
+      'message' => array(
+        'type' => 'blob',
+      )
+    ),
+    'primary key' => array('row', 'column'),
   );
 
   return $schema;
