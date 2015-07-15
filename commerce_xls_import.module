@@ -13,7 +13,7 @@ define('COMMERCE_XLS_IMPORT_DATA_NONE', 3);
 /**
  * Class containing variables used by Commerce XLS Import.
  */
-class XlsImportVariables {
+class CommerceXlsImportVariables {
   private static $validate;
   private static $import;
   private static $status;
@@ -22,29 +22,29 @@ class XlsImportVariables {
    * Set $status.
    */
   public static function setValidate($value) {
-    XlsImportVariables::$validate = $value;
-    XlsImportVariables::$import = !$value;
-    XlsImportVariables::setStatus();
+    CommerceXlsImportVariables::$validate = $value;
+    CommerceXlsImportVariables::$import = !$value;
+    CommerceXlsImportVariables::setStatus();
   }
 
   /**
    * Set $import.
    */
   public static function setImport($value) {
-    XlsImportVariables::$import = $value;
-    XlsImportVariables::$validate = !value;
-    XlsImportVariables::setStatus();
+    CommerceXlsImportVariables::$import = $value;
+    CommerceXlsImportVariables::$validate = !value;
+    CommerceXlsImportVariables::setStatus();
   }
 
   /**
    * Set the status message.
    */
   public static function setStatus() {
-    if (XlsImportVariables::$validate) {
-      XlsImportVariables::$status = "Validate";
+    if (CommerceXlsImportVariables::$validate) {
+      CommerceXlsImportVariables::$status = "Validate";
     }
-    elseif (XlsImportVariables::$import) {
-      XlsImportVariables::$status = "Import";
+    elseif (CommerceXlsImportVariables::$import) {
+      CommerceXlsImportVariables::$status = "Import";
     }
   }
 
@@ -52,21 +52,21 @@ class XlsImportVariables {
    * Get validate.
    */
   public static function isValidate() {
-    return XlsImportVariables::$validate;
+    return CommerceXlsImportVariables::$validate;
   }
 
   /**
    * Get import.
    */
   public static function isImport() {
-    return XlsImportVariables::$import;
+    return CommerceXlsImportVariables::$import;
   }
 
   /**
    * Get the status message.
    */
   public static function getStatus() {
-    return XlsImportVariables::$status;
+    return CommerceXlsImportVariables::$status;
   }
 
 }
@@ -519,7 +519,7 @@ function commerce_xls_import_export($op, $product_info = NULL, $product_type = N
         }
         $mapped = TRUE;
       }
-      if (($nids || commerce_xls_import_errors_get_product_nid($count)) && XlsImportVariables::isImport()) {
+      if (($nids || commerce_xls_import_errors_get_product_nid($count)) && CommerceXlsImportVariables::isImport()) {
         $array_pos = count($new_data_array) - 1;
         if ($headers['Products'][$array_pos] == 'NID') {
           if (commerce_xls_import_errors_get_product_nid($count)) {
@@ -635,7 +635,7 @@ function commerce_xls_import_import(array $file = NULL, $validate = FALSE) {
   module_load_include('inc', 'phpexcel', 'phpexcel');
   $entity_number = 1;
 
-  XlsImportVariables::setValidate($validate);
+  CommerceXlsImportVariables::setValidate($validate);
 
   // Create global variable to mark errors.
   $GLOBALS['errors']['import_errors'] = NULL;
@@ -989,7 +989,7 @@ function commerce_xls_import_create_product($values, $entity_info, $product_type
   $product = commerce_product_new($product_type);
   $product->created = time();
   commerce_xls_import_update_entity_info($product, $entity_info, $values, $image_info);
-  if (XlsImportVariables::isImport()) {
+  if (CommerceXlsImportVariables::isImport()) {
     if (!commerce_xls_import_product_has_errors()) {
       // If no errors exist, save the variation and node.
       commerce_product_save($product);
@@ -1001,7 +1001,7 @@ function commerce_xls_import_create_product($values, $entity_info, $product_type
       commerce_xls_import_errors_set_product_nid($node->nid);
       return $node->nid;
     }
-    elseif (XlsImportVariables::isValidate()) {
+    elseif (CommerceXlsImportVariables::isValidate()) {
       // Only validating products.
       return FALSE;
     }
@@ -1380,7 +1380,7 @@ function commerce_xls_import_phpexcel_export($op, &$data, &$phpexcel, $options, 
             ),
           );
         }
-        if (XlsImportVariables::isImport() && $GLOBALS['errors']['import_errors']['nid_column_row']['column'] != $column) {
+        if (CommerceXlsImportVariables::isImport() && $GLOBALS['errors']['import_errors']['nid_column_row']['column'] != $column) {
           $phpexcel->getStyleByColumnAndRow($column, $row)->getProtection()->setLocked(PHPExcel_Style_Protection::PROTECTION_UNPROTECTED);
         }
         else {
@@ -1611,7 +1611,7 @@ function commerce_xls_import_generate_headers($nid = NULL, $product_type = NULL)
   $headers['Products'] = array_merge($headers['Products'], array_keys($product));
   $headers['Products'][] = "Status";
   $headers['Products'][] = "Language";
-  if (XlsImportVariables::isImport() && $nid != NULL) {
+  if (CommerceXlsImportVariables::isImport() && $nid != NULL) {
     $headers['Products'][] = "NID";
   }
 
