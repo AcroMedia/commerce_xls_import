@@ -481,6 +481,23 @@ function commerce_xls_import_stop_import() {
 }
 
 /**
+ * Check to see if current import has been stopped.
+ */
+function commerce_xls_import_stopped() {
+  $result = db_select('current_xls_imports', 'i')
+    ->fields('i', array('stopped'))
+    ->execute()
+    ->fetchAssoc();
+
+  if ($result['stopped'] == 1) {
+    return TRUE;
+  }
+  else {
+    return FALSE;
+  }
+}
+
+/**
  * Main function for the drupal commerce XLS export.
  */
 function commerce_xls_import_export($op, $product_info = NULL, $product_type = NULL, $errors = NULL, $nids = FALSE) {
@@ -656,6 +673,9 @@ function commerce_xls_import_import(array $file = NULL, $validate = FALSE) {
     if (count($result) > 0) {
       foreach ($result as $sheet) {
         foreach ($sheet as $product) {
+          if (commerce_xls_import_stopped()) {
+            break;
+          }
           $entity_number++;
           $GLOBALS['current_row'] = $entity_number;
 
@@ -1338,47 +1358,49 @@ function commerce_xls_import_phpexcel_export($op, &$data, &$phpexcel, $options, 
       if ($row > 1) {
         $error_status = commerce_xls_import_get_column_status($column, $row);
 
-        if ($error_status == COMMERCE_XLS_IMPORT_DATA_ERROR) {
-          $style_array = array(
-            'fill' => array(
-              'type' => PHPExcel_Style_Fill::FILL_SOLID,
-              'startcolor' => array('argb' => '00FF9999'),
-            ),
-            'borders' => array(
-              'allborders' => array(
-                'style' => PHPExcel_Style_Border::BORDER_THIN,
-                'color' => array('argb' => '00DA4141'),
+        if ($row <= $GLOBALS['current_row']) {
+          if ($error_status == COMMERCE_XLS_IMPORT_DATA_ERROR) {
+            $style_array = array(
+              'fill' => array(
+                'type' => PHPExcel_Style_Fill::FILL_SOLID,
+                'startcolor' => array('argb' => '00FF9999'),
               ),
-            ),
-          );
-        }
-        elseif ($error_status == COMMERCE_XLS_IMPORT_DATA_WARNING) {
-          $style_array = array(
-            'fill' => array(
-              'type' => PHPExcel_Style_Fill::FILL_SOLID,
-              'startcolor' => array('argb' => '00ffeb9c'),
-            ),
-            'borders' => array(
-              'allborders' => array(
-                'style' => PHPExcel_Style_Border::BORDER_THIN,
-                'color' => array('argb' => '00EBEB51'),
+              'borders' => array(
+                'allborders' => array(
+                  'style' => PHPExcel_Style_Border::BORDER_THIN,
+                  'color' => array('argb' => '00DA4141'),
+                ),
               ),
-            ),
-          );
-        }
-        elseif ($error_status == COMMERCE_XLS_IMPORT_DATA_SUCCESS) {
-          $style_array = array(
-            'fill' => array(
-              'type' => PHPExcel_Style_Fill::FILL_SOLID,
-              'startcolor' => array('argb' => '0078FAA3'),
-            ),
-            'borders' => array(
-              'allborders' => array(
-                'style' => PHPExcel_Style_Border::BORDER_THIN,
-                'color' => array('argb' => '0000994C'),
+            );
+          }
+          elseif ($error_status == COMMERCE_XLS_IMPORT_DATA_WARNING) {
+            $style_array = array(
+              'fill' => array(
+                'type' => PHPExcel_Style_Fill::FILL_SOLID,
+                'startcolor' => array('argb' => '00ffeb9c'),
               ),
-            ),
-          );
+              'borders' => array(
+                'allborders' => array(
+                  'style' => PHPExcel_Style_Border::BORDER_THIN,
+                  'color' => array('argb' => '00EBEB51'),
+                ),
+              ),
+            );
+          }
+          elseif ($error_status == COMMERCE_XLS_IMPORT_DATA_SUCCESS) {
+            $style_array = array(
+              'fill' => array(
+                'type' => PHPExcel_Style_Fill::FILL_SOLID,
+                'startcolor' => array('argb' => '0078FAA3'),
+              ),
+              'borders' => array(
+                'allborders' => array(
+                  'style' => PHPExcel_Style_Border::BORDER_THIN,
+                  'color' => array('argb' => '0000994C'),
+                ),
+              ),
+            );
+          }
         }
         if (CommerceXlsImportVariables::isImport() && $GLOBALS['errors']['import_errors']['nid_column_row']['column'] != $column) {
           $phpexcel->getStyleByColumnAndRow($column, $row)->getProtection()->setLocked(PHPExcel_Style_Protection::PROTECTION_UNPROTECTED);
