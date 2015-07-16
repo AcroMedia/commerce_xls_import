@@ -10,3 +10,4 @@ stylesheets[all][] = commerce_xls_import.css
 scripts[] = commerce_xls_import.js
 
 files[] = commerce_xls_import.errors.inc
+files[] = commerce_xls_import.test

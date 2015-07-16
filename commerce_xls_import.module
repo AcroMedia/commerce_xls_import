@@ -11,6 +11,7 @@ define('COMMERCE_XLS_IMPORT_DATA_SUCCESS', 1);
 define('COMMERCE_XLS_IMPORT_DATA_WARNING', 2);
 define('COMMERCE_XLS_IMPORT_DATA_NONE', 3);
 
+//@TODO - you'll want to move the class into its own class file and out of the .module
 /**
  * Class containing variables used by Commerce XLS Import.
  */

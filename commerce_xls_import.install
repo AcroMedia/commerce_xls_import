@@ -41,7 +41,6 @@ function commerce_xls_import_schema() {
         'not null' => TRUE,
       ),
     ),
-    'primary key' => array('import_id'),
   );
 
   $schema['commerce_xls_import_errors'] = array(
