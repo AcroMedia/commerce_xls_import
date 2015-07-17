@@ -56,7 +56,7 @@ function commerce_xls_import_schema() {
       ),
       'message' => array(
         'type' => 'blob',
-      )
+      ),
     ),
     'primary key' => array('row', 'column'),
   );

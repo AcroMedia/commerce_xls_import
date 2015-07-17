@@ -1,6 +1,13 @@
 <?php
 
 /**
+ * @file
+ * Commerce_xls_import.errors.inc.
+ *
+ * Error functions.
+ */
+
+/**
  * Get error message if it exists.
  */
 function commerce_xls_import_get_error($row, $column) {
