@@ -526,24 +526,14 @@ function commerce_xls_import_export($op, $product_info = NULL, $product_type = N
     $data['Products'][] = array();
   }
   else {
-    $mapped = FALSE;
-
     $count = 1;
     foreach ($product_info[0] as $row) {
       $count++;
       $new_data_array = array();
 
-      if ($mapped) {
-        foreach ($row as $key => $new) {
-          $new_data_array[] = $new;
-
-        }
-      }
-      else {
-        foreach ($row as $key => $new) {
-          $new_data_array[] = $new;
-        }
-        $mapped = TRUE;
+      //not 100% sure, but I think we're just remapping to int keys very names?
+      foreach ($row as $key => $new) {
+        $new_data_array[] = $new;
       }
 
       if ($nids || commerce_xls_import_get_row_error($count)) {
