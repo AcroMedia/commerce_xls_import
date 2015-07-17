@@ -11,7 +11,8 @@ define('COMMERCE_XLS_IMPORT_DATA_SUCCESS', 1);
 define('COMMERCE_XLS_IMPORT_DATA_WARNING', 2);
 define('COMMERCE_XLS_IMPORT_DATA_NONE', 3);
 
-//@TODO - you'll want to move the class into its own class file and out of the .module
+// TODO - you'll want to move the class into its own class file and out of the
+// .module
 /**
  * Class containing variables used by Commerce XLS Import.
  */
@@ -102,7 +103,8 @@ function commerce_xls_import_menu() {
   return $items;
 }
 
-//@TODO - _settings probably isn't the best name for this form, settings usually means the module settings, not a user form.
+// @TODO - _settings probably isn't the best name for this form, settings
+// usually means the module settings, not a user form.
 /**
  * Import Menu Form.
  *
@@ -345,7 +347,8 @@ function commerce_xls_import_is_running() {
   return FALSE;
 }
 
-//@TODO - move these to be next to the form declaration, usually goes form, form_validate, form_submit
+// @TODO - move these to be next to the form declaration, usually goes form,
+// form_validate, form_submit
 /**
  * Validates the settings.
  */
@@ -532,7 +535,7 @@ function commerce_xls_import_export($op, $product_info = NULL, $product_type = N
       $count++;
       $new_data_array = array();
 
-      //not 100% sure, but I think we're just remapping to int keys very names?
+      // Not 100% sure, but I think we're just remapping to int keys very names?
       foreach ($row as $key => $new) {
         $new_data_array[] = $new;
       }
@@ -684,7 +687,7 @@ function commerce_xls_import_import(array $file = NULL, $validate = FALSE) {
             }
           }
           else {
-            $nid = null;
+            $nid = NULL;
           }
           $nids[$row - 2] = $nid;
         }
@@ -692,9 +695,9 @@ function commerce_xls_import_import(array $file = NULL, $validate = FALSE) {
     }
 
     // Add NIDs to each product.
-    if(CommerceXlsImportVariables::isImport()){
+    if (CommerceXlsImportVariables::isImport()) {
       $count = 0;
-      foreach($nids as $nid) {
+      foreach ($nids as $nid) {
         $result[0][$count]['nid'] = $nid;
         $count++;
       }
@@ -764,7 +767,7 @@ function commerce_xls_import_get_product_values(array $product, $product_type) {
   $possible_fields = commerce_xls_import_get_possible_fields($product_type);
 
   foreach ($possible_fields as $field) {
-    if(isset($product[$field])) {
+    if (isset($product[$field])) {
       $values[$field] = $product[$field];
     }
   }
@@ -909,7 +912,7 @@ function commerce_xls_import_create_product($row, $values, $entity_info, $produc
   $language = commerce_xls_import_validate_languages($entity_info['language']);
 
   if (!$language) {
-    // language  not there, set to undefined.
+    // Language  not there, set to undefined.
     $language = LANGUAGE_NONE;
   }
   $node->language = $language;
@@ -1004,11 +1007,11 @@ function commerce_xls_import_create_product($row, $values, $entity_info, $produc
     }
     elseif (CommerceXlsImportVariables::isValidate()) {
       // Only validating products.
-      return null;
+      return NULL;
     }
     else {
       // Don't create product or variation if there are errors.
-      return null;
+      return NULL;
     }
   }
 }
@@ -1267,8 +1270,9 @@ function commerce_xls_import_phpexcel_export($op, &$data, &$phpexcel, $options, 
     case 'post cell':
       $style_array = array();
       if ($row > 1) {
-        //have to convert header from number to column title to match with our error recording
-        //there must be a more elegant way to do this but I can't seem to figure one out
+        // Have to convert header from number to column title to match with our
+        // error recording there must be a more elegant way to do this but I
+        // can't seem to figure one out.
         $headers = commerce_xls_import_get_headers($phpexcel);
         $error_status = commerce_xls_import_get_column_status($row, $headers[$column]);
 
@@ -1382,18 +1386,22 @@ function commerce_xls_import_phpexcel_export($op, &$data, &$phpexcel, $options, 
   }
 }
 
+/**
+ * Get headers from XLS.
+ */
+
 function commerce_xls_import_get_headers(&$phpexcel) {
   static $headers = null;
 
-  if(!isset($headers)) {
+  if (!isset($headers)) {
     $headers = array();
 
     $last_column = $phpexcel->getHighestColumn();
     $headers_temp = $phpexcel->rangeToArray('A1:' . $last_column . '1', NULL, TRUE, TRUE, TRUE);
     $headers_temp = $headers_temp[1];
     foreach ($headers_temp as $key => $header) {
-      //use ascii to convert letter to number
-      //66 is the offset
+      // Use ascii to convert letter to number.
+      // 66 is the offset.
       $numeric_key = ord($key) - 65;
       $headers[$numeric_key] = $header;
     }

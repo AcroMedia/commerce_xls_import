@@ -4,14 +4,20 @@ class CommerceXlsImportTestCase extends DrupalWebTestCase {
   protected $privileged_user;
   protected $normal_user;
 
+  /**
+   * GetInfo().
+   */
   public static function getInfo() {
     return array(
       'name' => 'Commerce XLS Import Tests',
-      'description' => 'Ensure Commerce CLS Import is only useable by admins with the correct permissions',
+      'description' => 'Ensure Commerce XLS Import is only useable by admins with the correct permissions',
       'group' => 'Drupal Commerce',
     );
   }
 
+  /**
+   * Setup().
+   */
   public function setUp() {
 
     parent::setUp(array('commerce_xls_import'));
@@ -23,13 +29,15 @@ class CommerceXlsImportTestCase extends DrupalWebTestCase {
     $this->normal_user = $this->drupalCreateUser();
   }
 
+  /**
+   * Test permissions.
+   */
   public function testCommerceXlsImportPermissions() {
-    //this currently doesn't work without more setup, since there are no product bundles, wonder if we should change the setup or the code
-    //$this->drupalLogin($this->privileged_user);
-
-    //$this->drupalGet('admin/commerce/products/import_commerce');
-    //$this->assertResponse('200', 'Privileged user was able to correctly access the admin page');
-
+    // This currently doesn't work without more setup, since there are no
+    // product bundles, wonder if we should change the setup or the code.
+    // $this->drupalLogin($this->privileged_user);
+    // $this->drupalGet('admin/commerce/products/import_commerce');
+    // $this->assertResponse('200', 'Privileged user was able to correctly access the admin page');
     $this->drupalLogin($this->normal_user);
 
     $this->drupalGet('admin/commerce/products/import_commerce');
