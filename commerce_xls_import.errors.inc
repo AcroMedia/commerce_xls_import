@@ -3,6 +3,8 @@
 function commerce_xls_import_get_error($row, $column) {
   $message = '';
 
+  $column='test';
+
   $result = db_query("SELECT message FROM {commerce_xls_import_errors} WHERE row=:row AND `column`=:column", array(':row' => $row, ':column' => $column))->fetchField();
   if($result) {
     $message = $result;
@@ -40,8 +42,8 @@ function commerce_xls_import_set_error($row, $column, $message) {
  * If whole line is good, mark green, else mark white and highlight warnings and
  * errors.
  */
-function commerce_xls_import_get_column_status($row, $column) {
-  $error = commerce_xls_import_get_error($row, $column);
+function commerce_xls_import_get_column_status($column, $row) {
+  $error = commerce_xls_import_get_error($column, $row);
 
   if ($error){
     return COMMERCE_XLS_IMPORT_DATA_ERROR;

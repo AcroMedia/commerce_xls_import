@@ -376,7 +376,6 @@ function commerce_xls_import_settings_submit($form, &$form_state) {
   global $user;
 
   if ($form_state['clicked_button']['#id'] == 'edit-import-button') {
-    $validate = FALSE;
 
     // Reset import tables.
     db_delete('commerce_xls_import')
@@ -406,6 +405,8 @@ function commerce_xls_import_settings_submit($form, &$form_state) {
 
     // Reset import table.
     db_delete('commerce_xls_import')
+      ->execute();
+    db_delete('commerce_xls_import_errors')
       ->execute();
 
     foreach ($form_state['files'] as $file) {
@@ -548,7 +549,6 @@ function commerce_xls_import_export($op, $product_info = NULL, $product_type = N
 
       if ($nids || commerce_xls_import_get_row_error($count)) {
         $array_pos = count($new_data_array) - 1;
-
         if ($headers['Products'][$array_pos] == 'nid') {
           if (commerce_xls_import_get_row_error($count)) {
             $new_data_array[$array_pos] = commerce_xls_import_get_row_error($count);
