@@ -378,8 +378,10 @@ function commerce_xls_import_settings_submit($form, &$form_state) {
   if ($form_state['clicked_button']['#id'] == 'edit-import-button') {
     $validate = FALSE;
 
-    // Reset import table.
+    // Reset import tables.
     db_delete('commerce_xls_import')
+      ->execute();
+    db_delete('commerce_xls_import_errors')
       ->execute();
 
     foreach ($form_state['files'] as $file) {
@@ -1274,10 +1276,11 @@ function commerce_xls_import_phpexcel_export($op, &$data, &$phpexcel, $options, 
     case 'post cell':
       $style_array = array();
       if ($row > 1) {
-        $error_status = commerce_xls_import_get_column_status($column, $row);
+        watchdog('commerce_xls_import', $row . ' . ' . $column);
+        $error_status = commerce_xls_import_get_column_status($row, $column);
 
         //@TODO - I don't understand this piece, what are we checking for?
-        if ($row <= $GLOBALS['current_row']) {
+        //if ($row <= $GLOBALS['current_row']) {
           if ($error_status == COMMERCE_XLS_IMPORT_DATA_ERROR) {
             $style_array = array(
               'fill' => array(
@@ -1320,7 +1323,7 @@ function commerce_xls_import_phpexcel_export($op, &$data, &$phpexcel, $options, 
               ),
             );
           }
-        }
+       // }
         if (CommerceXlsImportVariables::isImport() && $GLOBALS['nid_column'] != $column) {
           $phpexcel->getStyleByColumnAndRow($column, $row)->getProtection()->setLocked(PHPExcel_Style_Protection::PROTECTION_UNPROTECTED);
         }

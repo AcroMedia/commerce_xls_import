@@ -3,7 +3,9 @@
 function commerce_xls_import_get_error($row, $column) {
   $message = '';
 
-  $result = db_query('SELECT message FROM {commerce_xls_import_errors} WHERE row=:row AND column=:column', array(':row' => $row, ':column' => $column))->fetchField();
+  $column='test';
+
+  $result = db_query("SELECT message FROM {commerce_xls_import_errors} WHERE row=:row AND `column`=:column", array(':row' => $row, ':column' => $column))->fetchField();
   if($result) {
     $message = $result;
   }
@@ -25,7 +27,7 @@ function commerce_xls_import_set_error($row, $column, $message) {
   db_insert('commerce_xls_import_errors')
     ->fields(array(
       'row' => $row,
-      'column' => $column,
+      '`column`' => $column,
       'message' => $message,
     ))
     ->execute();
@@ -41,16 +43,12 @@ function commerce_xls_import_set_error($row, $column, $message) {
  * errors.
  */
 function commerce_xls_import_get_column_status($column, $row) {
-  $result = NULL;
-
   $error = commerce_xls_import_get_error($column, $row);
 
   if ($error){
-    $result = $error;
+    return COMMERCE_XLS_IMPORT_DATA_ERROR;
   }
   else {
-    $result = COMMERCE_XLS_IMPORT_DATA_SUCCESS;
+    return COMMERCE_XLS_IMPORT_DATA_SUCCESS;
   }
-
-  return $result;
 }
