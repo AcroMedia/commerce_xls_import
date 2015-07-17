@@ -1389,9 +1389,8 @@ function commerce_xls_import_phpexcel_export($op, &$data, &$phpexcel, $options, 
 /**
  * Get headers from XLS.
  */
-
 function commerce_xls_import_get_headers(&$phpexcel) {
-  static $headers = null;
+  static $headers = NULL;
 
   if (!isset($headers)) {
     $headers = array();
