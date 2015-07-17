@@ -507,6 +507,8 @@ function commerce_xls_import_stopped() {
  */
 function commerce_xls_import_export($op, $product_info = NULL, $product_type = NULL, $nids = FALSE) {
   module_load_include('inc', 'phpexcel');
+  module_load_include('inc', 'commerce_xls_import', 'commerce_xls_import.errors');
+
   // NOTE: This is required because the phpexcel module gives strict warnings
   // with its export functionality.
   error_reporting(E_ALL ^ E_STRICT);
@@ -656,6 +658,7 @@ function commerce_xls_import_generate_errors_xls($options, $path, $headers, $dat
  */
 function commerce_xls_import_import(array $file = NULL, $validate = FALSE) {
   module_load_include('inc', 'phpexcel', 'phpexcel');
+  module_load_include('inc', 'commerce_xls_import', 'commerce_xls_import.errors');
 
   CommerceXlsImportVariables::setValidate($validate);
 
@@ -693,6 +696,7 @@ function commerce_xls_import_import(array $file = NULL, $validate = FALSE) {
             if (!isset($product['nid']) || $product['nid'] == NULL) {
               // If nid is set it is a line from a resubmitted results.xls.
               $entity_info = commerce_xls_import_set_entity_values($product);
+
               commerce_xls_import_create_product($row, $values, $entity_info, $product_type, $images_info);
             }
             else {
@@ -768,7 +772,9 @@ function commerce_xls_import_get_product_values(array $product, $product_type) {
   $possible_fields = commerce_xls_import_get_possible_fields($product_type);
 
   foreach ($possible_fields as $field) {
-    $values[$field] = $product[$field];
+    if(isset($product[$field])) {
+      $values[$field] = $product[$field];
+    }
   }
 
   return $values;
@@ -960,7 +966,7 @@ function commerce_xls_import_create_product($row, $values, $entity_info, $produc
       ),
     );
 
-    commerce_xls_import_update_entity_info($node, $entity_info, $values, $image_info, TRUE);
+    commerce_xls_import_update_entity_info($row, $node, $entity_info, $values, $image_info, TRUE);
 
     // Create the form_state to use node validation.
     foreach ($values as $key => $field) {
@@ -994,33 +1000,33 @@ function commerce_xls_import_create_product($row, $values, $entity_info, $produc
   commerce_xls_import_update_entity_info($row, $product, $entity_info, $values, $image_info);
 
   if (CommerceXlsImportVariables::isImport()) {
-if (!commerce_xls_import_get_row_error($row)) {
-    // If no errors exist, save the product.
-    commerce_product_save($product);
-  }
-  else {
-    // Don't create product or variation if there are errors.
-    watchdog('commerce_xls_import', $entity_info['title'] . " has errors and will not be created");
-    return FALSE;
-  }
+    if (!commerce_xls_import_get_row_error($row)) {
+      // If no errors exist, save the product.
+      commerce_product_save($product);
+    }
+    else {
+      // Don't create product or variation if there are errors.
+      watchdog('commerce_xls_import', $entity_info['title'] . " has errors and will not be created");
+      return FALSE;
+    }
 
-  $node->field_product[LANGUAGE_NONE][]['product_id'] = $product->product_id;
+    $node->field_product[LANGUAGE_NONE][]['product_id'] = $product->product_id;
 
-  if (!commerce_xls_import_get_row_error($row)) {
-    // If no errors exist, save node.
-    $node->language = $new_language;
-    node_save($node);
+    if (!commerce_xls_import_get_row_error($row)) {
+      // If no errors exist, save node.
+      $node->language = $new_language;
+      node_save($node);
 
-    return $node->nid;
-  }
+      return $node->nid;
+    }
     elseif (CommerceXlsImportVariables::isValidate()) {
       // Only validating products.
       return FALSE;
     }
-  else {
-    return FALSE;
+    else {
+      return FALSE;
+    }
   }
-}
 }
 
 /**
@@ -1396,17 +1402,19 @@ function commerce_xls_import_phpexcel_export($op, &$data, &$phpexcel, $options, 
  * Handles the main zip extraction.
  */
 function commerce_xls_import_extract_zip() {
+  $import_successful = FALSE;
   $dir = realpath(".") . "/" . variable_get('file_public_path', conf_path() . '/files');
 
-  $import_successful = commerce_xls_import_unpack_zip($dir, 'import_images/product_images', "$dir");
+  if(file_exists($dir . 'import_images/product_images.zip')) {
+    $import_successful = commerce_xls_import_unpack_zip($dir, 'import_images/product_images', "$dir");
+  }
 
   // Add new files to the file table.
   if ($import_successful) {
     return commerce_xls_import_create_image_database_entries("public://");
   }
-  else {
-    return FALSE;
-  }
+
+  return FALSE;
 }
 
 /**

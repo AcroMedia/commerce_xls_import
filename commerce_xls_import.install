@@ -49,7 +49,10 @@ function commerce_xls_import_schema() {
         'type' => 'int',
       ),
       'column' => array(
-        'type' => 'int',
+        'type' => 'varchar',
+        'length' => 255,
+        'not null' => TRUE,
+        'default' => '',
       ),
       'message' => array(
         'type' => 'blob',
