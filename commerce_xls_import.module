@@ -1276,8 +1276,10 @@ function commerce_xls_import_phpexcel_export($op, &$data, &$phpexcel, $options, 
     case 'post cell':
       $style_array = array();
       if ($row > 1) {
-        watchdog('commerce_xls_import', $row . ' . ' . $column);
-        $error_status = commerce_xls_import_get_column_status($row, $column);
+        //have to convert header from number to column title to match with our error recording
+        //there must be a more elegant way to do this but I can't seem to figure one out
+        $headers = commerce_xls_import_get_headers($phpexcel);
+        $error_status = commerce_xls_import_get_column_status($row, $headers[$column]);
 
         //@TODO - I don't understand this piece, what are we checking for?
         //if ($row <= $GLOBALS['current_row']) {
@@ -1390,6 +1392,26 @@ function commerce_xls_import_phpexcel_export($op, &$data, &$phpexcel, $options, 
       }
       break;
   }
+}
+
+function commerce_xls_import_get_headers(&$phpexcel) {
+  static $headers = null;
+
+  if(!isset($headers)) {
+    $headers = array();
+
+    $last_column = $phpexcel->getHighestColumn();
+    $headers_temp = $phpexcel->rangeToArray('A1:' . $last_column . '1', NULL, TRUE, TRUE, TRUE);
+    $headers_temp = $headers_temp[1];
+    foreach ($headers_temp as $key => $header) {
+      //use ascii to convert letter to number
+      //66 is the offset
+      $numeric_key = ord($key) - 65;
+      $headers[$numeric_key] = $header;
+    }
+  }
+
+  return $headers;
 }
 
 /**
