@@ -43,7 +43,7 @@ work properly with Drupal Commerce depending on your set-up.
 
  - Modules -
 
- * PHPExcel 7.x-3.9 (https://www.drupal.org/project/phpexcel)
+ * PHPExcel (https://www.drupal.org/project/phpexcel)
  * Background Process (https://www.drupal.org/project/background_process)
  * Commerce Product (https://www.drupal.org/project/commerce)
 

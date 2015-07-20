@@ -2,7 +2,7 @@ name = Commerce XLS Import
 description = Import commerce products/entities from an xls file
 core = 7.x
 package = Commerce (contrib)
-dependencies[] = phpexcel (7.x-3.9)
+dependencies[] = phpexcel
 dependencies[] = background_process
 dependencies[] = commerce_product
 
