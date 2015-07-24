@@ -7,6 +7,9 @@
  * Tests.
  */
 
+/**
+ * Class CommerceXlsImportTestCase.
+ */
 class CommerceXlsImportTestCase extends DrupalWebTestCase {
   protected $privilegedUser;
   protected $normalUser;
@@ -44,10 +47,12 @@ class CommerceXlsImportTestCase extends DrupalWebTestCase {
     // product bundles, wonder if we should change the setup or the code.
     // $this->drupalLogin($this->privileged_user);
     // $this->drupalGet('admin/commerce/products/import_commerce');
-    // $this->assertResponse('200', 'Privileged user was able to correctly access the admin page');
+    // $this->assertResponse('200', 'Privileged user was able to correctly ' .
+    // 'access the admin page');
     $this->drupalLogin($this->normalUser);
 
     $this->drupalGet('admin/commerce/products/import_commerce');
     $this->assertResponse('403', 'Unprivileged user was unable to access the admin page');
   }
+
 }

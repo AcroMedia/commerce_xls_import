@@ -898,11 +898,6 @@ function commerce_xls_import_validate_sku($row, $sku) {
 
 /**
  * Gets the text format to be used in the body of the product.
- *
- * @param $user
- *   The user.
- * @return string
- *   The text format to use.
  */
 function commerce_xls_import_get_text_format($user) {
   $formats = filter_formats($user);
