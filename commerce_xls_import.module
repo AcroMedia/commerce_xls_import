@@ -149,14 +149,14 @@ function commerce_xls_import_settings() {
 
     $form[$record['bundle']]['template-' . $record['bundle']] = array(
       '#type' => 'submit',
-      '#value' => t('Download !product_type Template', array('!product_type' => $record['bundle'])),
-      '#description' => t('Download a template for !product_type products', array('!product_type' => $record['bundle'])),
+      '#value' => t('Download @product_type Template', array('@product_type' => $record['bundle'])),
+      '#description' => t('Download a template for @product_type products', array('@product_type' => $record['bundle'])),
       '#attributes' => array('product_type' => $record['bundle']),
     );
     $form[$record['bundle']][$record['bundle']] = array(
       '#type' => 'file',
-      '#title' => t('Upload !product_type Import File', array('!product_type' => $record['bundle'])),
-      '#description' => t('Upload the .xls file that contains any !product_type products to add to the catalogue', array('!product_type' => $record['bundle'])),
+      '#title' => t('Upload @product_type Import File', array('@product_type' => $record['bundle'])),
+      '#description' => t('Upload the .xls file that contains any @product_type products to add to the catalogue', array('@product_type' => $record['bundle'])),
       '#attributes' => array('product_type' => $record['bundle']),
     );
 
@@ -164,8 +164,8 @@ function commerce_xls_import_settings() {
 
   $last_import = variable_get('commerce_xls_import_last_import', '');
   if ($last_import != '') {
-    $last_import_message = '<h6>' . t('Last Import Completed: !time', array('!time' => date('F j, Y - h:i T', $last_import['completed']))) . '</h6>';
-    $last_import_message .= t('!row/!total products evaluated during last import', array('!row' => $last_import['row'], '!total' => $last_import['total']));
+    $last_import_message = '<h6>' . t('Last Import Completed: @time', array('@time' => format_date($last_import['completed'], 'medium', 'F j, Y - h:i T'))) . '</h6>';
+    $last_import_message .= t('@row/@total products evaluated during last import', array('@row' => $last_import['row'], '@total' => $last_import['total']));
   }
   else {
     $last_import_message = '';
@@ -239,7 +239,7 @@ function commerce_xls_import_settings() {
 
   $image_instructions = "";
   $image_instructions .= "<h5 id='image-description'>" . t("Image Instructions") . "</h5>";
-  $image_instructions .= "<p>" . t('Images may be uploaded through ftp by creating a .zip file that contains the necessary images to the /import_images directory named !strongproduct_images.zip!endstrong. Full path : sites/default/files/import_images/product_images.zip', array('!strong' => '<strong>', '!endstrong' => '</strong>')) . "</p>";
+  $image_instructions .= "<p>" . t('Images may be uploaded through ftp by creating a .zip file that contains the necessary images to the /import_images directory named @strongproduct_images.zip@endstrong. Full path : sites/default/files/import_images/product_images.zip', array('@strong' => '<strong>', '@endstrong' => '</strong>')) . "</p>";
 
   $form['legend']['images-text'] = array(
     '#markup' => $image_instructions,
@@ -335,9 +335,10 @@ function commerce_xls_import_permission() {
  * Returns True if one is running, otherwise false.
  */
 function commerce_xls_import_is_running() {
+
   $result = db_select('background_process', 'bp')
     ->fields('bp', array('callback', 'exec_status'))
-    ->condition('callback', '%commerce_xls_import_import%', 'LIKE')
+    ->condition('callback', db_like('commerce_xls_import_import') . '%', 'LIKE')
     ->execute();
 
   if ($result->rowCount()) {
@@ -453,7 +454,7 @@ function commerce_xls_import_settings_submit($form, &$form_state) {
       readfile("$path/$filename");
 
       // Exit is used to keep page from refreshing which would prevent download.
-      exit;
+      drupal_exit();
     }
     else {
       drupal_set_message(t('No results found'), 'error');
@@ -470,7 +471,7 @@ function commerce_xls_import_settings_submit($form, &$form_state) {
     readfile("$path/$filename");
 
     // Exit is used to keep page from refreshing which would prevent download.
-    exit;
+    drupal_exit();
   }
 }
 
@@ -1521,7 +1522,7 @@ function commerce_xls_import_unpack_zip($zip_dir, $filename, $save_dir) {
     return FALSE;
   }
   else {
-    drupal_set_message(t("@filename.zip extracted successfully to @save_dir", array("!filename" => $filename, "@save_dir" => $save_dir)));
+    drupal_set_message(t("@filename.zip extracted successfully to @save_dir", array("@filename" => $filename, "@save_dir" => $save_dir)));
     return TRUE;
   }
 }
@@ -1623,7 +1624,7 @@ function commerce_xls_import_current_status() {
     variable_set('commerce_xls_import_completed', 1);
   }
   else {
-    $message = t("Status : !current/!total products evaluated", array("!current" => $current['completed'], "!total" => $current['total']));
+    $message = t("Status : @current/@total products evaluated", array("@current" => $current['completed'], "@total" => $current['total']));
     $status = 0;
   }
 
