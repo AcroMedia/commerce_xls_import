@@ -302,7 +302,7 @@ function commerce_xls_import_settings() {
       if (isset($info['description']) && $info['description'] != NULL) {
         // Only display description if it exists.
         $form['legend']['field-legend'][$product][$field] = array(
-          '#markup' => '<div class="product-field"><h6>' . $field . '</h6><span class="product-field-description">' . $info['description'] . '</span></div><div style="clear:both;"></div>',
+          '#markup' => '<div class="product-field"><h6>' . $field . '</h6><span class="product-field-description">' . t("@description", array('@description' => $info['description'])) . '</span></div><div style="clear:both;"></div>',
         );
       }
     }
@@ -897,6 +897,27 @@ function commerce_xls_import_validate_sku($row, $sku) {
 }
 
 /**
+ * Gets the text format to be used in the body of the product.
+ *
+ * @param $user
+ *   The user.
+ * @return string
+ *   The text format to use.
+ */
+function commerce_xls_import_get_text_format($user) {
+  $formats = filter_formats($user);
+
+  if (isset($formats['full_html'])) {
+    return "full_html";
+  }
+  elseif (isset($formats['filtered_html'])) {
+    return "filtered_html";
+  }
+
+  return "plain_text";
+}
+
+/**
  * Creates the product.
  */
 function commerce_xls_import_create_product($row, $values, $entity_info, $product_type, $image_info = array()) {
@@ -919,6 +940,8 @@ function commerce_xls_import_create_product($row, $values, $entity_info, $produc
   $new_language = $language;
   $language = LANGUAGE_NONE;
 
+  $text_format = commerce_xls_import_get_text_format($user);
+
   // Set up form state.
   $form_state['values']['title'] = $entity_info['title'];
   $form_state['values']['language'] = $language;
@@ -927,7 +950,7 @@ function commerce_xls_import_create_product($row, $values, $entity_info, $produc
     "$language" => array(
       0 => array(
         'value' => $entity_info["body"],
-        'format' => 'full_html',
+        'format' => $text_format,
       ),
     ),
   );

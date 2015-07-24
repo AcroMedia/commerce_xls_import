@@ -11,9 +11,9 @@
  * Uninstall Function.
  */
 function commerce_xls_import_uninstall() {
-  variable_del('import_count_status');
-  variable_del('import_completed');
-  variable_del('last_import');
+  variable_del('commerce_xls_import_import_count_status');
+  variable_del('commerce_xls_import_completed');
+  variable_del('commerce_xls_import_last_import');
 }
 
 /**
