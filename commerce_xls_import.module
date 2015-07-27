@@ -143,7 +143,7 @@ function commerce_xls_import_settings() {
 
     $form[$record['bundle']] = array(
       '#type' => 'markup',
-      '#prefix' => '<div class="product-options ' . $record['bundle'] . '">',
+      '#prefix' => '<div class="product-options ' . t('@bundle', array('@bundle' => $record['bundle'])) . '">',
       '#suffix' => '</div><div style="clear:both" class="divider"></div>',
     );
 
@@ -164,7 +164,12 @@ function commerce_xls_import_settings() {
 
   $last_import = variable_get('commerce_xls_import_last_import', '');
   if ($last_import != '') {
-    $last_import_message = '<h6>' . t('Last Import Completed: @time', array('@time' => format_date($last_import['completed'], 'medium', 'F j, Y - h:i T'))) . '</h6>';
+    $last_import_message = '<h6>' . t('Last Import Completed: @time',
+        array(
+          '@time' => format_date($last_import['completed'],
+          'medium',
+          'F j, Y - h:i T'),
+        )) . '</h6>';
     $last_import_message .= t('@row/@total products evaluated during last import', array('@row' => $last_import['row'], '@total' => $last_import['total']));
   }
   else {
