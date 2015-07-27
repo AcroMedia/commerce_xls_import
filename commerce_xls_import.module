@@ -335,10 +335,9 @@ function commerce_xls_import_permission() {
  * Returns True if one is running, otherwise false.
  */
 function commerce_xls_import_is_running() {
-
   $result = db_select('background_process', 'bp')
     ->fields('bp', array('callback', 'exec_status'))
-    ->condition('callback', db_like('commerce_xls_import_import') . '%', 'LIKE')
+    ->condition('callback', '%' . db_like('commerce_xls_import_import') . '%', 'LIKE')
     ->execute();
 
   if ($result->rowCount()) {
