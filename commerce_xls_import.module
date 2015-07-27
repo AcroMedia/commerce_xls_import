@@ -667,6 +667,9 @@ function commerce_xls_import_import(array $file = NULL, $validate = FALSE) {
       $row = 1;
       foreach ($result as $sheet) {
         foreach ($sheet as $product) {
+          if (commerce_xls_import_stopped()) {
+            break;
+          }
           $row++;
 
           // Set the import completion status.
