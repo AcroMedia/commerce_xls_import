@@ -443,14 +443,14 @@ function commerce_xls_import_settings_submit($form, &$form_state) {
   }
   elseif ($form_state['clicked_button']['#id'] == 'edit-errors-button') {
 
-    $path = realpath(".") . "/" . variable_get('file_public_path', conf_path() . '/files');
     $filename = "product_import_results.xls";
+    $path = file_build_uri($filename);
 
-    if (is_readable("$path/$filename")) {
+    if (is_readable($path)) {
       header('Content-Type: application/vnd.openxmlformats-officedocument.spreadsheetml.sheet');
       header('Content-Disposition: attachment;filename="' . $filename . '"');
       header('Cache-Control: max-age=0');
-      readfile("$path/$filename");
+      readfile($path);
 
       // Exit is used to keep page from refreshing which would prevent download.
       drupal_exit();
@@ -465,9 +465,10 @@ function commerce_xls_import_settings_submit($form, &$form_state) {
 
     commerce_xls_import_export('template', NULL, $product_type);
 
-    $path = realpath(".") . "/" . variable_get('file_public_path', conf_path() . '/files');
     $filename = $product_type . "_template.xls";
-    readfile("$path/$filename");
+    $path = file_build_uri($filename);
+
+    readfile($path);
 
     // Exit is used to keep page from refreshing which would prevent download.
     drupal_exit();
@@ -520,9 +521,6 @@ function commerce_xls_import_export($op, $product_info = NULL, $product_type = N
   error_reporting(E_ALL ^ E_STRICT);
 
   $data = array('Products' => array());
-
-  $path = realpath(".") . "/" . variable_get('file_public_path', conf_path() . '/files');
-
   $headers = commerce_xls_import_generate_headers($nids, $product_type);
   $options = array('format' => 'xls', 'title' => t('Product Import Template'));
 
@@ -552,7 +550,7 @@ function commerce_xls_import_export($op, $product_info = NULL, $product_type = N
 
   switch ($op) {
     case 'errors':
-      if (!commerce_xls_import_generate_errors_xls($options, $path, $headers, $data)) {
+      if (!commerce_xls_import_generate_errors_xls($options, $headers, $data)) {
         // If error, refresh page to display error.
         drupal_goto("admin/commerce/products/import_commerce");
       }
@@ -560,7 +558,7 @@ function commerce_xls_import_export($op, $product_info = NULL, $product_type = N
       break;
 
     case 'template':
-      if (!commerce_xls_import_generate_template_xls($path, $product_type, $headers, $data, $options)) {
+      if (!commerce_xls_import_generate_template_xls($product_type, $headers, $data, $options)) {
         // If error, refresh page to display error.
         drupal_goto("admin/commerce/products/import_commerce");
       }
@@ -575,9 +573,14 @@ function commerce_xls_import_export($op, $product_info = NULL, $product_type = N
  * @return bool
  *    Returns TRUE upon success and False upon failure.
  */
-function commerce_xls_import_generate_template_xls($path, $product_type, $headers, $data, $options) {
+function commerce_xls_import_generate_template_xls($product_type, $headers, $data, $options) {
   $filename = $product_type . "_template.xls";
-  $result = phpexcel_export($headers, $data, "$path/$filename", $options);
+  $path = file_build_uri($filename);
+
+  if (file_exists($path)) {
+    file_unmanaged_delete($path);
+  }
+  $result = phpexcel_export($headers, $data, drupal_realpath($path), $options);
 
   if ($result == PHPEXCEL_SUCCESS) {
     header('Content-Type: application/vnd.openxmlformats-officedocument.spreadsheetml.sheet');
@@ -600,15 +603,15 @@ function commerce_xls_import_generate_template_xls($path, $product_type, $header
  * @return bool
  *    Returns TRUE upon success and False upon failure.
  */
-function commerce_xls_import_generate_errors_xls($options, $path, $headers, $data) {
+function commerce_xls_import_generate_errors_xls($options, $headers, $data) {
   $filename = "product_import_results.xls";
+  $path = file_build_uri($filename);
   $options['errors'] = TRUE;
 
-  if (file_exists("$path/$filename")) {
-    $command = "rm $path/$filename 2>&1";
-    exec($command);
+  if (file_exists($path)) {
+    file_unmanaged_delete($path);
   }
-  $result = phpexcel_export($headers, $data, "$path/$filename", $options);
+  $result = phpexcel_export($headers, $data, drupal_realpath($path), $options);
 
   if ($result == PHPEXCEL_SUCCESS) {
     header('Content-Type: application/vnd.openxmlformats-officedocument.spreadsheetml.sheet');
