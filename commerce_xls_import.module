@@ -131,35 +131,27 @@ function commerce_xls_import_settings() {
     '#weight' => 0,
   );
 
-  // Get the drupal commerce product types.
-  $query = db_select('field_data_field_product', 'fdfp')
-    ->fields('fdfp', array("bundle"))
-    ->distinct();
+  foreach (commerce_product_types() as $product_type) {
+    $types[] = $product_type['type'];
 
-  $result = $query->execute();
-
-  while ($record = $result->fetchAssoc()) {
-    $types[] = $record['bundle'];
-
-    $form[$record['bundle']] = array(
+    $form[$product_type['type']] = array(
       '#type' => 'markup',
-      '#prefix' => '<div class="product-options ' . t('@bundle', array('@bundle' => $record['bundle'])) . '">',
+      '#prefix' => '<div class="product-options ' . t('@bundle', array('@bundle' => $product_type['type'])) . '">',
       '#suffix' => '</div><div style="clear:both" class="divider"></div>',
     );
 
-    $form[$record['bundle']]['template-' . $record['bundle']] = array(
+    $form[$product_type['type']]['template-' . $product_type['type']] = array(
       '#type' => 'submit',
-      '#value' => t('Download @product_type Template', array('@product_type' => $record['bundle'])),
-      '#description' => t('Download a template for @product_type products', array('@product_type' => $record['bundle'])),
-      '#attributes' => array('product_type' => $record['bundle']),
+      '#value' => t('Download @product_type Template', array('@product_type' => $product_type['type'])),
+      '#description' => t('Download a template for @product_type products', array('@product_type' => $product_type['type'])),
+      '#attributes' => array('product_type' => $product_type['type']),
     );
-    $form[$record['bundle']][$record['bundle']] = array(
+    $form[$product_type['type']][$product_type['type']] = array(
       '#type' => 'file',
-      '#title' => t('Upload @product_type Import File', array('@product_type' => $record['bundle'])),
-      '#description' => t('Upload the .xls file that contains any @product_type products to add to the catalogue', array('@product_type' => $record['bundle'])),
-      '#attributes' => array('product_type' => $record['bundle']),
+      '#title' => t('Upload @product_type Import File', array('@product_type' => $product_type['type'])),
+      '#description' => t('Upload the .xls file that contains any @product_type products to add to the catalogue', array('@product_type' => $product_type['type'])),
+      '#attributes' => array('product_type' => $product_type['type']),
     );
-
   }
 
   $last_import = variable_get('commerce_xls_import_last_import', '');
@@ -299,14 +291,14 @@ function commerce_xls_import_settings() {
     '#markup' => '<div class="product-field"><h6>' . t('language') . '</h6><span class="product-field-description">' . t('The language short hand to create the product in. (en, fr etc)') . '</span></div><div style="clear:both;"></div>',
   );
 
-  foreach ($types as $product) {
-    $fields = commerce_xls_import_get_possible_fields($product);
+  foreach (commerce_product_types() as $product_type) {
+    $fields = commerce_xls_import_get_possible_fields($product_type['type']);
     foreach ($fields as $field) {
-      $info = field_info_instance('node', $field, $product);
+      $info = field_info_instance('node', $field, $product_type['type']);
 
       if (isset($info['description']) && $info['description'] != NULL) {
         // Only display description if it exists.
-        $form['legend']['field-legend'][$product][$field] = array(
+        $form['legend']['field-legend'][$product_type['type']][$field] = array(
           '#markup' => '<div class="product-field"><h6>' . $field . '</h6><span class="product-field-description">' . t("@description", array('@description' => $info['description'])) . '</span></div><div style="clear:both;"></div>',
         );
       }
