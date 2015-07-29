@@ -53,6 +53,19 @@ function commerce_xls_import_permission() {
 }
 
 /**
+ * Implements hook_theme().
+ */
+function commerce_xls_import_theme() {
+  return array(
+    'commerce_xls_import_instructions' => array(
+      'file' => 'includes/commerce_xls_import.theme.inc',
+      'template' => 'templates/commerce_xls_import_instructions',
+      'variables' => array(),
+    ),
+  );
+}
+
+/**
  * Implements hook_phpexcel_export().
  */
 function commerce_xls_import_phpexcel_export($op, &$data, &$phpexcel, $options, $column = NULL, $row = NULL) {

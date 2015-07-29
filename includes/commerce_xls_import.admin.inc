@@ -31,6 +31,10 @@ function commerce_xls_import_start() {
     '#weight' => 0,
   );
 
+  $form['legend']['output'] = array(
+    '#markup' => theme('commerce_xls_import_instructions'),
+  );
+
   foreach (commerce_product_types() as $product_type) {
     $types[] = $product_type['type'];
 
@@ -114,99 +118,6 @@ function commerce_xls_import_start() {
   $form['buttons']['errors_button'] = array(
     '#type' => 'submit',
     '#value' => t('Retrieve Latest Results'),
-  );
-
-  // @TODO - not critical but we could probably move a whole bunch of this formatting stuff into some templates called through theme functions, all this markup screams template
-  // https://www.drupal.org/node/715160
-  $description = "<h3>" . t('Commerce Import') . "</h2>";
-  $description .= "<h5>" . t('Instructions') . "</h5>";
-  $description .= "<p>" . t('There are 3 main functions for the Commerce Import, which are:') . "</p>";
-  $description .= "<ul>";
-  $description .= "<li>" . t('Import Products') . "</li>";
-  $description .= "<li>" . t('Validate Products Without Importing') . "</li>";
-  $description .= "<li>" . t('Generate Product Templates') . "</li>";
-  $description .= "</ul>";
-  $description .= "<p>" . t("Using the product templates, a list of products to add may be uploaded using the appropriate file upload section which will then be added to the commerce catalogue. Use the legend below to figure out which fields belong to the base product, or each variation.") . "</p>";
-  $description .= "<p>" . t("When an import is complete, a result document will be generated to show how the import went. If the product was imported successfully, the line will be marked green. If the product had an error, the bad fields will be marked red and the product will not be created, nor will it's variations. If a variation has an error, the field will be marked red.") . "</p>";
-  $description .= "<p>" . t("If you find an error and wish to change that product in question, make your changes in the error document and submit it using the regular import functionality. This will update all the products in the file and not create new ones.") . "</p>";
-
-  $form['legend']['description'] = array(
-    '#markup' => $description,
-  );
-
-  $image_instructions = "";
-  $image_instructions .= "<h5 id='image-description'>" . t("Image Instructions") . "</h5>";
-  $image_instructions .= "<p>" . t('Images may be uploaded through ftp by creating a .zip file that contains the necessary images to the /import_images directory named @strongproduct_images.zip@endstrong. Full path : sites/default/files/import_images/product_images.zip', array('@strong' => '<strong>', '@endstrong' => '</strong>')) . "</p>";
-
-  $form['legend']['images-text'] = array(
-    '#markup' => $image_instructions,
-  );
-
-  $form['legend']['parent'] = array(
-    '#markup' => '<div id="legend-swatches"><div class="excel-swatches swatch-container" ><h6>' . t('Field Colors') . '</h6><div id="parent-swatch" ><div class="swatch"><span>' . t('Parent product') . '</span></div><span>' . t('The fields necessary to create a base product') . '</span></div>',
-  );
-  $form['legend']['variation'] = array(
-    '#markup' => '<div id="variation-swatch"><div class="swatch"><span>' . t('Variation') . '</span></div><span>' . t('The fields that need to be filled out to successfully create a product variation') . '</span></div>',
-  );
-
-  $form['legend']['both'] = array(
-    '#markup' => '<div id="both-swatch"><div class="swatch">' . t('Parent and variation') . '</span></div><span>' . t('The fields required by both  base product and its variations') . '</span></div></div>',
-  );
-
-  $form['legend']['result_colors'] = array(
-    '#markup' => '<div class="result-swatches swatch-container" ><h6>' . t('Result Colors') . '</h6>',
-  );
-
-  $form['legend']['warning'] = array(
-    '#markup' => '<div id="warning-swatch"><div class="swatch"><span>' . t('Warning') . '</span></div><span>' . t("A field highlighted in this color may have something wrong with it, or it hasn't been evaluated") . '</span></div>',
-  );
-  $form['legend']['error'] = array(
-    '#markup' => '<div id="error-swatch"><div  class="swatch"><span>' . t('Error') . '</span></div><span>' . t('A field in this color has had some errors found') . '</span></div>',
-  );
-  $form['legend']['success'] = array(
-    '#markup' => '<div id="success-swatch"><div  class="swatch"><span>' . t('Successfull') . '</span></div><span>' . t('A field in highlighted in this color is correct') . '</span></div></div></div>',
-  );
-
-  $form['legend']['field-legend'] = array(
-    '#type' => 'fieldset',
-    '#title' => t('Field Help'),
-    '#collapsed' => TRUE,
-    '#collapsible' => TRUE,
-    '#prefix' => '<div style="clear:both"></div>',
-  );
-
-  $form['legend']['field-legend']['product_title'] = array(
-    '#markup' => '<div class="product-field"><h6>' . t('title') . '</h6><span class="product-field-description">' . t('The title of the base product you are creating') . '</span></div><div style="clear:both;"></div>',
-  );
-
-  $form['legend']['field-legend']['sku'] = array(
-    '#markup' => '<div class="product-field"><h6>' . t('sku') . '</h6><span class="product-field-description">' . t('The sku of the product variation you are creating') . '</span></div><div style="clear:both;"></div>',
-  );
-
-  $form['legend']['field-legend']['status'] = array(
-    '#markup' => '<div class="product-field"><h6>' . t('status') . '</h6><span class="product-field-description">' . t('The status of the product or variation. 1 if the item is active, 0 if inactive') . '</span></div><div style="clear:both;"></div>',
-  );
-
-  $form['legend']['field-legend']['language'] = array(
-    '#markup' => '<div class="product-field"><h6>' . t('language') . '</h6><span class="product-field-description">' . t('The language short hand to create the product in. (en, fr etc)') . '</span></div><div style="clear:both;"></div>',
-  );
-
-  foreach (commerce_product_types() as $product_type) {
-    $fields = commerce_xls_import_get_possible_fields($product_type['type']);
-    foreach ($fields as $field) {
-      $info = field_info_instance('node', $field, $product_type['type']);
-
-      if (isset($info['description']) && $info['description'] != NULL) {
-        // Only display description if it exists.
-        $form['legend']['field-legend'][$product_type['type']][$field] = array(
-          '#markup' => '<div class="product-field"><h6>' . $field . '</h6><span class="product-field-description">' . t("@description", array('@description' => $info['description'])) . '</span></div><div style="clear:both;"></div>',
-        );
-      }
-    }
-  }
-
-  $form['legend']['field-legend']['variation_title'] = array(
-    '#markup' => '<div class="product-field"><h6>' . t('Variation Title') . '</h6><span class="product-field-description">' . t('The title of the variation of the product you are creating. If left blank it will use the title of the base product.') . '</span></div><div style="clear:both;"></div>',
   );
 
   return $form;
