@@ -6,7 +6,8 @@ dependencies[] = phpexcel
 dependencies[] = background_process
 dependencies[] = commerce_product
 
-stylesheets[all][] = commerce_xls_import.css
-scripts[] = commerce_xls_import.js
+stylesheets[all][] = css/commerce_xls_import.css
+scripts[] = js/commerce_xls_import.js
 
-files[] = commerce_xls_import.test
+files[] = tests/commerce_xls_import.test
+files[] = classes/CommerceXlsImportVariables.inc
