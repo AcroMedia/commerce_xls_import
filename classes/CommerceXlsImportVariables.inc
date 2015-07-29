@@ -12,6 +12,7 @@ class CommerceXlsImportVariables {
   private static $validate;
   private static $import;
   private static $status;
+  private static $rowTitleStatus = array();
 
   /**
    * Set $status.
@@ -41,6 +42,23 @@ class CommerceXlsImportVariables {
     elseif (CommerceXlsImportVariables::$import) {
       CommerceXlsImportVariables::$status = "Import";
     }
+  }
+
+  /**
+   * Sets the column's title status.
+   */
+  public static function setRowTitleErrorStatus($row, $status) {
+    CommerceXlsImportVariables::$rowTitleStatus[$row] = $status;
+  }
+
+  /**
+   * Gets the column's title status.
+   */
+  public static function rowTitleHasError($row) {
+    if (isset(CommerceXlsImportVariables::$rowTitleStatus[$row])) {
+      return CommerceXlsImportVariables::$rowTitleStatus[$row];
+    }
+    return FALSE;
   }
 
   /**
