@@ -15,7 +15,7 @@ function commerce_xls_import_start() {
   $types = array();
 
   if (variable_get('commerce_xls_import_completed', '') == 1) {
-    drupal_set_message(t('Import/Validate Complete'));
+    drupal_set_message(t('Import/Validate Complete with @errors errors', array('@errors' => variable_get('commerce_xls_import_error_count'))));
     variable_del('commerce_xls_import_completed');
   }
 
@@ -66,7 +66,12 @@ function commerce_xls_import_start() {
             'medium',
             'F j, Y - h:i T'),
         )) . '</h6>';
-    $last_import_message .= t('@row/@total products evaluated during last import', array('@row' => $last_import['row'], '@total' => $last_import['total']));
+    $last_import_message .= t('@row/@total products evaluated during last import with @errors errors',
+      array(
+        '@row' => $last_import['row'],
+        '@total' => $last_import['total'],
+        '@errors' => variable_get('commerce_xls_import_error_count')
+      ));
   }
   else {
     $last_import_message = '';
@@ -208,7 +213,7 @@ function commerce_xls_import_start_submit($form, &$form_state) {
   }
   elseif ($form_state['clicked_button']['#id'] == 'edit-import-stop') {
     if (commerce_xls_import_stop_import()) {
-      drupal_set_message(t('Import stopping at next parent product'), 'status', FALSE);
+      drupal_set_message(t('Import stopping at next product'), 'status', FALSE);
     }
     else {
       drupal_set_message(t('Failed to Stop Import'), 'error', FALSE);

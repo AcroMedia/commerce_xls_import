@@ -392,6 +392,7 @@ function commerce_xls_import_import(array $file = NULL, $validate = FALSE) {
   module_load_include('inc', 'commerce_xls_import', 'includes/commerce_xls_import.errors');
 
   CommerceXlsImportVariables::setValidate($validate);
+  variable_set('commerce_xls_import_error_count', 0);
 
   // Get the product type.
   $product_type = $file['product_type'];
@@ -1237,7 +1238,12 @@ function commerce_xls_import_current_status() {
     variable_set('commerce_xls_import_completed', 1);
   }
   else {
-    $message = t("Status : @current/@total products evaluated", array("@current" => $current['completed'], "@total" => $current['total']));
+    $message = t("Status : @current/@total products evaluated with @errors errors",
+      array(
+        '@current' => $current['completed'],
+        '@total' => $current['total'],
+        '@errors' => variable_get('commerce_xls_import_error_count')
+      ));
     $status = 0;
   }
 
