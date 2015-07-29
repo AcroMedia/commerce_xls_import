@@ -34,9 +34,9 @@
 <h5 id="image-description"><?php print t("Image Instructions"); ?></h5>
 
 <p>
-  <?php print t('Images may be uploaded through ftp by creating a .zip file that contains the necessary images to the /import_images directory named @strongproduct_images.zip@endstrong. Full path : sites/default/files/import_images/product_images.zip', array(
-    '@strong' => '<strong>',
-    '@endstrong' => '</strong>'
+  <?php print t('Images may be uploaded through ftp by creating a .zip file that contains the necessary images to the /import_images directory named !zipname. Full path : @filepath', array(
+    '!zipname' => '<strong>product_images.zip</strong>',
+    '@filepath' => file_create_url('public://import_images/product_images.zip'),
   )); ?>
 </p>
 
