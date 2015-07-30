@@ -1171,9 +1171,19 @@ function commerce_xls_import_unpack_zip($zip_dir, $filename, $save_dir) {
 }
 
 /**
- * Gets any fields that may apply to the product.
+ * Gets any fields that may apply to the product and (optionally) their type.
+ *
+ * @param string $product_type
+ *   The product type.
+ * @param bool $get_field_type
+ *   Whether or not to include field type.
+ *
+ * @return array
+ *   If $get_field_type is FALSE returns an array of all possible product types.
+ *   If $get_field_type is TRUE returns an array of all possible product types
+ *   as well as their field type.
  */
-function commerce_xls_import_get_possible_fields($product_type) {
+function commerce_xls_import_get_possible_fields($product_type, $get_field_type = FALSE) {
   $result = array();
   $fields = field_info_field_map();
   foreach ($fields as $key => $field) {
@@ -1186,7 +1196,12 @@ function commerce_xls_import_get_possible_fields($product_type) {
       // Also don't want to include the field rating since it's based off user
       // comments and isn't something that can be set by a simple value.
       if ($key != 'field_product' && $key != 'field_rating' && $key != 'title_field') {
-        $result[$key] = $key;
+        if ($get_field_type) {
+          $result[$key]['type'] = $field['type'];
+        }
+        else {
+          $result[$key] = $key;
+        }
       }
     }
   }
