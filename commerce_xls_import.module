@@ -617,7 +617,9 @@ function commerce_xls_import_check_set_images($row, $field, &$form_state, $image
   foreach ($filenames as $filename) {
     if ($filename != "") {
       if (pathinfo($filename, PATHINFO_EXTENSION) == "") {
-        commerce_xls_import_set_error($row, $key, "Entered image is missing extension");
+        if (commerce_xls_import_get_error($row, $key) == '') {
+          commerce_xls_import_set_error($row, $key, "Entered image is missing extension");
+        }
       }
       else {
         $file = file_load($image_info[trim($filename)]);
@@ -625,7 +627,9 @@ function commerce_xls_import_check_set_images($row, $field, &$form_state, $image
           $form_state['values'][$key][$language] = get_object_vars($file);
         }
         else {
-          commerce_xls_import_set_error($row, $key, "File could not be loaded");
+          if (commerce_xls_import_get_error($row, $key) == '') {
+            commerce_xls_import_set_error($row, $key, "File could not be loaded");
+          }
         }
       }
     }
@@ -915,7 +919,9 @@ function commerce_xls_import_update_entity_info($row, $product, $entity_info, $v
             // No image entered.
           }
           elseif (pathinfo($filename, PATHINFO_EXTENSION) == "") {
-            commerce_xls_import_set_error($row, $key, "Image is missing extension");
+            if (commerce_xls_import_get_error($row, $key) == '') {
+              commerce_xls_import_set_error($row, $key, "Image is missing extension");
+            }
           }
           else {
             $file = file_load($image_info[trim($filename)]);
@@ -925,7 +931,9 @@ function commerce_xls_import_update_entity_info($row, $product, $entity_info, $v
               file_usage_add($file, 'commerce_xls_import', 'user', 1);
             }
             else {
-              commerce_xls_import_set_error($row, $key, "Invalid image data entered");
+              if (commerce_xls_import_get_error($row, $key) == '') {
+                commerce_xls_import_set_error($row, $key, "Invalid image data entered");
+              }
             }
           }
         }

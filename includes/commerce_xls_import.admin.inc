@@ -70,7 +70,7 @@ function commerce_xls_import_start() {
       array(
         '@row' => $last_import['row'],
         '@total' => $last_import['total'],
-        '@errors' => variable_get('commerce_xls_import_error_count')
+        '@errors' => variable_get('commerce_xls_import_error_count'),
       ));
   }
   else {
