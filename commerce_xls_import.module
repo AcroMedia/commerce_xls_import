@@ -1077,7 +1077,7 @@ function commerce_xls_import_get_headers(&$phpexcel) {
 function commerce_xls_import_extract_zip() {
   $dir = realpath(".") . "/" . variable_get('file_public_path', conf_path() . '/files');
 
-  $import_successful = commerce_xls_import_unpack_zip($dir, 'import_images/product_images', "$dir");
+  $import_successful = commerce_xls_import_unpack_zip($dir, 'product_images', "$dir");
 
   // Add new files to the file table.
   if ($import_successful) {

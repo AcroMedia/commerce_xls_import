@@ -58,6 +58,12 @@ function commerce_xls_import_start() {
     );
   }
 
+  $form['product_images'] = array(
+    '#type' => 'file',
+    '#title' => t('Upload Product Images File'),
+    '#description' => t('Upload the .zip file that contains any product images to add to the catalogue'),
+  );
+
   $last_import = variable_get('commerce_xls_import_last_import', '');
   if ($last_import != '') {
     $last_import_message = '<h6>' . t('Last Import Completed: @time',
@@ -135,8 +141,20 @@ function commerce_xls_import_start_validate($form, &$form_state) {
 
   if (isset($_FILES['files'])) {
     foreach ($_FILES['files']['tmp_name'] as $field_name => $value) {
-      if ($value != NULL && is_uploaded_file($_FILES['files']['tmp_name'][$field_name])) {
-        $file = file_save_upload($field_name);
+      if ($field_name == 'product_images' && !empty($value)) {
+        $regex = '/\.(' . preg_replace('/ +/', '|', preg_quote('zip')) . ')$/i';
+        if (!preg_match($regex, $_FILES['files']['name']['product_images'])) {
+          $error = t('Product images need to be uploaded in a .zip file');
+          drupal_set_message($error, 'error');
+        }
+        else {
+          drupal_move_uploaded_file($value, file_build_uri('product_images.zip'));
+        }
+
+      }
+      elseif ($value != NULL && is_uploaded_file($_FILES['files']['tmp_name'][$field_name])) {
+        $validators = array('file_validate_extensions' => array('xls'));
+        $file = file_save_upload($field_name, $validators);
         if ($file) {
           $form_state['files'][] = array('uri' => $file->uri, 'product_type' => $field_name);
         }

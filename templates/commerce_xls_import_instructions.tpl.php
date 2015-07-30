@@ -34,10 +34,11 @@
 <h5 id="image-description"><?php print t("Image Instructions"); ?></h5>
 
 <p>
-  <?php print t('Images may be uploaded through ftp by creating a .zip file that contains the necessary images to the /import_images directory named !zipname. Full path : @filepath', array(
-    '!zipname' => '<strong>product_images.zip</strong>',
-    '@filepath' => file_create_url('public://import_images/product_images.zip'),
-  )); ?>
+  <?php print t('Images may be uploaded using the "Upload Image Files" upload section at the bottom of the form.'); ?>
+</p>
+
+<p>
+  <?php print t('Make sue that the permissions of the image files allow them to be readable by all.'); ?>
 </p>
 
 <div id="legend-swatches">
@@ -45,7 +46,7 @@
     <h6><?php print t('Field Colors'); ?></h6>
 
     <div id="parent-swatch">
-      <div class="swatch"><span><?php print  t('Parent product'); ?></span>
+      <div class="swatch"><span><?php print t('Parent product'); ?></span>
       </div>
       <span><?php print t('The fields necessary to create a base product'); ?></span>
     </div>
@@ -91,6 +92,11 @@
     </div>
     <div style="clear:both;"></div>
 
+    <div class="product-field"><h6><?php print t('variation_title'); ?></h6>
+      <span class="product-field-description"><?php print t('The title of the variation of the product you are creating. If left blank it will use the title of the base product.'); ?></span>
+    </div>
+    <div style="clear:both;"></div>
+
     <div class="product-field"><h6><?php print t('sku'); ?></h6>
       <span class="product-field-description"><?php print t('The sku of the product variation you are creating'); ?></span>
     </div>
@@ -103,11 +109,6 @@
 
     <div class="product-field"><h6><?php print t('language'); ?></h6>
       <span class="product-field-description"><?php print t('The language short hand to create the product in. (en, fr etc)'); ?></span>
-    </div>
-    <div style="clear:both;"></div>
-
-    <div class="product-field"><h6><?php print t('Variation Title'); ?></h6>
-      <span class="product-field-description"><?php print t('The title of the variation of the product you are creating. If left blank it will use the title of the base product.'); ?></span>
     </div>
 
     <div style="clear:both;"></div>
