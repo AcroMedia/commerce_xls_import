@@ -1412,7 +1412,6 @@ function commerce_xls_import_export_product_data($product_type) {
 
   }
 
-
   return $products;
 }
 
@@ -1473,7 +1472,7 @@ function commerce_xls_import_current_status() {
       array(
         '@current' => $current['completed'],
         '@total' => $current['total'],
-        '@errors' => variable_get('commerce_xls_import_error_count')
+        '@errors' => variable_get('commerce_xls_import_error_count'),
       ));
     $status = 0;
   }

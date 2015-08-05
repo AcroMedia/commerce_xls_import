@@ -81,4 +81,5 @@ class CommerceXlsImportVariables {
   public static function getStatus() {
     return CommerceXlsImportVariables::$status;
   }
+
 }
