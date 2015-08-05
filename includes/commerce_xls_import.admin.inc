@@ -35,8 +35,6 @@ function commerce_xls_import_start() {
   );
 
   foreach (commerce_product_types() as $product_type) {
-    $types[] = $product_type['type'];
-
     $form[$product_type['type']] = array(
       '#type' => 'markup',
       '#prefix' => '<div class="product-options ' . t('@bundle', array('@bundle' => $product_type['type'])) . '">',
