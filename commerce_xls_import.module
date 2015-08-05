@@ -326,8 +326,7 @@ function commerce_xls_import_export($op, $product_info = NULL, $product_type = N
       $count++;
       $new_data_array = array();
 
-      // Not 100% sure, but I think we're just remapping to int keys very names?
-      foreach ($row as $key => $new) {
+      foreach ($row as $new) {
         $new_data_array[] = $new;
       }
 

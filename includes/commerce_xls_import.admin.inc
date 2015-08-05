@@ -12,7 +12,6 @@
  */
 function commerce_xls_import_start() {
   $form = array();
-  $types = array();
 
   if (variable_get('commerce_xls_import_completed', '') == 1) {
     drupal_set_message(t('Import/Validate Complete with @errors errors', array('@errors' => variable_get('commerce_xls_import_error_count'))));
