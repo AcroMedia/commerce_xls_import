@@ -21,7 +21,7 @@ function commerce_xls_import_start() {
   $form['product_type'] = array(
     '#title' => t('Product Type'),
     '#type' => 'select',
-    '#description' => 'Select the product type to export.',
+    '#description' => t('Select the product type to export.'),
     '#options' => $types,
   );
 
@@ -35,7 +35,6 @@ function commerce_xls_import_start() {
     '#type' => 'submit',
     '#value' => t('Begin Export'),
   );
-
 
   $form['buttons'] = array(
     '#type' => 'markup',
