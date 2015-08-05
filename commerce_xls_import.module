@@ -29,6 +29,15 @@ function commerce_xls_import_menu() {
     'type' => MENU_LOCAL_TASK,
   );
 
+  $items['admin/commerce/products/import_commerce/export'] = array(
+    'title' => 'Commerce Export',
+    'description' => 'Export products to XLS.',
+    'page callback' => 'drupal_get_form',
+    'page arguments' => array('commerce_xls_import_start'),
+    'access arguments' => array('administer commerce import'),
+    'file' => 'includes/commerce_xls_import.export.inc',
+  );
+
   $items['admin/commerce/products/import_commerce/get_import_status'] = array(
     'title' => 'Commerce Import Status Update',
     'description' => 'Update the status of the current commerce xls import',
@@ -77,7 +86,6 @@ function commerce_xls_import_phpexcel_export($op, &$data, &$phpexcel, $options, 
     case 'new sheet':
       $phpexcel->getActiveSheet()->getProtection()->setSheet(FALSE);
       $phpexcel->getActiveSheet()->getProtection()->setSort(FALSE);
-
       break;
 
     case 'data':
@@ -93,26 +101,72 @@ function commerce_xls_import_phpexcel_export($op, &$data, &$phpexcel, $options, 
         // error recording there must be a more elegant way to do this but I
         // can't seem to figure one out.
         $headers = commerce_xls_import_get_headers($phpexcel);
-        $error_status = commerce_xls_import_get_column_status($row, $headers[$column]);
-        if (!CommerceXlsImportVariables::rowTitleHasError($row)) {
-          if ($error_status == COMMERCE_XLS_IMPORT_DATA_ERROR) {
-            if ($headers[$column] == 'title') {
-              CommerceXlsImportVariables::setRowTitleErrorStatus($row, TRUE);
-            }
-            $style_array = array(
-              'fill' => array(
-                'type' => PHPExcel_Style_Fill::FILL_SOLID,
-                'startcolor' => array('argb' => '00FF9999'),
-              ),
-              'borders' => array(
-                'allborders' => array(
-                  'style' => PHPExcel_Style_Border::BORDER_THIN,
-                  'color' => array('argb' => '00DA4141'),
+        if (CommerceXlsImportVariables::isImport() || CommerceXlsImportVariables::isValidate()) {
+
+          $error_status = commerce_xls_import_get_column_status($row, $headers[$column]);
+          if (!CommerceXlsImportVariables::rowTitleHasError($row)) {
+            if ($error_status == COMMERCE_XLS_IMPORT_DATA_ERROR) {
+              if ($headers[$column] == 'title') {
+                CommerceXlsImportVariables::setRowTitleErrorStatus($row, TRUE);
+              }
+              $style_array = array(
+                'fill' => array(
+                  'type' => PHPExcel_Style_Fill::FILL_SOLID,
+                  'startcolor' => array('argb' => '00FF9999'),
                 ),
-              ),
-            );
+                'borders' => array(
+                  'allborders' => array(
+                    'style' => PHPExcel_Style_Border::BORDER_THIN,
+                    'color' => array('argb' => '00DA4141'),
+                  ),
+                ),
+              );
+            }
+            elseif ($error_status == COMMERCE_XLS_IMPORT_DATA_WARNING) {
+              $style_array = array(
+                'fill' => array(
+                  'type' => PHPExcel_Style_Fill::FILL_SOLID,
+                  'startcolor' => array('argb' => '00FFFF66'),
+                ),
+                'borders' => array(
+                  'allborders' => array(
+                    'style' => PHPExcel_Style_Border::BORDER_THIN,
+                    'color' => array('argb' => '00CCCC00'),
+                  ),
+                ),
+              );
+            }
+            elseif ($error_status == COMMERCE_XLS_IMPORT_DATA_SUCCESS) {
+              if ($headers[$column] == 'title') {
+                CommerceXlsImportVariables::setRowTitleErrorStatus($row, FALSE);
+              }
+              $style_array = array(
+                'fill' => array(
+                  'type' => PHPExcel_Style_Fill::FILL_SOLID,
+                  'startcolor' => array('argb' => '0078FAA3'),
+                ),
+                'borders' => array(
+                  'allborders' => array(
+                    'style' => PHPExcel_Style_Border::BORDER_THIN,
+                    'color' => array('argb' => '0000994C'),
+                  ),
+                ),
+              );
+            }
+            else {
+              $style_array = array(
+                'fill' => array(
+                  'type' => PHPExcel_Style_Fill::FILL_NONE,
+                ),
+                'borders' => array(
+                  'allborders' => array(
+                    'style' => PHPExcel_Style_Border::BORDER_NONE,
+                  ),
+                ),
+              );
+            }
           }
-          elseif ($error_status == COMMERCE_XLS_IMPORT_DATA_WARNING) {
+          else {
             $style_array = array(
               'fill' => array(
                 'type' => PHPExcel_Style_Fill::FILL_SOLID,
@@ -126,37 +180,6 @@ function commerce_xls_import_phpexcel_export($op, &$data, &$phpexcel, $options, 
               ),
             );
           }
-          elseif ($error_status == COMMERCE_XLS_IMPORT_DATA_SUCCESS) {
-            if ($headers[$column] == 'title') {
-              CommerceXlsImportVariables::setRowTitleErrorStatus($row, FALSE);
-            }
-            $style_array = array(
-              'fill' => array(
-                'type' => PHPExcel_Style_Fill::FILL_SOLID,
-                'startcolor' => array('argb' => '0078FAA3'),
-              ),
-              'borders' => array(
-                'allborders' => array(
-                  'style' => PHPExcel_Style_Border::BORDER_THIN,
-                  'color' => array('argb' => '0000994C'),
-                ),
-              ),
-            );
-          }
-        }
-        else {
-          $style_array = array(
-            'fill' => array(
-              'type' => PHPExcel_Style_Fill::FILL_SOLID,
-              'startcolor' => array('argb' => '00FFFF66'),
-            ),
-            'borders' => array(
-              'allborders' => array(
-                'style' => PHPExcel_Style_Border::BORDER_THIN,
-                'color' => array('argb' => '00CCCC00'),
-              ),
-            ),
-          );
         }
         if (CommerceXlsImportVariables::isImport() && $GLOBALS['nid_column'] != $column) {
           $phpexcel->getStyleByColumnAndRow($column, $row)->getProtection()->setLocked(PHPExcel_Style_Protection::PROTECTION_UNPROTECTED);
@@ -284,6 +307,7 @@ function commerce_xls_import_stopped() {
 function commerce_xls_import_export($op, $product_info = NULL, $product_type = NULL, $nids = FALSE) {
   module_load_include('inc', 'phpexcel');
   module_load_include('inc', 'commerce_xls_import', 'includes/commerce_xls_import.errors');
+  watchdog('aa', print_r($product_info, TRUE));
 
   // NOTE: This is required because the phpexcel module gives strict warnings
   // with its export functionality.
@@ -318,12 +342,18 @@ function commerce_xls_import_export($op, $product_info = NULL, $product_type = N
   }
 
   switch ($op) {
+    case 'export':
+      if (!commerce_xls_import_export_xls($product_type, $options, $headers, $data)) {
+        // If error, refresh page to display error.
+        drupal_goto("admin/commerce/products/import_commerce");
+      }
+      break;
+
     case 'errors':
       if (!commerce_xls_import_generate_errors_xls($options, $headers, $data)) {
         // If error, refresh page to display error.
         drupal_goto("admin/commerce/products/import_commerce");
       }
-
       break;
 
     case 'template':
@@ -376,6 +406,36 @@ function commerce_xls_import_generate_errors_xls($options, $headers, $data) {
   $filename = "product_import_results.xls";
   $path = file_build_uri($filename);
   $options['errors'] = TRUE;
+
+  if (file_exists($path)) {
+    file_unmanaged_delete($path);
+  }
+  $result = phpexcel_export($headers, $data, drupal_realpath($path), $options);
+
+  if ($result == PHPEXCEL_SUCCESS) {
+    header('Content-Type: application/vnd.openxmlformats-officedocument.spreadsheetml.sheet');
+    header('Content-Disposition: attachment;filename="' . $filename . '"');
+    header('Cache-Control: max-age=0');
+
+    return TRUE;
+  }
+  else {
+    drupal_set_message(t('PHPExcel error @result', array('@result' => $result)), 'error');
+    drupal_set_message(t('There was an error generating the import result document. Please try again. If this problem persists, contact the system administrator'), 'error');
+
+    return FALSE;
+  }
+}
+
+/**
+ * Generate product_export.xls.
+ *
+ * @return bool
+ *    Returns TRUE upon success and False upon failure.
+ */
+function commerce_xls_import_export_xls($product_type, $options, $headers, $data) {
+  $filename = $product_type . "_export.xls";
+  $path = file_build_uri($filename);
 
   if (file_exists($path)) {
     file_unmanaged_delete($path);
@@ -1209,6 +1269,31 @@ function commerce_xls_import_get_possible_fields($product_type, $get_field_type 
 }
 
 /**
+ * Gets an array containing all product NIDs by the given type.
+ *
+ * @param string $product_type
+ *   The product type.
+ *
+ * @return array
+ *   An array containing the NIDs of the given product type.
+ */
+function commerce_xls_import_nids_of_type($product_type) {
+  $products = array();
+
+  $result = db_select('node', 'n')
+    ->fields('n', array('nid'))
+    ->condition('n.type', $product_type, '=')
+    ->execute();
+  $records = $result->fetchAllAssoc('nid');
+
+  foreach ($records as $key => $record) {
+    $products[] = $key;
+  }
+
+  return $products;
+}
+
+/**
  * Get the headers needed for the export and import template.
  */
 function commerce_xls_import_generate_headers($nid = NULL, $product_type = NULL) {
@@ -1227,6 +1312,108 @@ function commerce_xls_import_generate_headers($nid = NULL, $product_type = NULL)
   }
 
   return $headers;
+}
+
+/**
+ * Exports an array containing data of all products of a given type.
+ *
+ * @param string $product_type
+ *   The machine readable product type.
+ *
+ * @return array
+ *   The data of all products of the given type.
+ */
+function commerce_xls_import_export_product_data($product_type) {
+  $nids = commerce_xls_import_nids_of_type($product_type);
+  $products = array();
+  $field_info = commerce_xls_import_get_possible_fields($product_type, TRUE);
+
+  $headers_list = commerce_xls_import_generate_headers(NULL, $product_type);
+  $headers = array();
+
+  // Set up headers array to match exported data.
+  foreach ($headers_list['Products'] as $header) {
+    $headers[$header] = '';
+  }
+
+  foreach ($nids as $nid) {
+
+    $product_display = node_load($nid);
+
+    // The entity wrapper.
+    $wrapper = entity_metadata_wrapper('node', $product_display);
+
+    $product_title = $wrapper->title->value(array('sanitize' => TRUE));
+    $product_language = $wrapper->language->value(array('sanitize' => TRUE));
+    $product_body = $wrapper->body->value(array('sanitize' => TRUE));
+
+    // Array containing variation data.
+    $variations = $wrapper->field_product->value(array('sanitize' => TRUE));
+
+    foreach ($variations as $variation) {
+      $data = array();
+      $data['title'] = $product_title;
+      $data['body'] = $product_body['value'];
+      $data['language'] = $product_language;
+      $data['variation_title'] = $variation->title;
+      $data['sku'] = $variation->sku;
+      $data['status'] = $variation->status;
+
+      foreach ($field_info as $key => $field) {
+        switch ($field['type']) {
+          case 'commerce_price':
+            $price = $variation->$key;
+            $data[$key] = $price[$product_language][0]['amount'];
+            break;
+
+          case 'image':
+            $filenames = '';
+            $images = $variation->$key;
+
+            if (!empty($images)) {
+              $images = $images[$product_language];
+              foreach ($images as $image) {
+                $filenames = $filenames . $image['filename'] . ', ';
+              }
+              $filenames = substr($filenames, 0, -2);
+            }
+
+            $data[$key] = $filenames;
+            break;
+
+          case 'taxonomy_term_reference':
+            $name = '';
+            if (!empty($variation->$key)) {
+              $term_reference = $variation->$key;
+              $tid = $term_reference[$product_language][0]['tid'];
+              $term = taxonomy_term_load($tid);
+              $name = $term->name;
+            }
+            else {
+              // Is a field from the product, not the variation.
+              if (isset($wrapper->$key)) {
+                $term_reference = $wrapper->$key->value(array('sanitize' => TRUE));
+                if (!empty($term_reference)) {
+                  $name = $term_reference->name;
+                }
+              }
+            }
+            $data[$key] = $name;
+            break;
+
+        }
+      }
+
+      // Put keys in proper order for export.
+      $data = array_merge($headers, $data);
+
+      $products[] = $data;
+    }
+
+  }
+
+
+  return $products;
 }
 
 /**
