@@ -1342,12 +1342,12 @@ function commerce_xls_import_export_product_data($product_type) {
     // The entity wrapper.
     $wrapper = entity_metadata_wrapper('node', $product_display);
 
-    $product_title = $wrapper->title->value(array('sanitize' => TRUE));
-    $product_language = $wrapper->language->value(array('sanitize' => TRUE));
-    $product_body = $wrapper->body->value(array('sanitize' => TRUE));
+    $product_title = $wrapper->title->value(array('sanitize' => FALSE));
+    $product_language = $wrapper->language->value(array('sanitize' => FALSE));
+    $product_body = $wrapper->body->value(array('sanitize' => FALSE));
 
     // Array containing variation data.
-    $variations = $wrapper->field_product->value(array('sanitize' => TRUE));
+    $variations = $wrapper->field_product->value(array('sanitize' => FALSE));
 
     foreach ($variations as $variation) {
       $data = array();
