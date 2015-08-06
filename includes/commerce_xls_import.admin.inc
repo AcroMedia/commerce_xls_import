@@ -27,7 +27,6 @@ function commerce_xls_import_start() {
     '#title' => t('Instructions'),
     '#collapsed' => TRUE,
     '#collapsible' => TRUE,
-    '#weight' => 0,
   );
 
   $form['legend']['output'] = array(
