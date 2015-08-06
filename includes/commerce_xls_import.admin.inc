@@ -208,6 +208,7 @@ function commerce_xls_import_start_submit($form, &$form_state) {
       ->execute();
 
     foreach ($form_state['files'] as $file) {
+      $file['product_type'] = $form_state['values']['product_type'];
       if (!commerce_xls_import_is_running()) {
         $handle = background_process_start('commerce_xls_import_import', $file);
 
@@ -234,6 +235,7 @@ function commerce_xls_import_start_submit($form, &$form_state) {
       ->execute();
 
     foreach ($form_state['files'] as $file) {
+      $file['product_type'] = $form_state['values']['product_type'];
       if (!commerce_xls_import_is_running()) {
         $handle = background_process_start('commerce_xls_import_import', $file, $validate);
 
