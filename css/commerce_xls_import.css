@@ -80,22 +80,31 @@
 }
 .product-options .form-submit,
 #edit-errors-button,
+#commerce-xls-import-export-products,
+#commerce-xls-import-download-template,
 .product-options .form-submit:active,
 #edit-errors-button:active {
+  -webkit-box-shadow: none;
+  -moz-box-shadow: none;
+  box-shadow: none;
   background: none;
   border: none;
   color: #0074bd;
   font-weight: bold;
+  font-size: 15px;
   text-decoration: none;
   text-shadow: none;
   text-align: left;
   float: left;
+  padding: 0;
 }
 #edit-errors-button {
   float: none !important;
 }
 .product-options .form-submit:hover,
-#edit-errors-button:hover {
+#edit-errors-button:hover,
+#commerce-xls-import-export-products:hover,
+#commerce-xls-import-download-template:hover {
   text-decoration: underline;
 }
 

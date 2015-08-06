@@ -12,12 +12,15 @@
  */
 function commerce_xls_import_start() {
   $form = array();
+  $types = array();
 
   if (variable_get('commerce_xls_import_completed', '') == 1) {
     drupal_set_message(t('Import/Validate Complete with @errors errors', array('@errors' => variable_get('commerce_xls_import_error_count'))));
     variable_del('commerce_xls_import_completed');
   }
-
+  $form['title'] = array(
+    '#markup' => '<h1>' . t('Commerce XLS Import') . '</h1>',
+  );
   $form['message'] = array(
     '#markup' => '<div id="import_status_messages" class="messages status" style="display:none;"></div>',
   );
@@ -35,30 +38,54 @@ function commerce_xls_import_start() {
   );
 
   foreach (commerce_product_types() as $product_type) {
-    $form[$product_type['type']] = array(
-      '#type' => 'markup',
-      '#prefix' => '<div class="product-options ' . t('@bundle', array('@bundle' => $product_type['type'])) . '">',
-      '#suffix' => '</div><div style="clear:both" class="divider"></div>',
-    );
-
-    $form[$product_type['type']]['template-' . $product_type['type']] = array(
-      '#type' => 'submit',
-      '#value' => t('Download @product_type Template', array('@product_type' => $product_type['type'])),
-      '#description' => t('Download a template for @product_type products', array('@product_type' => $product_type['type'])),
-      '#attributes' => array('product_type' => $product_type['type']),
-    );
-    $form[$product_type['type']][$product_type['type']] = array(
-      '#type' => 'file',
-      '#title' => t('Upload @product_type Import File', array('@product_type' => $product_type['type'])),
-      '#description' => t('Upload the .xls file that contains any @product_type products to add to the catalogue', array('@product_type' => $product_type['type'])),
-      '#attributes' => array('product_type' => $product_type['type']),
-    );
+    $types[$product_type['type']] = $product_type['name'];
   }
+
+  $form['product_type'] = array(
+    '#title' => t('Product Type'),
+    '#type' => 'select',
+    '#description' => t('Select the product type to use in import.'),
+    '#options' => $types,
+    '#attributes' => array(
+      'id' => array('commerce-xls-import-product-type'),
+    ),
+  );
+
+  $form['export_products'] = array(
+    '#type' => 'submit',
+    '#value' => t('Export Products'),
+    '#suffix' => '<div style="clear:both"></div>',
+    '#attributes' => array(
+      'id' => array('commerce-xls-import-export-products'),
+    ),
+  );
+
+  $form['import_file'] = array(
+    '#type' => 'file',
+    '#title' => t('Import File'),
+    '#description' => t('Upload the .xls file that contains products of the selected type'),
+    '#attributes' => array(
+      'id' => array('commerce-xls-import-file-upload'),
+    ),
+  );
+
+  $form['download_template'] = array(
+    '#type' => 'submit',
+    '#name' => 'download_template',
+    '#value' => t('Download Template'),
+    '#suffix' => '<div style="clear:both"></div>',
+    '#attributes' => array(
+      'id' => array('commerce-xls-import-download-template'),
+    ),
+  );
 
   $form['product_images'] = array(
     '#type' => 'file',
     '#title' => t('Upload Product Images File'),
     '#description' => t('Upload the .zip file that contains any product images to add to the catalogue'),
+    '#attributes' => array(
+      'id' => array('commerce-xls-import-image-upload'),
+    ),
   );
 
   $last_import = variable_get('commerce_xls_import_last_import', '');
@@ -172,7 +199,7 @@ function commerce_xls_import_start_validate($form, &$form_state) {
 function commerce_xls_import_start_submit($form, &$form_state) {
   global $user;
 
-  if ($form_state['clicked_button']['#id'] == 'edit-import-button') {
+  if ($form_state['triggering_element']['#id'] == 'edit-import-button') {
 
     // Reset import tables.
     db_delete('commerce_xls_import')
@@ -197,7 +224,7 @@ function commerce_xls_import_start_submit($form, &$form_state) {
       }
     }
   }
-  elseif ($form_state['clicked_button']['#id'] == 'edit-validate-xls') {
+  elseif ($form_state['triggering_element']['#id'] == 'edit-validate-xls') {
     $validate = TRUE;
 
     // Reset import table.
@@ -223,10 +250,7 @@ function commerce_xls_import_start_submit($form, &$form_state) {
       }
     }
   }
-  elseif ($form_state['clicked_button']['#id'] == 'edit-zip-button') {
-    commerce_xls_import_extract_zip();
-  }
-  elseif ($form_state['clicked_button']['#id'] == 'edit-import-stop') {
+  elseif ($form_state['triggering_element']['#id'] == 'edit-import-stop') {
     if (commerce_xls_import_stop_import()) {
       drupal_set_message(t('Import stopping at next product'), 'status', FALSE);
     }
@@ -253,9 +277,22 @@ function commerce_xls_import_start_submit($form, &$form_state) {
       drupal_set_message(t('No results found'), 'error');
     }
   }
-  else {
-    // it's something from an individual product type template download.
-    $product_type = $form_state['clicked_button']['#attributes']['product_type'];
+  elseif ($form_state['values']['export_products'] == $form_state['triggering_element']['#value']) {
+    $product_type = $form_state['values']['product_type'];
+    $product_info = commerce_xls_import_export_product_data($product_type);
+
+    commerce_xls_import_export('export', array($product_info), $product_type);
+
+    $filename = $product_type . "_export.xls";
+    $path = file_build_uri($filename);
+
+    readfile($path);
+
+    // Exit is used to keep page from refreshing which would prevent download.
+    drupal_exit();
+  }
+  elseif ($form_state['values']['download_template'] == $form_state['triggering_element']['#value']) {
+    $product_type = $form_state['values']['product_type'];
 
     commerce_xls_import_export('template', NULL, $product_type);
 
