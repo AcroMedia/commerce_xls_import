@@ -20,7 +20,7 @@ var timer;
                     // Start counting after 2 seconds;
                     timer = setInterval(function () {
                         start_updates()
-                    }, 2000);
+                    }, 1000);
                 }
             });
         }

@@ -21,9 +21,6 @@ function commerce_xls_import_start() {
   $form['title'] = array(
     '#markup' => '<h1>' . t('Commerce XLS Import') . '</h1>',
   );
-  $form['message'] = array(
-    '#markup' => '<div id="import_status_messages" class="messages status" style="display:none;"></div>',
-  );
 
   $form['legend'] = array(
     '#type' => 'fieldset',
@@ -125,9 +122,11 @@ function commerce_xls_import_start() {
     );
   }
   else {
-    $form['last-import-message'] = array(
+    $form['last-import-message']['label'] = array(
       '#markup' => '<div class="last-import-message"><h6>' . t('Import/Validation in progress') . '</h6></div>',
-      '#weight' => 9,
+    );
+    $form['last-import-message']['progress'] = array(
+      '#markup' => '<div id="import_status_messages" class="" style="display:none;"></div>',
     );
     $form['buttons']['import_stop'] = array(
       '#type' => 'submit',
