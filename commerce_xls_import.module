@@ -997,7 +997,7 @@ function commerce_xls_import_update_entity_info($row, $product, $entity_info, $v
           }
         }
       }
-      elseif ($info['type'] == 'entity_reference') {
+      elseif ($info['type'] == 'entityreference') {
         // Get nid from given entity name.
         if ($field != "") {
           // Break them up since multiples are comma delimited.
