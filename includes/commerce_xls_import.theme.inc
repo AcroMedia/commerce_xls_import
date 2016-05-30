@@ -12,7 +12,7 @@ function commerce_xls_import_preprocess_commerce_xls_import_instructions(&$varia
   $variables['product_types'] = array();
 
   foreach (commerce_product_types() as $product_type) {
-    $fields = commerce_xls_import_get_possible_fields($product_type['type']);
+    $fields = commerce_xls_import_get_possible_fields($product_type['type'], FALSE);
     foreach ($fields as $field) {
       $info = field_info_instance('commerce_product', $field, $product_type['type']);
 

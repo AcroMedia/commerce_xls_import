@@ -12,7 +12,8 @@
  */
 function commerce_xls_import_start() {
   $form = array();
-  $types = array();
+  $product_types = array();
+  $display_types = array();
 
   if (variable_get('commerce_xls_import_completed', '') == 1) {
     drupal_set_message(t('Import/Validate Complete with @errors errors', array('@errors' => variable_get('commerce_xls_import_error_count'))));
@@ -34,14 +35,28 @@ function commerce_xls_import_start() {
   );
 
   foreach (commerce_product_types() as $product_type) {
-    $types[$product_type['type']] = $product_type['name'];
+    $product_types[$product_type['type']] = $product_type['name'];
   }
 
   $form['product_type'] = array(
     '#title' => t('Product Type'),
     '#type' => 'select',
     '#description' => t('Select the product type to use in import.'),
-    '#options' => $types,
+    '#options' => $product_types,
+    '#attributes' => array(
+      'id' => array('commerce-xls-import-product-type'),
+    ),
+  );
+
+  foreach (node_type_get_types() as $node_type) {
+    $display_types[$node_type->type] = $node_type->name;
+  }
+
+  $form['display_type'] = array(
+    '#title' => t('Display Type'),
+    '#type' => 'select',
+    '#description' => t('Select the display (node) type to use in import.'),
+    '#options' => $display_types,
     '#attributes' => array(
       'id' => array('commerce-xls-import-product-type'),
     ),
@@ -208,6 +223,7 @@ function commerce_xls_import_start_submit($form, &$form_state) {
 
     foreach ($form_state['files'] as $file) {
       $file['product_type'] = $form_state['values']['product_type'];
+      $file['display_type'] = $form_state['values']['display_type'];
       if (!commerce_xls_import_is_running()) {
         $handle = background_process_start('commerce_xls_import_import', $file);
 
@@ -235,6 +251,7 @@ function commerce_xls_import_start_submit($form, &$form_state) {
 
     foreach ($form_state['files'] as $file) {
       $file['product_type'] = $form_state['values']['product_type'];
+      $file['display_type'] = $form_state['values']['display_type'];
       if (!commerce_xls_import_is_running()) {
         $handle = background_process_start('commerce_xls_import_import', $file, $validate);
 
@@ -280,9 +297,11 @@ function commerce_xls_import_start_submit($form, &$form_state) {
   }
   elseif ($form_state['values']['export_products'] == $form_state['triggering_element']['#value']) {
     $product_type = $form_state['values']['product_type'];
-    $product_info = commerce_xls_import_export_product_data($product_type);
+    $display_type = $form_state['values']['display_type'];
 
-    commerce_xls_import_export('export', array($product_info), $product_type);
+    $product_info = commerce_xls_import_export_product_data($product_type, $display_type);
+
+    commerce_xls_import_export('export', array($product_info), $product_type, $display_type);
 
     $filename = $product_type . "_export.xls";
     $path = file_build_uri($filename);
@@ -294,8 +313,9 @@ function commerce_xls_import_start_submit($form, &$form_state) {
   }
   elseif ($form_state['values']['download_template'] == $form_state['triggering_element']['#value']) {
     $product_type = $form_state['values']['product_type'];
+    $display_type = $form_state['values']['display_type'];
 
-    commerce_xls_import_export('template', NULL, $product_type);
+    commerce_xls_import_export('template', NULL, $product_type, $display_type);
 
     $filename = $product_type . "_template.xls";
     $path = file_build_uri($filename);

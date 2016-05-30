@@ -12,10 +12,15 @@
  */
 function commerce_xls_import_start() {
   $form = array();
-  $types = array();
+  $product_types = array();
+  $display_types = array();
 
   foreach (commerce_product_types() as $product_type) {
-    $types[$product_type['type']] = $product_type['name'];
+    $product_types[$product_type['type']] = $product_type['name'];
+  }
+
+  foreach (node_type_get_types() as $node_type) {
+    $display_types[$node_type->type] = $node_type->name;
   }
 
   $form['title'] = array(
@@ -26,7 +31,14 @@ function commerce_xls_import_start() {
     '#title' => t('Product Type'),
     '#type' => 'select',
     '#description' => t('Select the product type to export.'),
-    '#options' => $types,
+    '#options' => $product_types,
+  );
+
+  $form['display_type'] = array(
+    '#title' => t('Display Type'),
+    '#type' => 'select',
+    '#description' => t('Select the display (node) type to export.'),
+    '#options' => $display_types,
   );
 
   $form['export'] = array(
@@ -68,9 +80,11 @@ function commerce_xls_import_start() {
 function commerce_xls_import_start_submit($form, &$form_state) {
   if (!commerce_xls_import_is_running()) {
     $product_type = $form_state['values']['product_type'];
-    $product_info = commerce_xls_import_export_product_data($product_type);
+    $display_type = $form_state['values']['display_type'];
 
-    commerce_xls_import_export('export', array($product_info), $product_type);
+    $product_info = commerce_xls_import_export_product_data($product_type, $display_type);
+
+    commerce_xls_import_export('export', array($product_info), $product_type, $display_type);
 
     $filename = $product_type . "_export.xls";
     $path = file_build_uri($filename);

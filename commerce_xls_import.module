@@ -304,17 +304,16 @@ function commerce_xls_import_stopped() {
 /**
  * Main function for the drupal commerce XLS export.
  */
-function commerce_xls_import_export($op, $product_info = NULL, $product_type = NULL, $nids = FALSE) {
+function commerce_xls_import_export($op, $product_info = NULL, $product_type = NULL, $display_type = NULL, $nids = FALSE) {
   module_load_include('inc', 'phpexcel');
   module_load_include('inc', 'commerce_xls_import', 'includes/commerce_xls_import.errors');
-  watchdog('aa', print_r($product_info, TRUE));
 
   // NOTE: This is required because the phpexcel module gives strict warnings
   // with its export functionality.
   error_reporting(E_ALL ^ E_STRICT);
 
   $data = array('Products' => array());
-  $headers = commerce_xls_import_generate_headers($nids, $product_type);
+  $headers = commerce_xls_import_generate_headers($nids, $product_type, $display_type);
   $options = array('format' => 'xls', 'title' => t('Product Import Template'));
 
   if ($product_info == NULL || $op == 'template') {
@@ -476,6 +475,7 @@ function commerce_xls_import_import(array $file = NULL, $validate = FALSE) {
 
   // Get the product type.
   $product_type = $file['product_type'];
+  $display_type = $file['display_type'];
 
   // Extract product images.
   $images_info = commerce_xls_import_extract_zip();
@@ -509,11 +509,11 @@ function commerce_xls_import_import(array $file = NULL, $validate = FALSE) {
           }
 
           if (!$has_errors) {
-            $values = commerce_xls_import_get_product_values($product, $product_type);
+            $values = commerce_xls_import_get_product_values($product, $product_type, $display_type);
             if (!isset($product['nid']) || $product['nid'] == NULL) {
               // If nid is set it is a line from a resubmitted results.xls.
               $entity_info = commerce_xls_import_set_entity_values($product);
-              $nid = commerce_xls_import_create_product($row, $values, $entity_info, $product_type, $images_info);
+              $nid = commerce_xls_import_create_product($row, $values, $entity_info, $product_type, $display_type, $images_info);
             }
             else {
               // If nid isn't null ignore it as it was already imported.
@@ -545,7 +545,7 @@ function commerce_xls_import_import(array $file = NULL, $validate = FALSE) {
       'total' => $import_counts['total'],
     ));
     variable_del('commerce_xls_import_import_count_status');
-    commerce_xls_import_export('errors', $result, $product_type, TRUE);
+    commerce_xls_import_export('errors', $result, $product_type, $display_type, TRUE);
   }
   else {
     drupal_set_message(t("There was an error with the import, please try again. If this problem persists contact the system administrator"), "error");
@@ -594,12 +594,12 @@ function commerce_xls_import_set_entity_values(array $product) {
  *   Returns the set values that correspond to the possible fields of the
  *   product type.
  */
-function commerce_xls_import_get_product_values(array $product, $product_type) {
+function commerce_xls_import_get_product_values(array $product, $product_type, $display_type) {
   $values = array(
     'currency_code' => commerce_default_currency(),
   );
 
-  $possible_fields = commerce_xls_import_get_possible_fields($product_type);
+  $possible_fields = commerce_xls_import_get_possible_fields($product_type, $display_type);
 
   foreach ($possible_fields as $field) {
     if (isset($product[$field])) {
@@ -754,7 +754,7 @@ function commerce_xls_import_get_text_format($user) {
 /**
  * Creates the product.
  */
-function commerce_xls_import_create_product($row, $values, $entity_info, $product_type, $image_info = array()) {
+function commerce_xls_import_create_product($row, $values, $entity_info, $product_type, $display_type, $image_info = array()) {
   module_load_include('inc', 'node');
   module_load_include('inc', 'node', 'node.pages');
 
@@ -762,6 +762,7 @@ function commerce_xls_import_create_product($row, $values, $entity_info, $produc
   $form_state = array();
 
   $sku = $entity_info['sku'];
+
   $node = new stdClass();
 
   $language = commerce_xls_import_validate_languages($entity_info['language']);
@@ -804,7 +805,7 @@ function commerce_xls_import_create_product($row, $values, $entity_info, $produc
   elseif ($nid == NULL) {
 
     // Prepare node.
-    $node->type = $product_type;
+    $node->type = $display_type;
     node_object_prepare($node);
     $node->title = $entity_info['title'];
     $node->language = $new_language;
@@ -1242,13 +1243,13 @@ function commerce_xls_import_unpack_zip($zip_dir, $filename, $save_dir) {
  *   If $get_field_type is TRUE returns an array of all possible product types
  *   as well as their field type.
  */
-function commerce_xls_import_get_possible_fields($product_type, $get_field_type = FALSE) {
+function commerce_xls_import_get_possible_fields($product_type, $display_type, $get_field_type = FALSE) {
   $result = array();
   $fields = field_info_field_map();
   foreach ($fields as $key => $field) {
 
     if ((isset($field['bundles']['commerce_product']) && in_array($product_type, $field['bundles']['commerce_product']))
-      || (isset($field['bundles']['node']) && in_array($product_type, $field['bundles']['node']))
+      || (isset($field['bundles']['node']) && in_array($display_type, $field['bundles']['node']))
     ) {
       // We don't want to include the product reference since the import will
       // take care of that for us.
@@ -1295,10 +1296,10 @@ function commerce_xls_import_nids_of_type($product_type) {
 /**
  * Get the headers needed for the export and import template.
  */
-function commerce_xls_import_generate_headers($nid = NULL, $product_type = NULL) {
+function commerce_xls_import_generate_headers($nid = NULL, $product_type = NULL, $display_type = NULL) {
   $headers = array();
 
-  $product = commerce_xls_import_get_possible_fields($product_type);
+  $product = commerce_xls_import_get_possible_fields($product_type, $display_type);
 
   $headers['Products'][] = "title";
   $headers['Products'][] = "variation_title";
@@ -1322,12 +1323,12 @@ function commerce_xls_import_generate_headers($nid = NULL, $product_type = NULL)
  * @return array
  *   The data of all products of the given type.
  */
-function commerce_xls_import_export_product_data($product_type) {
-  $nids = commerce_xls_import_nids_of_type($product_type);
+function commerce_xls_import_export_product_data($product_type, $display_type) {
+  $nids = commerce_xls_import_nids_of_type($display_type);
   $products = array();
-  $field_info = commerce_xls_import_get_possible_fields($product_type, TRUE);
+  $field_info = commerce_xls_import_get_possible_fields($product_type, $display_type, TRUE);
 
-  $headers_list = commerce_xls_import_generate_headers(NULL, $product_type);
+  $headers_list = commerce_xls_import_generate_headers(NULL, $product_type, $display_type);
   $headers = array();
 
   // Set up headers array to match exported data.
