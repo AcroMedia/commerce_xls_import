@@ -9,6 +9,9 @@
  * Import Menu Form.
  *
  * Contains the buttons to begin the import or to generate example headers.
+ *
+ * @return
+ *  The form array representing the from to initiate the import or generate examples headers.
  */
 function commerce_xls_import_start() {
   $form = array();
@@ -174,6 +177,12 @@ function commerce_xls_import_start() {
 
 /**
  * Validation handler for the import start form.
+ *
+ * @param array $form
+ *  The form that is being validated.
+ *
+ * @param array $form_state
+ *  The form state array, passed by reference.
  */
 function commerce_xls_import_start_validate($form, &$form_state) {
 
@@ -209,6 +218,12 @@ function commerce_xls_import_start_validate($form, &$form_state) {
 
 /**
  * Submit handler for the import start form.
+ *
+ * @param $form
+ *  The form that is being submitted.
+ *
+ * @param $form_state
+ *  The form state array, passed by reference.
  */
 function commerce_xls_import_start_submit($form, &$form_state) {
   global $user;

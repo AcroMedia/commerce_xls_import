@@ -7,6 +7,10 @@
 
 /**
  * Implements template_preprocess_commerce_xls_import_instructions().
+ *
+ * @param array $variables
+ *  Array populated with product types and their associated field information,
+ *  passed by reference.
  */
 function commerce_xls_import_preprocess_commerce_xls_import_instructions(&$variables) {
   $variables['product_types'] = array();

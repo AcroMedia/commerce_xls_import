@@ -9,6 +9,7 @@
 
 /**
  * Class CommerceXlsImportTestCase.
+ *
  */
 class CommerceXlsImportTestCase extends DrupalWebTestCase {
   protected $adminUser;
@@ -17,6 +18,9 @@ class CommerceXlsImportTestCase extends DrupalWebTestCase {
 
   /**
    * GetInfo().
+   *
+   * @return array
+   *  An array containing name, description, and group text.
    */
   public static function getInfo() {
     return array(
@@ -28,6 +32,7 @@ class CommerceXlsImportTestCase extends DrupalWebTestCase {
 
   /**
    * Setup().
+   * @{inheritdoc}
    */
   public function setUp() {
 

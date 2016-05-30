@@ -9,6 +9,9 @@
  * Import Menu Form.
  *
  * Contains the buttons export products.
+ *
+ * @return array $form
+ *  The array containing the export and import buttons.
  */
 function commerce_xls_import_start() {
   $form = array();
@@ -76,6 +79,12 @@ function commerce_xls_import_start() {
 
 /**
  * Submit handler for the import start form.
+ *
+ * @param array $form
+ *  The form containing the values being submitted.
+ *
+ * @param array $form_state
+ *  The form state array, passed by reference.
  */
 function commerce_xls_import_start_submit($form, &$form_state) {
   if (!commerce_xls_import_is_running()) {

@@ -253,6 +253,9 @@ function commerce_xls_import_phpexcel_export($op, &$data, &$phpexcel, $options, 
  * Determines whether an import is currently running in the background.
  *
  * Returns True if one is running, otherwise false.
+ *
+ * @return bool
+ *  A boolean value representing whether an import is running or not.
  */
 function commerce_xls_import_is_running() {
   $result = db_select('background_process', 'bp')
@@ -269,6 +272,9 @@ function commerce_xls_import_is_running() {
 
 /**
  * Stops current import.
+ *
+ * @return bool
+ *  A boolean value representing whether the import was successfully stopped or not.
  */
 function commerce_xls_import_stop_import() {
   // Set all updates to stopped status.
@@ -286,6 +292,9 @@ function commerce_xls_import_stop_import() {
 
 /**
  * Check to see if current import has been stopped.
+ *
+ * @return bool
+ *  A boolean value representing whether the current has been stopped or not.
  */
 function commerce_xls_import_stopped() {
   $result = db_select('commerce_xls_import', 'i')
@@ -303,6 +312,18 @@ function commerce_xls_import_stopped() {
 
 /**
  * Main function for the drupal commerce XLS export.
+ *
+ * @param string $op
+ *  A string representing the respective operation to be performed.
+ *
+ * @param array $product_info
+ *  An array containing product information.
+ *
+ * @param string $product_type
+ *  A string representing the currenty product's product type.
+ *
+ * @param array $nids
+ *  An array of node ids.
  */
 function commerce_xls_import_export($op, $product_info = NULL, $product_type = NULL, $display_type = NULL, $nids = FALSE) {
   module_load_include('inc', 'phpexcel');
@@ -617,6 +638,7 @@ function commerce_xls_import_get_product_values(array $product, $product_type, $
  *
  * Returns the language if a match is found, false if the table does not
  * exist or no language match found.
+ *
  */
 function commerce_xls_import_validate_languages($language) {
   if (db_table_exists('languages')) {
@@ -665,6 +687,24 @@ function commerce_xls_import_validate_product($row, $entity_info) {
 
 /**
  * Checks image validity and sets it in the form_state if valid.
+ *
+ * @param int $row
+ *  Current row in spreadsheet.
+ *
+ * @param array|string $field
+ *  Value or values of image name(s).
+ *
+ * @param array $form_state
+ *  The form state array.
+ *
+ * @param array $image_info
+ *  Contains image file info.
+ *
+ * @param string $key
+ *  Index representing the column name in the current row.
+ *
+ * @param string $language
+ *  Represents the language being used.
  */
 function commerce_xls_import_check_set_images($row, $field, &$form_state, $image_info, $key, $language) {
   // it's an image, check whether multiple uploads.
@@ -737,6 +777,13 @@ function commerce_xls_import_validate_sku($row, $sku) {
 
 /**
  * Gets the text format to be used in the body of the product.
+ *
+ * @param object $user
+ *  The user account object.
+ *
+ * @return string
+ *  The text format selection for a given user if set, otherwise return the
+ *  'plain_text' format option.
  */
 function commerce_xls_import_get_text_format($user) {
   $formats = filter_formats($user);
@@ -753,6 +800,24 @@ function commerce_xls_import_get_text_format($user) {
 
 /**
  * Creates the product.
+ *
+ * @param int $row
+ *  Current row in spreadsheet.
+ *
+ * @param array $values
+ *  Contains the possible field values of the product type.
+ *
+ * @param array $entity_info
+ *  Contains the entity_info required to create product.
+ *
+ * @param string $product_type
+ *  The product type for the product being created.
+ *
+ * @param array $image_info
+ *  Contains image file information.
+ *
+ * @return int $nid|NULL
+ *  If successful the nid of the newley created product, otherwise NULL.
  */
 function commerce_xls_import_create_product($row, $values, $entity_info, $product_type, $display_type, $image_info = array()) {
   module_load_include('inc', 'node');
@@ -921,6 +986,9 @@ function commerce_xls_import_search_for_product($title) {
  * Function to use a comma separated list of category names to retrieve the
  * taxonomy terms.
  *
+ * @param array $category_names
+ *  List of category names.
+ *
  * @return array
  *    An array containing category terms.
  */
@@ -940,6 +1008,25 @@ function commerce_xls_import_get_category_id($category_names) {
 
 /**
  * Updates the entity info.
+ *
+ * @param int $row
+ *  Current row in spreadsheet.
+ *
+ * @param object $product
+ *  A product object with all default fields initialized.
+ *
+ * @param array $entity_info
+ *  Contains the entity info with fields to update on product object.
+ *
+ * @param array $values
+ *  Contains the possible field values of the product type.
+ *
+ * @param array $image_info
+ *  Contains image file information.
+ *
+ * @param boolean $a_node
+ *  True if entity is a node and False if not a node.
+ *
  */
 function commerce_xls_import_update_entity_info($row, $product, $entity_info, $values, $image_info, $a_node = FALSE) {
   $language = $values['language'];
@@ -1072,7 +1159,10 @@ function commerce_xls_import_update_entity_info($row, $product, $entity_info, $v
 }
 
 /**
- * Validates that the products price.
+ * Validates that the products price is a valid price.
+ *
+ * @param int $row
+ *  Current row in the import spreadsheet.
  *
  * @param array $values
  *    An array containing the product values.
@@ -1096,6 +1186,12 @@ function commerce_xls_import_validate_price($row, array $values) {
 
 /**
  * Gets the entity reference nid.
+ *
+ * @param string $field
+ *  The title of the entity reference.
+ *
+ * @return int
+ *  The entity reference nid.
  */
 function commerce_xls_import_get_entity_reference_nid($field) {
   $result = db_select('node', 'n')
@@ -1110,6 +1206,13 @@ function commerce_xls_import_get_entity_reference_nid($field) {
 
 /**
  * Get headers from XLS.
+ *
+ * @param object $phpexcel
+ *  The phpexcel object created for the current excel spreasheet, passed by
+ *  reference.
+ *
+ * @return array $headers
+ *  The headers from the current excel spreadsheet.
  */
 function commerce_xls_import_get_headers(&$phpexcel) {
   static $headers = NULL;
@@ -1133,6 +1236,10 @@ function commerce_xls_import_get_headers(&$phpexcel) {
 
 /**
  * Handles the main zip extraction.
+ *
+ * @return array|bool
+ *  Returns array of files names if zip extraction is successful, otherwise
+ *  it return boolean value FALSE.
  */
 function commerce_xls_import_extract_zip() {
   $dir = realpath(".") . "/" . variable_get('file_public_path', conf_path() . '/files');
@@ -1193,6 +1300,12 @@ function commerce_xls_import_create_image_database_entries($base_path) {
 
 /**
  * Checks to see if file entry already exists.
+ *
+ * @param string uri
+ *  The uri for the underlying file.
+ *
+ * @return int|bool
+ *  If the uri is found return the fid, otherwise return false.
  */
 function commerce_xls_import_file_entry_exists($uri) {
   $result = db_select('file_managed', 'f')
@@ -1211,6 +1324,18 @@ function commerce_xls_import_file_entry_exists($uri) {
  *
  * Uses the command line to unpack .zip files and move to public files
  * directory.
+ *
+ * @param string $zip_dir
+ *  The directory name of the file to be unzipped.
+ *
+ * @param string $filename
+ *  The name of the directory to place the unzipped files.
+ *
+ * @param string $save_dir
+ *  The name of the directory to extract the files to.
+ *
+ * @return bool
+ *  TRUE if file is zip file is succesfully extracted, othewise FALSE.
  */
 function commerce_xls_import_unpack_zip($zip_dir, $filename, $save_dir) {
   $file_directory = $save_dir;
@@ -1295,6 +1420,15 @@ function commerce_xls_import_nids_of_type($product_type) {
 
 /**
  * Get the headers needed for the export and import template.
+ *
+ * @param int|bool $nid
+ *  list of nodes ids.
+ *
+ * @param string $product_type
+ *  The product type for the selected import.
+ *
+ * @return array $headers
+ *
  */
 function commerce_xls_import_generate_headers($nid = NULL, $product_type = NULL, $display_type = NULL) {
   $headers = array();
@@ -1417,6 +1551,13 @@ function commerce_xls_import_export_product_data($product_type, $display_type) {
 
 /**
  * Gets the owner of the form field.
+ *
+ * @param string $field_name
+ *  The field name to check ownwership against.
+ *
+ * @return string
+ *  The owner of the given field
+ *
  */
 function commerce_xls_import_get_field_owner($field_name) {
   if ($field_name == 'title') {

@@ -16,6 +16,7 @@ class CommerceXlsImportVariables {
 
   /**
    * Set $status.
+   * @param $value
    */
   public static function setValidate($value) {
     CommerceXlsImportVariables::$validate = $value;
@@ -28,7 +29,7 @@ class CommerceXlsImportVariables {
    */
   public static function setImport($value) {
     CommerceXlsImportVariables::$import = $value;
-    CommerceXlsImportVariables::$validate = !value;
+    CommerceXlsImportVariables::$validate = !$value;
     CommerceXlsImportVariables::setStatus();
   }
 

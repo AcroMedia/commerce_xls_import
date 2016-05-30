@@ -19,6 +19,10 @@ function commerce_xls_import_uninstall() {
 
 /**
  * Table to keep track of whether an attempted stop has occurred.
+ *
+ * @return array $schema
+ *  Array containing the required descriptions for creating the
+ *  commerce_xls_import, and commerce_xls_import_errors tables.
  */
 function commerce_xls_import_schema() {
   $schema = array();
