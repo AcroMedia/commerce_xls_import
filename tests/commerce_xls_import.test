@@ -73,20 +73,6 @@ class CommerceXlsImportTestCase extends DrupalWebTestCase {
   }
 
   /**
-   * Test xls upload
-   */
-  public function testCommerceXlsImportUpload() {
-    $this->drupalLogin($this->privilegedUser);
-
-    $edit = array(
-      'product_type' => 'product',
-      'files[import_file]' => drupal_get_path('module', 'commerce_xls_import') . '/sample_files/sample_tops.xls',
-    );
-    $this->drupalPost('admin/commerce/products/import_commerce', $edit, 'Begin Full Import');
-    $this->assertText('You are currently running an import or validation, you will not be able to run another until it is finished or stopped manually', 'XLS is importing');
-  }
-
-  /**
    * Test xls import
    */
   public function testCommerceXlsImportImport() {
@@ -94,6 +80,7 @@ class CommerceXlsImportTestCase extends DrupalWebTestCase {
     $file = array(
       'uri' => drupal_get_path('module', 'commerce_xls_import') . '/sample_files/sample_tops.xls',
       'product_type' => 'product',
+      'display_type' => 'product'
     );
     commerce_xls_import_import($file);
 
@@ -105,6 +92,7 @@ class CommerceXlsImportTestCase extends DrupalWebTestCase {
 
     //Loop thru xls and check if all skus are in the product page, make sure #18 and above do not appear (no sku)
     $result = phpexcel_import(drupal_get_path('module', 'commerce_xls_import') . '/sample_files/sample_tops.xls');
+    debug($result);
     foreach ($result[0] as $index => $row) {
       if ($index < 18) {
         //Valid Sku

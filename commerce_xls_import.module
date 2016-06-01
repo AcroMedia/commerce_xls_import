@@ -1338,21 +1338,24 @@ function commerce_xls_import_file_entry_exists($uri) {
  *  TRUE if file is zip file is succesfully extracted, othewise FALSE.
  */
 function commerce_xls_import_unpack_zip($zip_dir, $filename, $save_dir) {
-  $file_directory = $save_dir;
-  $command = "unzip -oq $zip_dir/$filename.zip -d $file_directory 2>&1";
-  $output = array();
-  exec($command, $output, $result);
-  $error_message = implode("\r\n", $output);
+  $file = $zip_dir . '/' . $filename . '.zip';
 
-  if ($result != 0) {
-    drupal_set_message(t("There was an error extracting @filename.zip. Please try again, if the problem persists contact the system administrator", array("@filename" => $filename)), "error");
-    watchdog('commerce_xls_import', "Error: " . $error_message);
-    return FALSE;
-  }
-  else {
+  $zip = new ZipArchive;
+  $resource = $zip->open($file);
+  if ($resource === TRUE) {
+    // extract it to the path we determined above
+    $zip->extractTo($save_dir);
+    $zip->close();
+
     drupal_set_message(t("@filename.zip extracted successfully to @save_dir", array("@filename" => $filename, "@save_dir" => $save_dir)));
     return TRUE;
   }
+  else {
+    drupal_set_message(t("There was an error extracting @filename.zip. Please try again, if the problem persists contact the system administrator", array("@filename" => $filename)), "error");
+    watchdog('commerce_xls_import', "Error extracting zip file @filename", array('@filename' => $filename));
+    return FALSE;
+  }
+
 }
 
 /**
