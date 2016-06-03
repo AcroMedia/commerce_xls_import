@@ -240,15 +240,17 @@ function commerce_xls_import_start_submit($form, &$form_state) {
       $file['product_type'] = $form_state['values']['product_type'];
       $file['display_type'] = $form_state['values']['display_type'];
       if (!commerce_xls_import_is_running()) {
-        $handle = background_process_start('commerce_xls_import_import', $file);
 
         db_insert('commerce_xls_import')
           ->fields(array(
             'status' => 'pending',
-            'handle' => $handle,
+            'handle' => '',
             'uid' => $user->uid,
           ))
           ->execute();
+
+        //$unpublish_products = (bool) $form_state['values']['unpublish_products'];
+        commerce_xls_import_batch_start($file, FALSE);
       }
       else {
         drupal_set_message(t('You are currently running an import. Please wait until it is finished or cancel the current one'), 'error', FALSE);
@@ -256,7 +258,6 @@ function commerce_xls_import_start_submit($form, &$form_state) {
     }
   }
   elseif ($form_state['triggering_element']['#id'] == 'edit-validate-xls') {
-    $validate = TRUE;
 
     // Reset import table.
     db_delete('commerce_xls_import')
@@ -268,15 +269,17 @@ function commerce_xls_import_start_submit($form, &$form_state) {
       $file['product_type'] = $form_state['values']['product_type'];
       $file['display_type'] = $form_state['values']['display_type'];
       if (!commerce_xls_import_is_running()) {
-        $handle = background_process_start('commerce_xls_import_import', $file, $validate);
 
         db_insert('commerce_xls_import')
           ->fields(array(
             'status' => 'pending',
-            'handle' => $handle,
+            'handle' => '',
             'uid' => $user->uid,
           ))
           ->execute();
+
+        //$unpublish_products = (bool) $form_state['values']['unpublish_products'];
+        commerce_xls_import_batch_start($file, TRUE);
       }
       else {
         drupal_set_message(t('You are currently running an file validation. Please wait until it is finished or cancel the current one'), 'error', FALSE);

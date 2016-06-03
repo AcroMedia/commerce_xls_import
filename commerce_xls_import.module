@@ -101,72 +101,27 @@ function commerce_xls_import_phpexcel_export($op, &$data, &$phpexcel, $options, 
         // error recording there must be a more elegant way to do this but I
         // can't seem to figure one out.
         $headers = commerce_xls_import_get_headers($phpexcel);
-        if (CommerceXlsImportVariables::isImport() || CommerceXlsImportVariables::isValidate()) {
 
-          $error_status = commerce_xls_import_get_column_status($row, $headers[$column]);
-          if (!CommerceXlsImportVariables::rowTitleHasError($row)) {
-            if ($error_status == COMMERCE_XLS_IMPORT_DATA_ERROR) {
-              if ($headers[$column] == 'title') {
-                CommerceXlsImportVariables::setRowTitleErrorStatus($row, TRUE);
-              }
-              $style_array = array(
-                'fill' => array(
-                  'type' => PHPExcel_Style_Fill::FILL_SOLID,
-                  'startcolor' => array('argb' => '00FF9999'),
-                ),
-                'borders' => array(
-                  'allborders' => array(
-                    'style' => PHPExcel_Style_Border::BORDER_THIN,
-                    'color' => array('argb' => '00DA4141'),
-                  ),
-                ),
-              );
+        $error_status = commerce_xls_import_get_column_status($row, $headers[$column]);
+        if (!CommerceXlsImportVariables::rowTitleHasError($row)) {
+          if ($error_status == COMMERCE_XLS_IMPORT_DATA_ERROR) {
+            if ($headers[$column] == 'title') {
+              CommerceXlsImportVariables::setRowTitleErrorStatus($row, TRUE);
             }
-            elseif ($error_status == COMMERCE_XLS_IMPORT_DATA_WARNING) {
-              $style_array = array(
-                'fill' => array(
-                  'type' => PHPExcel_Style_Fill::FILL_SOLID,
-                  'startcolor' => array('argb' => '00FFFF66'),
+            $style_array = array(
+              'fill' => array(
+                'type' => PHPExcel_Style_Fill::FILL_SOLID,
+                'startcolor' => array('argb' => '00FF9999'),
+              ),
+              'borders' => array(
+                'allborders' => array(
+                  'style' => PHPExcel_Style_Border::BORDER_THIN,
+                  'color' => array('argb' => '00DA4141'),
                 ),
-                'borders' => array(
-                  'allborders' => array(
-                    'style' => PHPExcel_Style_Border::BORDER_THIN,
-                    'color' => array('argb' => '00CCCC00'),
-                  ),
-                ),
-              );
-            }
-            elseif ($error_status == COMMERCE_XLS_IMPORT_DATA_SUCCESS) {
-              if ($headers[$column] == 'title') {
-                CommerceXlsImportVariables::setRowTitleErrorStatus($row, FALSE);
-              }
-              $style_array = array(
-                'fill' => array(
-                  'type' => PHPExcel_Style_Fill::FILL_SOLID,
-                  'startcolor' => array('argb' => '0078FAA3'),
-                ),
-                'borders' => array(
-                  'allborders' => array(
-                    'style' => PHPExcel_Style_Border::BORDER_THIN,
-                    'color' => array('argb' => '0000994C'),
-                  ),
-                ),
-              );
-            }
-            else {
-              $style_array = array(
-                'fill' => array(
-                  'type' => PHPExcel_Style_Fill::FILL_NONE,
-                ),
-                'borders' => array(
-                  'allborders' => array(
-                    'style' => PHPExcel_Style_Border::BORDER_NONE,
-                  ),
-                ),
-              );
-            }
+              ),
+            );
           }
-          else {
+          elseif ($error_status == COMMERCE_XLS_IMPORT_DATA_WARNING) {
             $style_array = array(
               'fill' => array(
                 'type' => PHPExcel_Style_Fill::FILL_SOLID,
@@ -180,6 +135,49 @@ function commerce_xls_import_phpexcel_export($op, &$data, &$phpexcel, $options, 
               ),
             );
           }
+          elseif ($error_status == COMMERCE_XLS_IMPORT_DATA_SUCCESS) {
+            if ($headers[$column] == 'title') {
+              CommerceXlsImportVariables::setRowTitleErrorStatus($row, FALSE);
+            }
+            $style_array = array(
+              'fill' => array(
+                'type' => PHPExcel_Style_Fill::FILL_SOLID,
+                'startcolor' => array('argb' => '0078FAA3'),
+              ),
+              'borders' => array(
+                'allborders' => array(
+                  'style' => PHPExcel_Style_Border::BORDER_THIN,
+                  'color' => array('argb' => '0000994C'),
+                ),
+              ),
+            );
+          }
+          else {
+            $style_array = array(
+              'fill' => array(
+                'type' => PHPExcel_Style_Fill::FILL_NONE,
+              ),
+              'borders' => array(
+                'allborders' => array(
+                  'style' => PHPExcel_Style_Border::BORDER_NONE,
+                ),
+              ),
+            );
+          }
+        }
+        else {
+          $style_array = array(
+            'fill' => array(
+              'type' => PHPExcel_Style_Fill::FILL_SOLID,
+              'startcolor' => array('argb' => '00FFFF66'),
+            ),
+            'borders' => array(
+              'allborders' => array(
+                'style' => PHPExcel_Style_Border::BORDER_THIN,
+                'color' => array('argb' => '00CCCC00'),
+              ),
+            ),
+          );
         }
         if (CommerceXlsImportVariables::isImport() && $GLOBALS['nid_column'] != $column) {
           $phpexcel->getStyleByColumnAndRow($column, $row)->getProtection()->setLocked(PHPExcel_Style_Protection::PROTECTION_UNPROTECTED);
@@ -258,15 +256,34 @@ function commerce_xls_import_phpexcel_export($op, &$data, &$phpexcel, $options, 
  *  A boolean value representing whether an import is running or not.
  */
 function commerce_xls_import_is_running() {
-  $result = db_select('background_process', 'bp')
-    ->fields('bp', array('callback', 'exec_status'))
-    ->condition('callback', '%' . db_like('commerce_xls_import_import') . '%', 'LIKE')
+  $result = db_select('commerce_xls_import', 'ci')
+    ->fields('ci', array('status'))
+    ->condition('status', 'pending')
     ->execute();
 
-  if ($result->rowCount()) {
+  if (isset($result)) {
+    return $result->rowCount();
+  }
+  else {
+    return FALSE;
+  }
+}
+
+/**
+ * Setins current import to finished.
+ */
+function commerce_xls_import_set_finish_import() {
+  global $user;
+
+  // Set all updates to stopped status.
+  $result = db_update('commerce_xls_import')
+    ->fields(array('status' => 'finished'))
+    ->condition('uid', $user->uid)
+    ->execute();
+
+  if ($result) {
     return TRUE;
   }
-
   return FALSE;
 }
 
@@ -342,7 +359,7 @@ function commerce_xls_import_export($op, $product_info = NULL, $product_type = N
   }
   else {
     $count = 1;
-    foreach ($product_info[0] as $row) {
+    foreach ($product_info as $row) {
       $count++;
       $new_data_array = array();
 
@@ -477,7 +494,7 @@ function commerce_xls_import_export_xls($product_type, $options, $headers, $data
 }
 
 /**
- * Main function for the drupal commerce XLS import.
+ * Main batch function for the drupal commerce XLS import.
  *
  * Extracts product_images.zip, then imports XLS file. If the XLS import is
  * successful the results will then be processed and the import will be started.
@@ -487,89 +504,216 @@ function commerce_xls_import_export_xls($product_type, $options, $headers, $data
  * @param bool $validate
  *   If true, don't create products. Otherwise create products.
  */
-function commerce_xls_import_import(array $file = NULL, $validate = FALSE) {
-  module_load_include('inc', 'phpexcel', 'phpexcel');
+function commerce_xls_import_batch_start($file, $validate = FALSE) {
   module_load_include('inc', 'commerce_xls_import', 'includes/commerce_xls_import.errors');
 
-  CommerceXlsImportVariables::setValidate($validate);
   variable_set('commerce_xls_import_error_count', 0);
 
   // Get the product type.
   $product_type = $file['product_type'];
   $display_type = $file['display_type'];
 
+  $time_started = time();
+
   // Extract product images.
   $images_info = commerce_xls_import_extract_zip();
 
-  // Import XLS.
-  $result = phpexcel_import($file['uri']);
+  $batch = array(
+    'operations' => array(
+      array('commerce_xls_import_batch_begin', array($validate)),
+      array('commerce_xls_import_batch_process', array($file, $product_type, $images_info)),
+      array('commerce_xls_import_batch_wrapup', array($product_type, $time_started)),
+    ),
+    'finished' => 'commerce_xls_import_batch_finished',
+    'title' => t('Processing Import'),
+    'init_message' => t('Import is starting.'),
+    'progress_message' => t('Import in progress...'),
+    'error_message' => t('Import has encountered an error.'),
+  );
 
-  $nids = array();
+  batch_set($batch);
+}
+/**
+ * Batch begin function, sets up initial status values
+ */
+function commerce_xls_import_batch_begin($validate) {
+  CommerceXlsImportVariables::setValidate($validate);
+  variable_set('commerce_xls_import_import_count_status', array('completed' => 0, 'total' => 0));
+}
 
-  // If an array, import function was successful.
-  if (is_array($result)) {
-    if (count($result) > 0) {
-      $row = 1;
-      foreach ($result as $sheet) {
-        foreach ($sheet as $product) {
-          if (commerce_xls_import_stopped()) {
-            break;
-          }
-          $row++;
+/**
+ * Batch process function, each process 100 elements.
+ */
+function commerce_xls_import_batch_process($file, $product_type, $images_info, &$context) {
+  libraries_load('PHPExcel');
+  module_load_include('inc', 'phpexcel', 'phpexcel');
+  module_load_include('inc', 'commerce_xls_import', 'includes/commerce_xls_import.errors');
 
-          // Set the import completion status.
-          variable_set('commerce_xls_import_import_count_status', array('completed' => $row - 1, 'total' => count($sheet)));
+  // 5 minutes should be more than enough to process 100 products at a time..
+  set_time_limit(300);
 
-          if ($product['title'] == NULL) {
-            commerce_xls_import_set_error($row, 'title', "Product doesn't have a title");
+  // Set up our PHP Excel variables.
+  $filepath = drupal_realpath($file['uri']);
 
-            $has_errors = TRUE;
-          }
-          else {
-            $has_errors = FALSE;
-          }
+  $reader = PHPExcel_IOFactory::createReaderForFile($filepath);
+  $filter = new CommerceXlsImportReadFilter();
+  $reader->setReadFilter($filter);
 
-          if (!$has_errors) {
-            $values = commerce_xls_import_get_product_values($product, $product_type, $display_type);
-            if (!isset($product['nid']) || $product['nid'] == NULL) {
-              // If nid is set it is a line from a resubmitted results.xls.
-              $entity_info = commerce_xls_import_set_entity_values($product);
-              $nid = commerce_xls_import_create_product($row, $values, $entity_info, $product_type, $display_type, $images_info);
-            }
-            else {
-              // If nid isn't null ignore it as it was already imported.
-              $nid = $product['nid'];
-              commerce_xls_import_set_error($row, 'nid', 'nis was already imported');
-            }
-          }
-          else {
-            $nid = NULL;
-          }
-          $nids[$row - 2] = $nid;
+  if (empty($context['sandbox']['progress'])) {
+    $context['sandbox']['progress'] = 0;
+    $file_info = $reader->listWorksheetInfo($filepath);
+
+    $context['sandbox']['total_rows'] = $file_info[0]['totalRows'];
+    $context['sandbox']['total_columns'] = $file_info[0]['totalColumns'];
+    $context['sandbox']['headers'] = array();
+    $context['sandbox']['nids'] = array();
+
+    $file_info = NULL;
+  }
+
+  $chunk_size = 100;
+  // PHPExcel counts rows starting at 1, not 0, so the starting row needs to
+  // be adjusted.
+  $start_row = $context['sandbox']['progress'] + 1;
+
+  if (($context['sandbox']['progress'] + $chunk_size) > $context['sandbox']['total_rows']) {
+    // Adjust the chunk size if we're going to get pushed past the total number
+    // of rows in the excel file.
+    $chunk_size = $context['sandbox']['total_rows'] - $context['sandbox']['progress'];
+  }
+
+  $filter->setRows($start_row, $start_row + $chunk_size);
+  $objPHPExcel = $reader->load($filepath);
+  $active_sheet = $objPHPExcel->getActiveSheet();
+
+  for ($i = 0; $i < $chunk_size; $i++) {
+
+    if (commerce_xls_import_stopped()) {
+      return;
+    }
+
+    // Manually flush Drupal's static caches when we start a new chunk
+    entity_get_controller('node')->resetCache();
+    entity_get_controller('commerce_product')->resetCache();
+    $row = array();
+
+    // Populate our row array.
+    for ($col_count = 0; $col_count < $context['sandbox']['total_columns']; $col_count++) {
+      if ($cell = $active_sheet->getCellByColumnAndRow($col_count, $i + $start_row)) {
+        // Headers needed to be populated first.
+        if ($start_row == 1 && $i == 0) {
+          $context['sandbox']['headers'][] = $cell->getValue();
+        }
+        else {
+          $row[$context['sandbox']['headers'][$col_count]] = $cell->getValue();
         }
       }
-    }
-
-    // Add NIDs to each product.
-    if (CommerceXlsImportVariables::isImport()) {
-      $count = 0;
-      foreach ($nids as $nid) {
-        $result[0][$count]['nid'] = $nid;
-        $count++;
+      else {
+        break;
       }
     }
 
-    $import_counts = variable_get('commerce_xls_import_import_count_status', '');
-    variable_set('commerce_xls_import_last_import', array(
-      'completed' => time(),
-      'row' => $import_counts['completed'],
-      'total' => $import_counts['total'],
-    ));
-    variable_del('commerce_xls_import_import_count_status');
-    commerce_xls_import_export('errors', $result, $product_type, $display_type, TRUE);
+    // If $row is empty it means that we're only on the header row.
+    if (!empty($row)) {
+
+      if ($row['title'] == NULL) {
+        commerce_xls_import_set_error($i + $start_row, 'title', "Product doesn't have a title");
+        $has_errors = TRUE;
+      }
+      else {
+        $has_errors = FALSE;
+      }
+
+      if (!$has_errors) {
+        $values = commerce_xls_import_get_product_values($row, $product_type, $display_type;
+        if (!isset($row['nid']) || $row['nid'] == NULL) {
+          // If nid is set it is a line from a resubmitted results.xls.
+          $entity_info = commerce_xls_import_set_entity_values($row);
+          $nid = commerce_xls_import_create_product($i + $start_row, $values, $entity_info, $product_type, $display_type, $images_info);
+        }
+        else {
+          // If nid isn't null ignore it as it was already imported.
+          $nid = $row['nid'];
+          commerce_xls_import_set_error($i + $start_row, 'nid', 'nis was already imported');
+        }
+      }
+      else {
+        $nid = NULL;
+      }
+      $context['sandbox']['nids'][$i + $start_row] = $nid;
+
+      variable_set('commerce_xls_import_import_count_status', array('completed' => $context['sandbox']['progress'], 'total' => $context['sandbox']['total_rows'] - 1));
+
+      $context['results'][] = $row;
+    }
+
+    // Update progress info
+    $context['sandbox']['progress'] ++;
+    $context['message'] = t('@count records have been processed.', array('@count' => $context['sandbox']['progress']));
+  }
+
+  // Add NIDs to each product.
+  if (CommerceXlsImportVariables::isImport()) {
+    $count = 0;
+    foreach ($context['sandbox']['nids'] as $nid) {
+      $context['results'][$count]['nid'] = $nid;
+      $count++;
+    }
+  }
+
+  // Inform the batch engine that we are not finished,
+  // and provide an estimation of the completion level we reached.
+  if ($context['sandbox']['progress']!= $context['sandbox']['total_rows']) {
+    $context['finished'] = $context['sandbox']['progress'] / $context['sandbox']['total_rows'];
+  }
+
+  $objPHPExcel->disconnectWorksheets();
+  $objPHPExcel = NULL;
+}
+
+/**
+ * Batch wrapup function.
+ */
+function commerce_xls_import_batch_wrapup($product_type, $time_started, &$context) {
+
+  // Skip this step if errors were encountered.
+  if (!empty($context['results']['has_errors'])) {
+    return;
+  }
+
+  $context['message'] = t('@count products processed.', array('@count' => count($context['results'])));
+
+  $import_counts = variable_get('commerce_xls_import_import_count_status', '');
+  variable_set('commerce_xls_import_last_import', array(
+    'completed' => time(),
+    'row' => $import_counts['completed'],
+    'total' => $import_counts['total'],
+  ));
+  variable_del('commerce_xls_import_import_count_status');
+  commerce_xls_import_export('errors', $context['results'], $product_type, $display_type, TRUE);
+  commerce_xls_import_set_finish_import();
+}
+
+/**
+ * Batch completion callback.
+ */
+function commerce_xls_import_batch_finished($success, $results, $operations) {
+  if (!empty($results['has_errors'])) {
+    drupal_set_message(t('Import encountered problems with the Excel file.'), 'error');
+    return;
+  }
+
+  if ($success) {
+    // Here we do something meaningful with the results.
+    $message = t('@count products successfully processed', array('@count' => count($results)));
+    drupal_set_message($message);
   }
   else {
-    drupal_set_message(t("There was an error with the import, please try again. If this problem persists contact the system administrator"), "error");
+    // An error occurred.
+    // $operations contains the operations that remained unprocessed.
+    $error_operation = reset($operations);
+    $message = t('An error occurred while processing %error_operation with arguments: @arguments', array('%error_operation' => $error_operation[0], '@arguments' => print_r($error_operation[1], TRUE)));
+    drupal_set_message($message, 'error');
   }
 }
 

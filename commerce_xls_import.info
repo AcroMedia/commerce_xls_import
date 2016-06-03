@@ -4,7 +4,6 @@ core = 7.x
 package = Commerce (contrib)
 
 dependencies[] = phpexcel
-dependencies[] = background_process
 dependencies[] = commerce_product
 dependencies[] = commerce_product_ui
 
@@ -13,3 +12,4 @@ scripts[] = js/commerce_xls_import.js
 
 files[] = tests/commerce_xls_import.test
 files[] = classes/CommerceXlsImportVariables.inc
+files[] = classes/CommerceXlsImportReadFilter.inc
