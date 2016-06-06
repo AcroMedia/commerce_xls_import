@@ -33,7 +33,7 @@ function commerce_xls_import_menu() {
     'title' => 'Commerce Export',
     'description' => 'Export products to XLS.',
     'page callback' => 'drupal_get_form',
-    'page arguments' => array('commerce_xls_import_start'),
+    'page arguments' => array('commerce_xls_import_start_export'),
     'access arguments' => array('administer commerce import'),
     'file' => 'includes/commerce_xls_import.export.inc',
   );

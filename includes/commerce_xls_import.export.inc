@@ -13,7 +13,7 @@
  * @return array $form
  *  The array containing the export and import buttons.
  */
-function commerce_xls_import_start() {
+function commerce_xls_import_start_export() {
   $form = array();
   $product_types = array();
   $display_types = array();
@@ -86,7 +86,7 @@ function commerce_xls_import_start() {
  * @param array $form_state
  *  The form state array, passed by reference.
  */
-function commerce_xls_import_start_submit($form, &$form_state) {
+function commerce_xls_import_start_export_submit($form, &$form_state) {
   if (!commerce_xls_import_is_running()) {
     $product_type = $form_state['values']['product_type'];
     $display_type = $form_state['values']['display_type'];
