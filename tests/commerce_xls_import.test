@@ -71,36 +71,4 @@ class CommerceXlsImportTestCase extends DrupalWebTestCase {
     $this->drupalGet('admin/commerce/products/import_commerce');
     $this->assertFieldByXPath("//select[@name='product_type']/option[@value='product']", 'Product', 'Product type \'Product\' found');
   }
-
-  /**
-   * Test xls import
-   */
-  public function testCommerceXlsImportImport() {
-    //Import products from sample_tops.xls
-    $file = array(
-      'uri' => drupal_get_path('module', 'commerce_xls_import') . '/sample_files/sample_tops.xls',
-      'product_type' => 'product',
-      'display_type' => 'product'
-    );
-    commerce_xls_import_import($file);
-
-    //Set admin user to have admin privileges
-    $this->drupalLogin($this->adminUser);
-    $this->drupalPost('user/2/edit', array('roles[3]' => TRUE), t('Save'));
-
-    $this->drupalGet('admin/commerce/products');
-
-    //Loop thru xls and check if all skus are in the product page, make sure #18 and above do not appear (no sku)
-    $result = phpexcel_import(drupal_get_path('module', 'commerce_xls_import') . '/sample_files/sample_tops.xls');
-    debug($result);
-    foreach ($result[0] as $index => $row) {
-      if ($index < 18) {
-        //Valid Sku
-        $this->assertText($row['sku'], $row['title'] . ':' . $row['sku'] . ' found');
-      } else {
-        //Invalid Sku
-        $this->assertNoText($row['title'], $row['title'] . ':' . $row['sku'] . ' not found');
-      }
-    }
-  }
 }
