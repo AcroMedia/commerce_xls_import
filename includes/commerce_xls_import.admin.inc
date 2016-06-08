@@ -37,6 +37,9 @@ function commerce_xls_import_start() {
     '#markup' => theme('commerce_xls_import_instructions'),
   );
 
+  include('commerce_xls_import.errors.inc');
+  commerce_xls_import_check_phpexcel_library();
+
   foreach (commerce_product_types() as $product_type) {
     $product_types[$product_type['type']] = $product_type['name'];
   }

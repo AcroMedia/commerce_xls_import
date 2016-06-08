@@ -26,6 +26,9 @@ function commerce_xls_import_start_export() {
     $display_types[$node_type->type] = $node_type->name;
   }
 
+  include('commerce_xls_import.errors.inc');
+  commerce_xls_import_check_phpexcel_library();
+
   $form['title'] = array(
     '#markup' => '<h1>' . t('Commerce XLS Import - Export') . '</h1>',
   );

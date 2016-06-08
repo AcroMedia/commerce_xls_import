@@ -101,3 +101,14 @@ function commerce_xls_import_get_column_status($row, $column) {
     return COMMERCE_XLS_IMPORT_DATA_SUCCESS;
   }
 }
+
+/**
+ * Checks to see if PHPExcel library is installed
+*/
+function commerce_xls_import_check_phpexcel_library() {
+  $libraries = libraries_get_libraries();
+  if(!isset($libraries['PHPExcel'])) {
+      drupal_set_message(t('The PHPExcel library is required and was not found.'), 'error', FALSE);
+  }
+}
+
