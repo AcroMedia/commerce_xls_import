@@ -203,7 +203,7 @@ function commerce_xls_import_start_validate($form, &$form_state) {
 
       }
       elseif ($value != NULL && is_uploaded_file($_FILES['files']['tmp_name'][$field_name])) {
-        $validators = array('file_validate_extensions' => array('xls'));
+        $validators = array('file_validate_extensions' => array('xls xlsx'));
         $file = file_save_upload($field_name, $validators);
         if ($file) {
           $form_state['files'][] = array('uri' => $file->uri, 'product_type' => $field_name);
