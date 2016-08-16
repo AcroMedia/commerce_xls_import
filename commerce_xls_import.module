@@ -1612,7 +1612,7 @@ function commerce_xls_import_export_product_data($product_type, $display_type) {
         switch ($field['type']) {
           case 'commerce_price':
             $price = $variation->$key;
-            $data[$key] = $price[$product_language][0]['amount'];
+            $data[$key] = $price[$product_language][0]['amount'] / 100;
             break;
 
           case 'image':
