@@ -22,6 +22,7 @@ function commerce_xls_import_start() {
     drupal_set_message(t('Import/Validate Complete with @errors errors', array('@errors' => variable_get('commerce_xls_import_error_count'))));
     variable_del('commerce_xls_import_completed');
   }
+
   $form['title'] = array(
     '#markup' => '<h1>' . t('Commerce XLS Import') . '</h1>',
   );
@@ -127,12 +128,11 @@ function commerce_xls_import_start() {
       '#markup' => '<div class="last-import-message">' . $last_import_message . '</div>',
       '#weight' => 9,
     );
-
-    $form['buttons']['import_button'] = array(
+    $form['buttons']['import'] = array(
       '#type' => 'submit',
       '#value' => t('Begin Full Import'),
     );
-    $form['buttons']['validate_xls'] = array(
+    $form['buttons']['validate'] = array(
       '#type' => 'submit',
       '#value' => t('Validate File'),
     );
@@ -212,7 +212,7 @@ function commerce_xls_import_start_validate($form, &$form_state) {
     }
   }
 
-  if (!isset($form_state['files']) && ($form_state['clicked_button']['#id'] == 'edit-import-button' || $form_state['clicked_button']['#id'] == 'edit-validate-xls')) {
+  if (!isset($form_state['files']) && ($form_state['clicked_button']['#id'] == 'edit-import' || $form_state['clicked_button']['#id'] == 'edit-validate')) {
     foreach ($_FILES['files']['tmp_name'] as $field_name) {
       form_set_error($field_name, t('No files to import'));
     }
@@ -231,7 +231,7 @@ function commerce_xls_import_start_validate($form, &$form_state) {
 function commerce_xls_import_start_submit($form, &$form_state) {
   global $user;
 
-  if ($form_state['triggering_element']['#id'] == 'edit-import-button') {
+  if ($form_state['triggering_element']['#id'] == 'edit-import') {
 
     // Reset import tables.
     db_delete('commerce_xls_import')
@@ -252,7 +252,6 @@ function commerce_xls_import_start_submit($form, &$form_state) {
           ))
           ->execute();
 
-        //$unpublish_products = (bool) $form_state['values']['unpublish_products'];
         commerce_xls_import_batch_start($file, FALSE);
       }
       else {
@@ -260,7 +259,7 @@ function commerce_xls_import_start_submit($form, &$form_state) {
       }
     }
   }
-  elseif ($form_state['triggering_element']['#id'] == 'edit-validate-xls') {
+  elseif ($form_state['triggering_element']['#id'] == 'edit-validate') {
 
     // Reset import table.
     db_delete('commerce_xls_import')
@@ -300,7 +299,7 @@ function commerce_xls_import_start_submit($form, &$form_state) {
   }
   elseif ($form_state['clicked_button']['#id'] == 'edit-errors-button') {
 
-    $filename = "product_import_results.xls";
+    $filename = 'product_import_results.xls';
     $path = file_build_uri($filename);
 
     if (is_readable($path)) {
@@ -316,7 +315,7 @@ function commerce_xls_import_start_submit($form, &$form_state) {
       drupal_set_message(t('No results found'), 'error');
     }
   }
-  elseif ($form_state['values']['export_products'] == $form_state['triggering_element']['#value']) {
+  elseif (isset($form_state['values']['export_products']) && $form_state['values']['export_products'] == $form_state['triggering_element']['#value']) {
     $product_type = $form_state['values']['product_type'];
     $display_type = $form_state['values']['display_type'];
 
@@ -324,7 +323,7 @@ function commerce_xls_import_start_submit($form, &$form_state) {
 
     commerce_xls_import_export('export', array($product_info), $product_type, $display_type);
 
-    $filename = $product_type . "_export.xls";
+    $filename = $product_type . '_export.xls';
     $path = file_build_uri($filename);
 
     readfile($path);
@@ -332,13 +331,13 @@ function commerce_xls_import_start_submit($form, &$form_state) {
     // Exit is used to keep page from refreshing which would prevent download.
     drupal_exit();
   }
-  elseif ($form_state['values']['download_template'] == $form_state['triggering_element']['#value']) {
+  elseif (isset($form_state['values']['download_template']) && $form_state['values']['download_template'] == $form_state['triggering_element']['#value']) {
     $product_type = $form_state['values']['product_type'];
     $display_type = $form_state['values']['display_type'];
 
     commerce_xls_import_export('template', NULL, $product_type, $display_type);
 
-    $filename = $product_type . "_template.xls";
+    $filename = $product_type . '_template.xls';
     $path = file_build_uri($filename);
 
     readfile($path);

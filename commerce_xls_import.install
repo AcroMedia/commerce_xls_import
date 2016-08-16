@@ -52,6 +52,7 @@ function commerce_xls_import_schema() {
     'fields' => array(
       'row' => array(
         'type' => 'int',
+        'not null' => TRUE,
       ),
       'column' => array(
         'type' => 'varchar',

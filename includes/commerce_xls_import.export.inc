@@ -98,7 +98,7 @@ function commerce_xls_import_start_export_submit($form, &$form_state) {
 
     commerce_xls_import_export('export', array($product_info), $product_type, $display_type);
 
-    $filename = $product_type . "_export.xls";
+    $filename = $product_type . '_export.xls';
     $path = file_build_uri($filename);
 
     readfile($path);
