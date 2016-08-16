@@ -315,22 +315,6 @@ function commerce_xls_import_start_submit($form, &$form_state) {
       drupal_set_message(t('No results found'), 'error');
     }
   }
-  elseif (isset($form_state['values']['export_products']) && $form_state['values']['export_products'] == $form_state['triggering_element']['#value']) {
-    $product_type = $form_state['values']['product_type'];
-    $display_type = $form_state['values']['display_type'];
-
-    $product_info = commerce_xls_import_export_product_data($product_type, $display_type);
-
-    commerce_xls_import_export('export', array($product_info), $product_type, $display_type);
-
-    $filename = $product_type . '_export.xls';
-    $path = file_build_uri($filename);
-
-    readfile($path);
-
-    // Exit is used to keep page from refreshing which would prevent download.
-    drupal_exit();
-  }
   elseif (isset($form_state['values']['download_template']) && $form_state['values']['download_template'] == $form_state['triggering_element']['#value']) {
     $product_type = $form_state['values']['product_type'];
     $display_type = $form_state['values']['display_type'];
