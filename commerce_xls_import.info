@@ -9,7 +9,6 @@ dependencies[] = commerce_product
 dependencies[] = commerce_product_ui
 
 stylesheets[all][] = css/commerce_xls_import.css
-scripts[] = js/commerce_xls_import.js
 
 files[] = tests/commerce_xls_import.test
 files[] = classes/CommerceXlsImportSettings.inc

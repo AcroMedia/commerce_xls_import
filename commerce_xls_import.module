@@ -254,12 +254,9 @@ function commerce_xls_import_is_running() {
  * Setins current import to finished.
  */
 function commerce_xls_import_set_finish_import() {
-  global $user;
-
   // Set all updates to stopped status.
   $result = db_update('commerce_xls_import')
     ->fields(array('status' => 'finished'))
-    ->condition('uid', $user->uid)
     ->execute();
 
   if ($result) {
@@ -364,6 +361,7 @@ function commerce_xls_import_export($op, $product_info = NULL, $product_type = N
   }
 }
 
+//TODO - we should probably split this into 1 function that does the actual generation and 1 that just provides the download
 /**
  * Generate template xls.
  *
@@ -411,9 +409,7 @@ function commerce_xls_import_generate_errors_xls($options, $headers, $data) {
   $result = phpexcel_export($headers, $data, drupal_realpath($path), $options);
 
   if ($result == PHPEXCEL_SUCCESS) {
-    header('Content-Type: application/vnd.openxmlformats-officedocument.spreadsheetml.sheet');
-    header('Content-Disposition: attachment;filename="' . $filename . '"');
-    header('Cache-Control: max-age=0');
+    drupal_set_message(t('Import completed, if you require the results, download them from the link below'));
 
     return TRUE;
   }
@@ -425,6 +421,7 @@ function commerce_xls_import_generate_errors_xls($options, $headers, $data) {
   }
 }
 
+//TODO - we should probably split this into 1 function that does the actual generation and 1 that just provides the download, especially if we want to port to a batch
 /**
  * Generate product_export.xls.
  *
@@ -590,13 +587,9 @@ function commerce_xls_import_batch_process($file, $product_type, $display_type, 
 
       if ($row['title'] == NULL) {
         commerce_xls_import_set_error($i + $start_row, 'title', "Product doesn't have a title");
-        $has_errors = TRUE;
-      }
-      else {
-        $has_errors = FALSE;
       }
 
-      if (!$has_errors) {
+      if (!commerce_xls_import_get_row_error($row)) {
         $values = commerce_xls_import_get_product_values($row, $product_type, $display_type);
         if (!isset($row['nid']) || $row['nid'] == NULL) {
           // If nid is set it is a line from a resubmitted results.xls.
@@ -606,7 +599,7 @@ function commerce_xls_import_batch_process($file, $product_type, $display_type, 
         else {
           // If nid isn't null ignore it as it was already imported.
           $nid = $row['nid'];
-          commerce_xls_import_set_error($i + $start_row, 'nid', 'nis was already imported');
+          commerce_xls_import_set_error($i + $start_row, 'nid', 'nid was already imported');
         }
       }
       else {
@@ -616,7 +609,8 @@ function commerce_xls_import_batch_process($file, $product_type, $display_type, 
 
       variable_set('commerce_xls_import_import_count_status', array('completed' => $context['sandbox']['progress'], 'total' => $context['sandbox']['total_rows'] - 1));
 
-      $context['results'][] = $row;
+      //array_values needed because PHPExcel needs numeric keys for column values
+      $context['results'][] = array_values($row);
     }
 
     // Update progress info
@@ -1131,14 +1125,14 @@ function commerce_xls_import_get_category_id($category_names) {
  * @param array $image_info
  *  Contains image file information.
  *
- * @param boolean $a_node
+ * @param boolean $is_node
  *  True if entity is a node and False if not a node.
  *
  */
-function commerce_xls_import_update_entity_info($row, $product, $entity_info, $values, $image_info, $a_node = FALSE) {
+function commerce_xls_import_update_entity_info($row, $product, $entity_info, $values, $image_info, $is_node = FALSE) {
   $language = $values['language'];
 
-  if (!$a_node) {
+  if (!$is_node) {
     foreach ($entity_info as $key => $value) {
       $product->$key = $value;
     }
@@ -1162,22 +1156,12 @@ function commerce_xls_import_update_entity_info($row, $product, $entity_info, $v
       if ($info['type'] == 'image' && $image_info) {
         // This field contains an image
         // check for an apostrophe to see if multiple images.
-        $filenames = array($field);
-        if (strpos($field, ',')) {
-          $filenames = explode(',', $field);
-        }
+        $filenames = explode(',', $field);
+
         // Reset all the images to only use the ones provided.
         $product->{$key}[$language] = array();
         foreach ($filenames as $filename) {
-          if ($filename == '') {
-            // No image entered.
-          }
-          elseif (pathinfo($filename, PATHINFO_EXTENSION) == '') {
-            if (commerce_xls_import_get_error($row, $key) == '') {
-              commerce_xls_import_set_error($row, $key, 'Image is missing extension');
-            }
-          }
-          else {
+          if(pathinfo($filename, PATHINFO_EXTENSION) != '') {
             $file = file_load($image_info[trim($filename)]);
 
             if ($file !== FALSE) {
@@ -1185,10 +1169,11 @@ function commerce_xls_import_update_entity_info($row, $product, $entity_info, $v
               file_usage_add($file, 'commerce_xls_import', 'user', 1);
             }
             else {
-              if (commerce_xls_import_get_error($row, $key) == '') {
-                commerce_xls_import_set_error($row, $key, 'Invalid image data entered');
-              }
+              commerce_xls_import_set_error($row, $key, 'Invalid image data entered');
             }
+          }
+          else{
+            commerce_xls_import_set_error($row, $key, 'Image is missing extension');
           }
         }
       }
@@ -1249,7 +1234,7 @@ function commerce_xls_import_update_entity_info($row, $product, $entity_info, $v
       }
     }
   }
-  if (!$a_node) {
+  if (!$is_node) {
     // Set the price and currency.
     if (commerce_xls_import_validate_price($row, $values)) {
       $price = array(
@@ -1315,14 +1300,14 @@ function commerce_xls_import_get_entity_reference_nid($field) {
  * Get headers from XLS.
  *
  * @param object $phpexcel
- *  The phpexcel object created for the current excel spreasheet, passed by
+ *  The phpexcel object created for the current excel spreadsheet, passed by
  *  reference.
  *
  * @return array $headers
  *  The headers from the current excel spreadsheet.
  */
 function commerce_xls_import_get_headers(&$phpexcel) {
-  static $headers = NULL;
+  //static $headers = NULL;
 
   if (!isset($headers)) {
     $headers = array();

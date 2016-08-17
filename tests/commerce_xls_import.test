@@ -44,6 +44,7 @@ class CommerceXlsImportTestCase extends DrupalWebTestCase {
 
     $this->privilegedUser = $this->drupalCreateUser(array(
       'administer commerce import',
+      'administer commerce_product entities',
     ));
 
     $this->normalUser = $this->drupalCreateUser();
@@ -79,29 +80,33 @@ class CommerceXlsImportTestCase extends DrupalWebTestCase {
 
     $edit = array(
       'product_type' => 'product',
-      'files[import_file]' => drupal_get_path('module', 'commerce_xls_import') . '/sample_files/sample_tops.xls',
+      'files[import_file]' => drupal_get_path('module', 'commerce_xls_import') . '/sample_files/sample.xls',
+      'files[product_images]' => drupal_get_path('module', 'commerce_xls_import') . '/sample_files/product_images.zip',
     );
     $this->drupalPost('admin/commerce/products/import_commerce', $edit, 'Validate File');
-    $this->assertText('You are currently running an import or validation, you will not be able to run another until it is finished or stopped manually', 'XLS is validating');
+    $this->assertText('24 products successfully processed', 'XLS File Validation is Running');
   }
 
   /**
    * Test xls import
    */
   public function testCommerceXlsImportImport() {
-    //Import products from sample_tops.xls
-    $file = array(
-      'uri' => drupal_get_path('module', 'commerce_xls_import') . '/sample_files/sample_tops.xls',
+    $this->drupalLogin($this->privilegedUser);
+
+    $edit = array(
       'product_type' => 'product',
+      'files[import_file]' => drupal_get_path('module', 'commerce_xls_import') . '/sample_files/sample.xls',
+      'files[product_images]' => drupal_get_path('module', 'commerce_xls_import') . '/sample_files/product_images.zip',
     );
-    commerce_xls_import_batch_start($file);
+    $this->drupalPost('admin/commerce/products/import_commerce', $edit, 'Begin Full Import');
+    $this->assertText('24 products successfully processed', 'XLS File processed');
 
     $this->drupalGet('admin/commerce/products');
 
     libraries_load('PHPExcel');
     module_load_include('inc', 'phpexcel', 'phpexcel');
     //Loop thru xls and check if all skus are in the product page, make sure #18 and above do not appear (no sku)
-    $result = phpexcel_import(drupal_get_path('module', 'commerce_xls_import') . '/sample_files/sample_tops.xls');
+    $result = phpexcel_import(drupal_get_path('module', 'commerce_xls_import') . '/sample_files/sample.xls');
     foreach ($result[0] as $index => $row) {
       if ($index < 18) {
         //Valid Sku
