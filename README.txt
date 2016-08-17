@@ -5,7 +5,6 @@ CONTENTS OF THIS FILE
  * Features
  * Requirements
  * Known Problems
- * FAQ
 
 INTRODUCTION
 ------------
@@ -13,12 +12,8 @@ INTRODUCTION
 The Commerce XLS Import module is a Drupal Commerce module that allows the
 import of Drupal Commerce Products from an XLS file.
 
-This module is meant to be used on sites built using Commerce Kickstart.
-
-
  * For a full description of the module, visit the project page:
-   https://www.drupal.org/sandbox/cbanman/2504005
-
+   https://www.drupal.org/project/commerce_xls_import
 
  * To submit bug reports and feature suggestions, or to track changes:
    https://www.drupal.org/project/issues/2504005
@@ -32,7 +27,6 @@ FEATURES
  * Generate template XLS for each product type
  * Exports XLS containing information on successful and unsuccessful product
    imports
-
 
 
 REQUIREMENTS
@@ -59,14 +53,3 @@ KNOWN PROBLEMS
 ______________
 
  * Can't set variation titles (https://www.drupal.org/node/2509178)
-
-
-FAQ
----
-
- * How do I upload product images?
-
-    In order to upload product images they must be in a .zip file place in
-    /sites/default/files/import_images/ directory of the Drupal install
-    (public://import_images/). Also make sure that the permissions of the image
-    files allow them to be readable by all.

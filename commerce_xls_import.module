@@ -589,7 +589,7 @@ function commerce_xls_import_batch_process($file, $product_type, $display_type, 
         commerce_xls_import_set_error($i + $start_row, 'title', "Product doesn't have a title");
       }
 
-      if (!commerce_xls_import_get_row_error($row)) {
+      if (!commerce_xls_import_get_row_error($i + $start_row)) {
         $values = commerce_xls_import_get_product_values($row, $product_type, $display_type);
         if (!isset($row['nid']) || $row['nid'] == NULL) {
           // If nid is set it is a line from a resubmitted results.xls.
