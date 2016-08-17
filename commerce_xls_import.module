@@ -763,53 +763,6 @@ function commerce_xls_import_validate_languages($language) {
 }
 
 /**
- * Checks image validity and sets it in the form_state if valid.
- *
- * @param int $row
- *  Current row in spreadsheet.
- *
- * @param array|string $field
- *  Value or values of image name(s).
- *
- * @param array $form_state
- *  The form state array.
- *
- * @param array $image_info
- *  Contains image file info.
- *
- * @param string $key
- *  Index representing the column name in the current row.
- *
- * @param string $language
- *  Represents the language being used.
- */
-function commerce_xls_import_check_set_images($row, $field, &$form_state, $image_info, $key, $language) {
-  // it's an image, check whether multiple uploads.
-  $filenames = explode(',', $field);
-
-  foreach ($filenames as $filename) {
-    if ($filename != '') {
-      if (pathinfo($filename, PATHINFO_EXTENSION) == '') {
-        if (commerce_xls_import_get_error($row, $key) == '') {
-          commerce_xls_import_set_error($row, $key, 'Entered image is missing extension');
-        }
-      }
-      else {
-        $file = file_load($image_info[trim($filename)]);
-        if ($file !== FALSE) {
-          $form_state['values'][$key][$language] = get_object_vars($file);
-        }
-        else {
-          if (commerce_xls_import_get_error($row, $key) == '') {
-            commerce_xls_import_set_error($row, $key, 'File could not be loaded');
-          }
-        }
-      }
-    }
-  }
-}
-
-/**
  * Validates the product's sku.
  *
  * If the product does not have a sku, return false. If the sku is not a valid
@@ -892,10 +845,7 @@ function commerce_xls_import_get_text_format($user) {
 function commerce_xls_import_create_product($row, $values, $entity_info, $product_type, $display_type, $image_info = array()) {
   module_load_include('inc', 'node');
   module_load_include('inc', 'node', 'node.pages');
-
-  global $user;
-  $form_state = array();
-
+  
   $sku = $entity_info['sku'];
 
   $node = new stdClass();
@@ -909,25 +859,6 @@ function commerce_xls_import_create_product($row, $values, $entity_info, $produc
   $node->language = $language;
   $new_language = $language;
   $language = LANGUAGE_NONE;
-
-  $text_format = commerce_xls_import_get_text_format($user);
-
-  // Set up form state.
-  $form_state['values']['title'] = $entity_info['title'];
-  $form_state['values']['language'] = $language;
-  $form_state['values']['name'] = $user->name;
-  $form_state['values']['body'] = array(
-    "$language" => array(
-      0 => array(
-        'value' => $entity_info['body'],
-        'format' => $text_format,
-      ),
-    ),
-  );
-  $form_state['values']['status'] = 1;
-  $form_state['values']['promote'] = 0;
-  $form_state['values']['sticky'] = 0;
-  $form_state['values']['op'] = t('Save');
 
   $values['language'] = $language;
 
@@ -952,25 +883,6 @@ function commerce_xls_import_create_product($row, $values, $entity_info, $produc
     );
 
     commerce_xls_import_update_entity_info($row, $node, $entity_info, $values, $image_info, TRUE);
-
-    // Create the form_state to use node validation.
-    foreach ($values as $key => $field) {
-      $field_info = field_info_field($key);
-      if ($field_info['type'] == 'image') {
-
-        // Validate Images.
-        commerce_xls_import_check_set_images($row, $field, $form_state, $image_info, $key, $language);
-      }
-      else {
-        $form_state['values'][$key] = array(
-          "$language" => array(
-            0 => $field,
-          ),
-        );
-      }
-    }
-
-    $form_state['values']['language'] = $language;
   }
 
   // Validate sku.
@@ -1073,10 +985,11 @@ function commerce_xls_import_update_entity_info($row, $product, $entity_info, $v
         // Reset all the images to only use the ones provided.
         $product->{$key}[$language] = array();
         foreach ($filenames as $filename) {
-          if(pathinfo($filename, PATHINFO_EXTENSION) != '') {
-            $file = file_load($image_info[trim($filename)]);
+          $filename = trim($filename);
+          if(isset($image_info[$filename])) {
+            $file = file_load($image_info[$filename]);
 
-            if ($file !== FALSE) {
+            if ($file !== FALSE && pathinfo($filename, PATHINFO_EXTENSION) != '') {
               $product->{$key}[$language][] = get_object_vars($file);
               file_usage_add($file, 'commerce_xls_import', 'user', 1);
             }
