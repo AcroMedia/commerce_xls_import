@@ -467,8 +467,6 @@ function commerce_xls_import_export_xls($product_type, $options, $headers, $data
 function commerce_xls_import_batch_start($file, $validate = FALSE) {
   module_load_include('inc', 'commerce_xls_import', 'includes/commerce_xls_import.errors');
 
-  variable_set('commerce_xls_import_error_count', 0);
-
   // Get the product type.
   $product_type = $file['product_type'];
   $display_type = $file['display_type'];
@@ -1629,7 +1627,7 @@ function commerce_xls_import_current_status() {
       array(
         '@current' => $current['completed'],
         '@total' => $current['total'],
-        '@errors' => variable_get('commerce_xls_import_error_count'),
+        '@errors' => 'TODO REPLACE ME',
       ));
     $message .= '<br /><progress id="commerce-xls-import-progress" value=' . $current['completed'] . ' max=' . $current['total'] . ' style="clear:both"></progress>';
     $status = 0;

@@ -64,7 +64,7 @@ function commerce_xls_import_schema() {
         'type' => 'blob',
       ),
     ),
-    'primary key' => array('row', 'column'),
+    'indexes' => array('rowcolumn' => array('row', 'column'), 'row' => array('row')),
   );
 
   return $schema;

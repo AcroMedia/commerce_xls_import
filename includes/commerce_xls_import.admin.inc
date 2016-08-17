@@ -19,7 +19,7 @@ function commerce_xls_import_start() {
   $display_types = array();
 
   if (variable_get('commerce_xls_import_completed', '') == 1) {
-    drupal_set_message(t('Import/Validate Complete with @errors errors', array('@errors' => variable_get('commerce_xls_import_error_count'))));
+    drupal_set_message(t('Import/Validate Complete with @errors errors', array('@errors' => 'TODO REPLACE ME')));
     variable_del('commerce_xls_import_completed');
   }
 
@@ -109,7 +109,7 @@ function commerce_xls_import_start() {
       array(
         '@row' => $last_import['row'],
         '@total' => $last_import['total'],
-        '@errors' => variable_get('commerce_xls_import_error_count'),
+        '@errors' => 'TODO REPLACE ME',
       ));
   }
   else {

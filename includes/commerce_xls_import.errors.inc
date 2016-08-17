@@ -70,7 +70,6 @@ function commerce_xls_import_set_error($row, $column, $message) {
       'message' => $message,
     ))
     ->execute();
-  variable_set('commerce_xls_import_error_count', variable_get('commerce_xls_import_error_count') + 1);
 }
 
 /**
