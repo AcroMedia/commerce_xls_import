@@ -765,36 +765,6 @@ function commerce_xls_import_validate_languages($language) {
 }
 
 /**
- * Validates the product by title and returns nid if it exists.
- *
- * If one or no products with the same name exists, return nid. Otherwise
- * return false.
- *
- * @return bool
- *    True if product is valid.
- */
-function commerce_xls_import_validate_product($row, $entity_info) {
-  $nid = NULL;
-
-  if (!isset($entity_info['nid']) || $entity_info['nid'] == NULL) {
-    $nid = commerce_xls_import_search_for_product($entity_info['title']);
-  }
-  else {
-    $nid = $entity_info['nid'];
-  }
-
-  // Validate nid.
-  if (is_array($nid)) {
-    // Multiple possible nid's mark warning and do not proceed any further.
-    commerce_xls_import_set_error($row, 'nid', 'Multiple product matches found');
-
-    return FALSE;
-  }
-
-  return $nid;
-}
-
-/**
  * Checks image validity and sets it in the form_state if valid.
  *
  * @param int $row
@@ -817,10 +787,7 @@ function commerce_xls_import_validate_product($row, $entity_info) {
  */
 function commerce_xls_import_check_set_images($row, $field, &$form_state, $image_info, $key, $language) {
   // it's an image, check whether multiple uploads.
-  $filenames = array($field);
-  if (strpos($field, ',')) {
-    $filenames = explode(',', $field);
-  }
+  $filenames = explode(',', $field);
 
   foreach ($filenames as $filename) {
     if ($filename != '') {
@@ -867,16 +834,12 @@ function commerce_xls_import_validate_sku($row, $sku) {
 
   // Validate sku. The 'a' is added because commerce_product_validate_sku()
   // returns a false positive if the first character of $sku is a ','
-  $sku_is_valid = commerce_product_validate_sku('a' . $sku);
-
-  if (!$sku_is_valid) {
+  if (!commerce_product_validate_sku('a' . $sku)) {
     commerce_xls_import_set_error($row, 'sku', 'sku format invalid');
     return FALSE;
   }
 
-  $sku_available = commerce_product_validate_sku_unique($sku, NULL);
-
-  if (!$sku_available) {
+  if (!commerce_product_validate_sku_unique($sku, NULL)) {
     commerce_xls_import_set_error($row, 'sku', 'sku already in use');
     return FALSE;
   }
@@ -970,14 +933,11 @@ function commerce_xls_import_create_product($row, $values, $entity_info, $produc
 
   $values['language'] = $language;
 
-  $nid = commerce_xls_import_validate_product($row, $entity_info);
-
-  if ($nid === FALSE) {
-    // Product failed validation.
-    return FALSE;
+  if (!empty($entity_info['nid'])) {
+    $node = node_load($entity_info['nid'], NULL, TRUE);
+    $node->language = $new_language;
   }
-  elseif ($nid == NULL) {
-
+  else {
     // Prepare node.
     $node->type = $display_type;
     node_object_prepare($node);
@@ -1014,10 +974,6 @@ function commerce_xls_import_create_product($row, $values, $entity_info, $produc
 
     $form_state['values']['language'] = $language;
   }
-  else {
-    $node = node_load($nid, NULL, TRUE);
-    $node->language = $new_language;
-  }
 
   // Validate sku.
   commerce_xls_import_validate_sku($row, $sku);
@@ -1038,47 +994,6 @@ function commerce_xls_import_create_product($row, $values, $entity_info, $produc
   }
 
   return NULL;
-}
-
-/**
- * Searches to see if the product if it already exists.
- *
- * If a product with the given title already exists, return its nid. If
- * multiple products with the given title exist, return an array containing
- * the nids of all matching products. Otherwise, if no products exist, return
- * null.
- *
- * @param string $title
- *   The title of the product to be queried.
- *
- * @return int|array|null
- *   Returns single nid if one product found.
- *   Returns array of nids if multiple products found.
- *   Returns null if no products found.
- */
-function commerce_xls_import_search_for_product($title) {
-  $nids = array();
-  $count = 0;
-
-  $result = db_select('node', 'n')
-    ->fields('n', array('nid'))
-    ->condition('n.title', $title, '=')
-    ->execute();
-
-  while ($record = $result->fetchAssoc()) {
-    $nids[$count] = $record['nid'];
-    $count++;
-  }
-
-  if ($count == 1) {
-    return $nids[0];
-  }
-  elseif ($count > 1) {
-    return $nids;
-  }
-  else {
-    return NULL;
-  }
 }
 
 /**
@@ -1155,7 +1070,6 @@ function commerce_xls_import_update_entity_info($row, $product, $entity_info, $v
 
       if ($info['type'] == 'image' && $image_info) {
         // This field contains an image
-        // check for an apostrophe to see if multiple images.
         $filenames = explode(',', $field);
 
         // Reset all the images to only use the ones provided.
