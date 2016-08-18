@@ -101,6 +101,20 @@ function commerce_xls_import_get_column_status($row, $column) {
   }
 }
 
+/*
+ * Gets the total number of errors for the import, simply counts all the error entries
+ */
+function commerce_xls_import_count_errors() {
+  $total = 0;
+
+  $result = db_query("SELECT count(*) FROM {commerce_xls_import_errors}")->fetchField();
+  if ($result) {
+    $total = $result;
+  }
+
+  return $total;
+}
+
 /**
  * Checks to see if PHPExcel library is installed
 */

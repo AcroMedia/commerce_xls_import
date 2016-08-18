@@ -845,7 +845,7 @@ function commerce_xls_import_get_text_format($user) {
 function commerce_xls_import_create_product($row, $values, $entity_info, $product_type, $display_type, $image_info = array()) {
   module_load_include('inc', 'node');
   module_load_include('inc', 'node', 'node.pages');
-  
+
   $sku = $entity_info['sku'];
 
   $node = new stdClass();
@@ -1132,7 +1132,7 @@ function commerce_xls_import_get_entity_reference_nid($field) {
  *  The headers from the current excel spreadsheet.
  */
 function commerce_xls_import_get_headers(&$phpexcel) {
-  //static $headers = NULL;
+  static $headers = NULL;
 
   if (!isset($headers)) {
     $headers = array();
@@ -1540,7 +1540,7 @@ function commerce_xls_import_current_status() {
       array(
         '@current' => $current['completed'],
         '@total' => $current['total'],
-        '@errors' => 'TODO REPLACE ME',
+        '@errors' => commerce_xls_import_count_errors(),
       ));
     $message .= '<br /><progress id="commerce-xls-import-progress" value=' . $current['completed'] . ' max=' . $current['total'] . ' style="clear:both"></progress>';
     $status = 0;
