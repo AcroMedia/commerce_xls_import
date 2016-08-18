@@ -104,7 +104,7 @@ function commerce_xls_import_phpexcel_export($op, &$data, &$phpexcel, $options, 
         if (!CommerceXlsImportSettings::rowHasError($row)) {
           if ($column_status == COMMERCE_XLS_IMPORT_DATA_ERROR) {
             if ($headers[$column] == 'title') {
-              CommerceXlsImportSettings::setRowErrorStatus($row);
+              CommerceXlsImportSettings::setRowError($row);
             }
             $style_array = array(
               'fill' => array(
