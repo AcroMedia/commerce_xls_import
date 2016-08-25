@@ -27,6 +27,16 @@ function commerce_xls_import_menu() {
     'type' => MENU_LOCAL_TASK,
   );
 
+  $items['admin/commerce/products/import_commerce/aliases'] = array(
+    'title' => 'Configure Commerce Import Aliases',
+    'description' => 'Configure aliases for fields',
+    'page callback' => 'drupal_get_form',
+    'page arguments' => array('commerce_xls_import_aliases_form'),
+    'access arguments' => array('administer commerce import'),
+    'file' => 'includes/commerce_xls_import.admin.inc',
+    'type' => MENU_LOCAL_ACTION,
+  );
+
   $items['admin/commerce/products/import_commerce/export'] = array(
     'title' => 'Commerce Export',
     'description' => 'Export products to XLS.',
@@ -499,6 +509,7 @@ function commerce_xls_import_batch_begin($validate) {
   if($validate) {
     CommerceXlsImportSettings::setValidate();
   }
+  CommerceXlsImportSettings::setAliases(variable_get('commerce_xls_import_field_aliases', array()));
   variable_set('commerce_xls_import_import_count_status', array('completed' => 0, 'total' => 0));
 }
 
@@ -572,7 +583,8 @@ function commerce_xls_import_batch_process($file, $product_type, $display_type, 
           $context['sandbox']['headers'][] = $cell->getValue();
         }
         else {
-          $row[$context['sandbox']['headers'][$col_count]] = $cell->getValue();
+          $field_name = CommerceXlsImportSettings::field_name($context['sandbox']['headers'][$col_count]);
+          $row[$field_name] = $cell->getValue();
         }
       }
       else {
@@ -1365,6 +1377,8 @@ function commerce_xls_import_generate_headers($nid = NULL, $product_type = NULL,
     $headers['Products'][] = 'nid';
   }
 
+  $headers['Products'] = array_map(array('CommerceXlsImportSettings', 'field_alias'), $headers['Products']);
+
   return $headers;
 }
 
@@ -1411,18 +1425,19 @@ function commerce_xls_import_export_product_data($product_type, $display_type) {
 
     foreach ($variations as $variation) {
       $data = array();
-      $data['title'] = $product_title;
-      $data['body'] = $product_body['value'];
-      $data['language'] = $product_language;
-      $data['variation_title'] = $variation->title;
-      $data['sku'] = $variation->sku;
-      $data['status'] = $variation->status;
+      $data[CommerceXlsImportSettings::field_alias('title')] = $product_title;
+      $data[CommerceXlsImportSettings::field_alias('body')] = $product_body['value'];
+      $data[CommerceXlsImportSettings::field_alias('language')] = $product_language;
+      $data[CommerceXlsImportSettings::field_alias('variation_title')] = $variation->title;
+      $data[CommerceXlsImportSettings::field_alias('sku')] = $variation->sku;
+      $data[CommerceXlsImportSettings::field_alias('status')] = $variation->status;
 
       foreach ($field_info as $key => $field) {
+        $column_name = CommerceXlsImportSettings::field_alias($key);
         switch ($field['type']) {
           case 'commerce_price':
             $price = $variation->$key;
-            $data[$key] = $price[$product_language][0]['amount'] / 100;
+            $data[$column_name] = $price[$product_language][0]['amount'] / 100;
             break;
 
           case 'image':
@@ -1437,7 +1452,7 @@ function commerce_xls_import_export_product_data($product_type, $display_type) {
               $filenames = substr($filenames, 0, -2);
             }
 
-            $data[$key] = $filenames;
+            $data[$column_name] = $filenames;
             break;
 
           case 'taxonomy_term_reference':
@@ -1457,7 +1472,7 @@ function commerce_xls_import_export_product_data($product_type, $display_type) {
                 }
               }
             }
-            $data[$key] = $name;
+            $data[$column_name] = $name;
             break;
 
         }

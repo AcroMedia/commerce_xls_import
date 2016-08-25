@@ -330,3 +330,78 @@ function commerce_xls_import_start_submit($form, &$form_state) {
     drupal_exit();
   }
 }
+
+/**
+ * Form callback for the alias configuration page.
+ */
+function commerce_xls_import_aliases_form($form, &$form_state) {
+  $default_values = variable_get('commerce_xls_import_field_aliases', array());
+
+  $form['heading'] = array(
+    '#markup' => '<h1>' . t('Field Aliases') . '</h1>',
+  );
+
+  $form['help'] = array(
+    '#markup' => '<p>' . t('These settings determine what will be used in the header of the import and export spreadsheets. The default value is the machine name of the field. Note that all fields and properties for all bundles of the commerce_product and node entities are present here but may not be relevant to your import.') . '</p>',
+  );
+
+  $form['submit'] = array(
+    '#type' => 'submit',
+    '#value' => t('Save'),
+  );
+
+  $form['aliases'] = array(
+    '#type' => 'container',
+    '#tree' => TRUE,
+  );
+
+  $fields = array();
+  $product_properties = entity_get_property_info('commerce_product');
+  $node_properties = entity_get_property_info('node');
+
+  foreach ($product_properties['properties'] as $property_name => $property_info) {
+    $fields[$property_name] = $property_info['label'];
+  }
+
+  foreach ($node_properties['properties'] as $property_name => $property_info) {
+    $fields[$property_name] = $property_info['label'];
+  }
+
+  $product_fields = field_info_instances('commerce_product');
+  $node_fields = field_info_instances('node');
+
+  foreach ($product_fields as $bundle => $bundle_fields) {
+    foreach ($bundle_fields as $field_name => $field_info) {
+      $fields[$field_name] = $field_info['label'];
+    }
+  }
+
+  foreach ($node_fields as $bundle => $bundle_fields) {
+    foreach ($bundle_fields as $field_name => $field_info) {
+      $fields[$field_name] = $field_info['label'];
+    }
+  }
+
+  // Order fields alphabetically by label to make it easier to find.
+  asort($fields);
+
+  foreach ($fields as $field_name => $field_label) {
+    $form['aliases'][$field_name] = array(
+      '#type' => 'textfield',
+      '#title' => $field_label,
+      '#default_value' => (!empty($default_values[$field_name])) ? $default_values[$field_name] : $field_name,
+    );
+  }
+
+  $form['submit_bottom'] = $form['submit'];
+
+  return $form;
+}
+
+/**
+ * Submit callback for the alias configuration page.
+ */
+function commerce_xls_import_aliases_form_submit($form, &$form_state) {
+  variable_set('commerce_xls_import_field_aliases', $form_state['values']['aliases']);
+  drupal_set_message(t('Settings saved.'));
+}

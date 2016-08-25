@@ -15,6 +15,7 @@ function commerce_xls_import_uninstall() {
   variable_del('commerce_xls_import_completed');
   variable_del('commerce_xls_import_last_import');
   variable_del('commerce_xls_import_error_count');
+  variable_del('commerce_xls_import_field_aliases');
 }
 
 /**

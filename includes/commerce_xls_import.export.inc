@@ -91,6 +91,7 @@ function commerce_xls_import_start_export() {
  */
 function commerce_xls_import_start_export_submit($form, &$form_state) {
   if (!commerce_xls_import_is_running()) {
+    CommerceXlsImportSettings::setAliases(variable_get('commerce_xls_import_field_aliases', array()));
     $product_type = $form_state['values']['product_type'];
     $display_type = $form_state['values']['display_type'];
 
