@@ -70,3 +70,34 @@ function commerce_xls_import_schema() {
 
   return $schema;
 }
+
+/**
+ * Implements hook_requirements().
+ */
+function commerce_xls_import_requirements($phase) {
+  if ($phase == 'runtime') {
+    $library = libraries_load('PHP_XLSXWriter');
+    $t = get_t();
+
+    if (empty($library['loaded'])) {
+      return array(
+        'commerce_xls_import' => array(
+          'title' => $t('PHP_XLSXWriter'),
+          'value' => 'Not Installed',
+          'description' => $t('In order to export with Commerce XLS Import, you must first download the library from !link and put it under sites/*/libraries/PHP_XLSXWriter/', array('!link' => '<a href="https://github.com/mk-j/PHP_XLSXWriter">Github</a>')),
+          'severity' => REQUIREMENT_ERROR,
+        ),
+      );
+    }
+    else {
+      return array(
+        'commerce_xls_import' => array(
+          'title' => $t('PHP_XLSXWriter'),
+          'value' => $t('Installed'),
+          'severity' => REQUIREMENT_OK,
+        ),
+      );
+    }
+  }
+  return array();
+}

@@ -27,6 +27,7 @@ FEATURES
  * Generate template XLS for each product type
  * Exports XLS containing information on successful and unsuccessful product
    imports
+ * Export data for all existing products.
 
 
 REQUIREMENTS
@@ -45,8 +46,14 @@ work properly with Drupal Commerce depending on your set-up.
 
  * PHPExcel 1.7.8 or higher (https://phpexcel.codeplex.com/releases/view/96183)
 
- PHPExcel library can be extracted in any libraries folder you want
- (sites/*/libraries)
+   PHPExcel library can be extracted in any libraries folder you want
+   (sites/*/libraries)
+
+ * PHP_XLSXWriter 0.22 or higher (https://packagist.org/packages/mk-j/php_xlsxwriter)
+   Required for exporting products only.
+
+   Install in the libraries folder as with PHPExcel.
+
 
 
 KNOWN PROBLEMS

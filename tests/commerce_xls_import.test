@@ -10,7 +10,7 @@
 /**
  * Class CommerceXlsImportTestCase.
  */
-class CommerceXlsImportTestCase extends DrupalWebTestCase {
+class CommerceXlsImportTestCase extends CommerceBaseTestCase {
   protected $adminUser;
   protected $privilegedUser;
   protected $normalUser;
@@ -34,8 +34,23 @@ class CommerceXlsImportTestCase extends DrupalWebTestCase {
    * @{inheritdoc}
    */
   public function setUp() {
+    $modules = parent::setUpHelper('all', array('commerce_xls_import'));
+    parent::setUp($modules);
 
-    parent::setUp(array('commerce_product_ui', 'commerce_xls_import'));
+    // Create a dummy product display content type.
+    $this->createDummyProductDisplayContentType();
+
+    // Many of the following values will be defaulted, they're included here as an illustrative examples.
+    // See http://api.drupal.org/api/function/field_create_instance/7
+    $instance = array(
+      'field_name' => 'field_image',
+      'entity_type' => 'commerce_product',
+      'label' => 'Image',
+      'bundle' => 'product',
+      'description' => t('Upload an image to go with this product display.'),
+      'required' => FALSE,
+    );
+    field_create_instance($instance);
 
     $this->adminUser = $this->drupalCreateUser(array(
       'administer users',
@@ -79,12 +94,12 @@ class CommerceXlsImportTestCase extends DrupalWebTestCase {
     $this->drupalLogin($this->privilegedUser);
 
     $edit = array(
-      'product_type' => 'product',
+      'display_type' => 'product_display',
       'files[import_file]' => drupal_get_path('module', 'commerce_xls_import') . '/sample_files/sample.xls',
       'files[product_images]' => drupal_get_path('module', 'commerce_xls_import') . '/sample_files/product_images.zip',
     );
     $this->drupalPost('admin/commerce/products/import_commerce', $edit, 'Validate File');
-    $this->assertText('24 products successfully processed', 'XLS File Validation is Running');
+    $this->assertText('24 products successfully processed', 'Import file validation completed');
   }
 
   /**
@@ -94,12 +109,12 @@ class CommerceXlsImportTestCase extends DrupalWebTestCase {
     $this->drupalLogin($this->privilegedUser);
 
     $edit = array(
-      'product_type' => 'product',
+      'display_type' => 'product_display',
       'files[import_file]' => drupal_get_path('module', 'commerce_xls_import') . '/sample_files/sample.xls',
       'files[product_images]' => drupal_get_path('module', 'commerce_xls_import') . '/sample_files/product_images.zip',
     );
     $this->drupalPost('admin/commerce/products/import_commerce', $edit, 'Begin Full Import');
-    $this->assertText('24 products successfully processed', 'XLS File processed');
+    $this->assertText('24 products successfully processed', 'Import file processed');
 
     $this->drupalGet('admin/commerce/products');
 
@@ -115,6 +130,34 @@ class CommerceXlsImportTestCase extends DrupalWebTestCase {
         //Invalid Sku
         $this->assertNoText($row['title'], $row['title'] . ':' . $row['sku'] . ' not found');
       }
+    }
+  }
+
+  /**
+   * Test xls export
+   */
+  public function testCommerceXlsImportExport() {
+    // Create dummy product display nodes (and their corresponding product
+    //  entities).
+    $sku = 'PROD-01';
+    $product_name = 'Product One';
+    $product = $this->createDummyProduct($sku, $product_name);
+    $product_node = $this->createDummyProductNode(array($product->product_id), $product_name);
+
+    $this->drupalLogin($this->privilegedUser);
+    $edit = array(
+      'display_type' => 'product_display'
+    );
+    $this->drupalPost('admin/commerce/products/import_commerce/export', $edit, 'Begin Export');
+    $this->assertText('The export completed successfully. Download the results now.', 'Export file generated');
+
+    libraries_load('PHPExcel');
+    module_load_include('inc', 'phpexcel', 'phpexcel');
+    //Loop thru xls and check if all skus are in the product page, make sure #18 and above do not appear (no sku)
+    $filepath = drupal_realpath(file_build_uri('export/commerce_xls_export_product_display.xlsx'));
+    $result = phpexcel_import($filepath);
+    foreach ($result[0] as $index => $row) {
+      $this->assertEqual($row['sku'], 'PROD-01', 'PROD-01 found in export file');
     }
   }
 }

@@ -83,6 +83,39 @@ function commerce_xls_import_theme() {
 }
 
 /**
+ * Implements hook_libraries_info().
+ */
+function commerce_xls_import_libraries_info() {
+  $libs['PHP_XLSXWriter'] = array(
+    'name' => 'PHP_XLSXWriter',
+    'vendor url' => 'https://packagist.org/packages/mk-j/php_xlsxwriter',
+    'download url' => 'https://packagist.org/packages/mk-j/php_xlsxwriter',
+    'version callback' => 'commerce_xls_import_xlsxwriter_version',
+    'files' => array(
+      'php' => array(
+        'xlsxwriter.class.php',
+      ),
+    ),
+  );
+
+  return $libs;
+}
+
+/**
+ * Version callback for the PHP_XLSXWriter library.
+ *
+ * @param array $library
+ *   An array of library information from hook_libraries_info().
+ *
+ * @return string
+ */
+function commerce_xls_import_xlsxwriter_version($library) {
+  // The version is not available in composer.json so we don't have anything to
+  // go off of here.
+  return 'n/a';
+}
+
+/**
  * Implements hook_phpexcel_export().
  */
 function commerce_xls_import_phpexcel_export($op, &$data, &$phpexcel, $options, $column = NULL, $row = NULL) {
@@ -445,7 +478,6 @@ function commerce_xls_import_export_xls($product_type, $options, $headers, $data
   if (file_exists($path)) {
     file_unmanaged_delete($path);
   }
-
   $result = phpexcel_export($headers, $data, drupal_realpath($path), $options);
 
   if ($result == PHPEXCEL_SUCCESS) {
@@ -689,6 +721,224 @@ function commerce_xls_import_batch_finished($success, $results, $operations) {
     $error_operation = reset($operations);
     $message = t('An error occurred while processing %error_operation with arguments: @arguments', array('%error_operation' => $error_operation[0], '@arguments' => print_r($error_operation[1], TRUE)));
     drupal_set_message($message, 'error');
+  }
+}
+
+/**
+ * Batch process function for the product export.
+ *
+ * @param $product_type
+ *   The product type to be processed.
+ * @param string $display_type
+ *   The product display type to be processed.
+ * @param array $context
+ *   The batch context.
+ */
+function commerce_xls_import_export_batch_process($product_type, $display_type, &$context) {
+  libraries_load('PHP_XLSXWriter');
+
+  CommerceXlsImportSettings::setAliases(variable_get('commerce_xls_import_field_aliases', array()));
+
+  // Get a total count of products of this type.
+  $count_query = db_select('node', 'n');
+  $count_query->addField('n', 'nid');
+  $count_query->orderBy('n.nid');
+  $count_query->condition('n.type', $display_type);
+  $total_products = $count_query->countQuery()->execute()->fetchField();
+
+  // Get product data and write to file 50 products at a time.
+  $batch_size = 50;
+  $result_count = 0;
+
+  $writer = new XLSXWriter();
+  //$writer->addCellFormat();
+
+  while ($result_count < $total_products) {
+    // Flush cashes after each batch.
+    entity_get_controller('node')->resetCache();
+    entity_get_controller('commerce_product')->resetCache();
+
+    $processed = commerce_xls_import_generate_records($writer, $product_type, $display_type, $result_count, $batch_size);
+    $result_count += $processed;
+  }
+
+  $file_path = commerce_xls_import_export_filepath($display_type);
+  // Delete any previous version of this export.
+  if (file_exists($file_path)) {
+    file_unmanaged_delete($file_path);
+  }
+  // Write our new file to its permanent location.
+
+  $writer->writeToFile(drupal_realpath($file_path));
+}
+
+/**
+ * Batch completion callback.
+ */
+function commerce_xls_import_export_batch_finished($success, $results, $operations) {
+  if ($success) {
+    drupal_set_message(t('The export completed successfully. Download the results now.'));
+  }
+  else {
+    drupal_set_message(t('The export did not complete. Please try again or contact an administrator'));
+  }
+}
+
+/**
+ * @param XLSXWriter $writer
+ *   The PHP_XLSXWriter object.
+ * @param string $product_type
+ *   The commerce_product bundle to export.
+ * @param string $display_type
+ *   The node bundle to export.
+ * @param int $offset
+ *   The number of products exported so far.
+ * @param int $batch_size
+ *   The number of records to generate.
+ *
+ * @return int
+ *   The number of records processed.
+ */
+function commerce_xls_import_generate_records($writer, $product_type, $display_type, $offset, $batch_size) {
+  $products_processed = 0;
+  // Track if we've written headers to the file so we don't do it more than
+  // once.
+  $headers_written = &drupal_static(__FUNCTION__ . '_headers_written', FALSE);
+
+  $query = db_select('node', 'n');
+  $query->addField('n', 'nid');
+  $query->orderBy('n.nid');
+  $query->condition('n.type', $display_type);
+  $query->range($offset, $batch_size);
+  $result = $query->execute();
+
+  $field_info = commerce_xls_import_get_possible_fields($product_type, $display_type, TRUE);
+
+  if(!$headers_written) {
+    $headers_list = commerce_xls_import_generate_headers(NULL, $product_type, $display_type);
+    $headers = array();
+    // Create an array keyed by the column header with an empty string that will
+    // serve as the default value of each column.
+    foreach ($headers_list['Products'] as $header) {
+      $headers[$header] = '';
+      $sheet_headers[$header] = 'string';
+    }
+    $writer->writeSheetHeader('Products', $sheet_headers);
+    $headers_written = TRUE;
+  }
+
+  foreach ($result as $row) {
+    $product_display = node_load($row->nid, NULL, TRUE);
+
+    // The entity wrapper.
+    $wrapper = entity_metadata_wrapper('node', $product_display);
+
+    $product_title = $wrapper->title->value(array('sanitize' => FALSE));
+    $product_language = $wrapper->language->value(array('sanitize' => FALSE));
+    if (empty($product_language)) {
+      $product_language = LANGUAGE_NONE;
+    }
+    $product_body = $wrapper->body->value(array('sanitize' => FALSE));
+
+    // Array containing variation data.
+    $variations = $wrapper->field_product->value(array('sanitize' => FALSE));
+
+    //if field_product is a 1:1 field it will return the object and not an array
+    if(!is_array($variations)) {
+      $variations = array($variations);
+    }
+
+    foreach ($variations as $variation) {
+      $data = array();
+      $data[CommerceXlsImportSettings::field_alias('title')] = $product_title;
+      $data[CommerceXlsImportSettings::field_alias('body')] = $product_body['value'];
+      $data[CommerceXlsImportSettings::field_alias('language')] = $product_language;
+      $data[CommerceXlsImportSettings::field_alias('variation_title')] = $variation->title;
+      $data[CommerceXlsImportSettings::field_alias('sku')] = $variation->sku;
+      $data[CommerceXlsImportSettings::field_alias('status')] = $variation->status;
+
+      foreach ($field_info as $key => $field) {
+        $column_name = CommerceXlsImportSettings::field_alias($key);
+        switch ($field['type']) {
+          case 'commerce_price':
+            $price = $variation->$key;
+            $data[$column_name] = $price[$product_language][0]['amount'] / 100;
+            break;
+
+          case 'image':
+            $filenames = '';
+            $images = $variation->$key;
+
+            if (!empty($images)) {
+              $images = $images[$product_language];
+              foreach ($images as $image) {
+                $filenames = $filenames . $image['filename'] . ', ';
+              }
+              $filenames = substr($filenames, 0, -2);
+            }
+
+            $data[$column_name] = $filenames;
+            break;
+
+          case 'taxonomy_term_reference':
+            $name = '';
+            if (!empty($variation->$key)) {
+              $term_reference = $variation->$key;
+              $tid = $term_reference[$product_language][0]['tid'];
+              $term = taxonomy_term_load($tid);
+              $name = $term->name;
+            }
+            else {
+              // Is a field from the product, not the variation.
+              if (isset($wrapper->$key)) {
+                $term_reference = $wrapper->$key->value(array('sanitize' => TRUE));
+                if (!empty($term_reference)) {
+                  $name = $term_reference->name;
+                }
+              }
+            }
+            $data[$column_name] = $name;
+            break;
+
+        }
+      }
+
+      $row_styles = array();
+
+      // Put keys in proper order for export.
+      $data = array_merge($headers, $data);
+      $data = array_values($data);
+
+      $writer->writeSheetRow('Products', $data, $row_styles);
+    }
+
+    $products_processed++;
+  }
+
+  return $products_processed;
+}
+
+/**
+ * Writes a set of rows to the temporary file in the XLSX writer object.
+ *
+ * @param \XLSXWriter $writer
+ *   The PHP_XLSXWriter object.
+ * @param array $rows
+ *   An associative array of sheets and rows in that sheet.
+ * @param array $headers
+ *   An associative array of sheets and headers in that sheet.
+ */
+function commerce_xls_import_export_write_to_xlsx($writer, $rows, $row_styles, $headers = array()) {
+  if (!empty($headers)) {
+    foreach($headers as $sheet_name => $sheet_headers) {
+      $writer->writeSheetHeader($sheet_name, $sheet_headers);
+    }
+  }
+
+  foreach ($rows as $sheet_name => $sheet_rows) {
+    foreach ($sheet_rows as $row) {
+      $writer->writeSheetRow($sheet_name, $row, $row_styles);
+    }
   }
 }
 
@@ -1214,7 +1464,7 @@ function commerce_xls_import_create_image_database_entries($base_path) {
         $file->uid = $user->uid;
         $file->filename = $filename;
         $file->uri = $uri;
-        $file->filemime = mime_content_type($uri);
+        $file->filemime = mime_content_type(drupal_realpath($uri));
         $file->filesize = filesize($uri);
         $file->status = 1;
 
@@ -1383,115 +1633,6 @@ function commerce_xls_import_generate_headers($nid = NULL, $product_type = NULL,
 }
 
 /**
- * Exports an array containing data of all products of a given type.
- *
- * @param string $product_type
- *   The machine readable product type.
- *
- * @return array
- *   The data of all products of the given type.
- */
-function commerce_xls_import_export_product_data($product_type, $display_type) {
-  $nids = commerce_xls_import_nids_of_type($display_type);
-  $products = array();
-  $field_info = commerce_xls_import_get_possible_fields($product_type, $display_type, TRUE);
-
-  $headers_list = commerce_xls_import_generate_headers(NULL, $product_type, $display_type);
-  $headers = array();
-
-  // Set up headers array to match exported data.
-  foreach ($headers_list['Products'] as $header) {
-    $headers[$header] = '';
-  }
-
-  foreach ($nids as $nid) {
-
-    $product_display = node_load($nid);
-
-    // The entity wrapper.
-    $wrapper = entity_metadata_wrapper('node', $product_display);
-
-    $product_title = $wrapper->title->value(array('sanitize' => FALSE));
-    $product_language = $wrapper->language->value(array('sanitize' => FALSE));
-    $product_body = $wrapper->body->value(array('sanitize' => FALSE));
-
-    // Array containing variation data.
-    $variations = $wrapper->field_product->value(array('sanitize' => FALSE));
-
-    //if field_product is a 1:1 field it will return the object and not an array
-    if(!is_array($variations)) {
-      $variations = array($variations);
-    }
-
-    foreach ($variations as $variation) {
-      $data = array();
-      $data[CommerceXlsImportSettings::field_alias('title')] = $product_title;
-      $data[CommerceXlsImportSettings::field_alias('body')] = $product_body['value'];
-      $data[CommerceXlsImportSettings::field_alias('language')] = $product_language;
-      $data[CommerceXlsImportSettings::field_alias('variation_title')] = $variation->title;
-      $data[CommerceXlsImportSettings::field_alias('sku')] = $variation->sku;
-      $data[CommerceXlsImportSettings::field_alias('status')] = $variation->status;
-
-      foreach ($field_info as $key => $field) {
-        $column_name = CommerceXlsImportSettings::field_alias($key);
-        switch ($field['type']) {
-          case 'commerce_price':
-            $price = $variation->$key;
-            $data[$column_name] = $price[$product_language][0]['amount'] / 100;
-            break;
-
-          case 'image':
-            $filenames = '';
-            $images = $variation->$key;
-
-            if (!empty($images)) {
-              $images = $images[$product_language];
-              foreach ($images as $image) {
-                $filenames = $filenames . $image['filename'] . ', ';
-              }
-              $filenames = substr($filenames, 0, -2);
-            }
-
-            $data[$column_name] = $filenames;
-            break;
-
-          case 'taxonomy_term_reference':
-            $name = '';
-            if (!empty($variation->$key)) {
-              $term_reference = $variation->$key;
-              $tid = $term_reference[$product_language][0]['tid'];
-              $term = taxonomy_term_load($tid);
-              $name = $term->name;
-            }
-            else {
-              // Is a field from the product, not the variation.
-              if (isset($wrapper->$key)) {
-                $term_reference = $wrapper->$key->value(array('sanitize' => TRUE));
-                if (!empty($term_reference)) {
-                  $name = $term_reference->name;
-                }
-              }
-            }
-            $data[$column_name] = $name;
-            break;
-
-        }
-      }
-
-      // Put keys in proper order for export.
-      $data = array_merge($headers, $data);
-      //phpexcel only access a numerically keyed array, make sure that is the case.
-      $data = array_values($data);
-
-      $products[] = $data;
-    }
-
-  }
-
-  return $products;
-}
-
-/**
  * Gets the owner of the form field.
  *
  * @param string $field_name
@@ -1579,4 +1720,22 @@ function commerce_xls_import_current_status() {
   }
 
   drupal_json_output($output);
+}
+
+/**
+ * Returns a URI to the location of the exported XLS file.
+ *
+ * If the "export" directory doesn't exist in files folder, it is created.
+ *
+ * @param string $display_type
+ *   The node bundle to create the file path for.
+ *
+ * @return string
+ *   The URI to the export file of the specified product type.
+ */
+function commerce_xls_import_export_filepath($display_type) {
+  $export_uri = file_build_uri('export');
+  // Create or update directory permissions as needed.
+  file_prepare_directory($export_uri, FILE_CREATE_DIRECTORY | FILE_MODIFY_PERMISSIONS);
+  return "{$export_uri}/commerce_xls_export_{$display_type}.xlsx";
 }
