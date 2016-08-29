@@ -37,13 +37,14 @@ function commerce_xls_import_menu() {
     'type' => MENU_LOCAL_ACTION,
   );
 
-  $items['admin/commerce/products/import_commerce/export'] = array(
+  $items['admin/commerce/products/export_commerce'] = array(
     'title' => 'Commerce Export',
     'description' => 'Export products to XLS.',
     'page callback' => 'drupal_get_form',
     'page arguments' => array('commerce_xls_import_start_export'),
     'access arguments' => array('administer commerce import'),
     'file' => 'includes/commerce_xls_import.export.inc',
+    'type' => MENU_LOCAL_TASK,
   );
 
   $items['admin/commerce/products/import_commerce/get_import_status'] = array(

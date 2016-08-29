@@ -69,22 +69,22 @@ function commerce_xls_import_start() {
     ),
   );
 
+  $form['download_template'] = array(
+      '#type' => 'submit',
+      '#name' => 'download_template',
+      '#value' => t('Download Template'),
+      '#suffix' => '<div style="clear:both"></div>',
+      '#attributes' => array(
+          'id' => array('commerce-xls-import-download-template'),
+      ),
+  );
+
   $form['import_file'] = array(
     '#type' => 'file',
     '#title' => t('Import File'),
     '#description' => t('Upload the .xls file that contains products of the selected type'),
     '#attributes' => array(
       'id' => array('commerce-xls-import-file-upload'),
-    ),
-  );
-
-  $form['download_template'] = array(
-    '#type' => 'submit',
-    '#name' => 'download_template',
-    '#value' => t('Download Template'),
-    '#suffix' => '<div style="clear:both"></div>',
-    '#attributes' => array(
-      'id' => array('commerce-xls-import-download-template'),
     ),
   );
 
@@ -128,13 +128,13 @@ function commerce_xls_import_start() {
       '#markup' => '<div class="last-import-message">' . $last_import_message . '</div>',
       '#weight' => 9,
     );
-    $form['buttons']['import'] = array(
-      '#type' => 'submit',
-      '#value' => t('Begin Full Import'),
-    );
     $form['buttons']['validate'] = array(
       '#type' => 'submit',
       '#value' => t('Validate File'),
+    );
+    $form['buttons']['import'] = array(
+        '#type' => 'submit',
+        '#value' => t('Begin Full Import'),
     );
     $form['import_status'] = array(
       '#type' => 'hidden',
@@ -163,16 +163,6 @@ function commerce_xls_import_start() {
   $form['buttons']['errors_button'] = array(
     '#type' => 'submit',
     '#value' => t('Retrieve Latest Results'),
-  );
-
-  $form['buttons']['export_products'] = array(
-    '#type' => 'link',
-    '#href' => 'admin/commerce/products/import_commerce/export',
-    '#title' => t('Export Products'),
-    '#prefix' => '<div style="clear:both"></div>',
-    '#attributes' => array(
-      'id' => array('commerce-xls-import-export-products'),
-    ),
   );
 
   return $form;
