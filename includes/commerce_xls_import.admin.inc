@@ -39,7 +39,6 @@ function commerce_xls_import_start() {
   );
 
   include('commerce_xls_import.errors.inc');
-  commerce_xls_import_check_phpexcel_library();
 
   foreach (commerce_product_types() as $product_type) {
     $product_types[$product_type['type']] = $product_type['name'];
@@ -180,19 +179,18 @@ function commerce_xls_import_start() {
 function commerce_xls_import_start_validate($form, &$form_state) {
 
   if (isset($_FILES['files'])) {
-    foreach ($_FILES['files']['tmp_name'] as $field_name => $value) {
-      if ($field_name == 'product_images' && !empty($value)) {
-        $regex = '/\.(' . preg_replace('/ +/', '|', preg_quote('zip')) . ')$/i';
-        if (!preg_match($regex, $_FILES['files']['name']['product_images'])) {
+    foreach ($_FILES['files']['tmp_name'] as $field_name => $tmp_file) {
+      if ($field_name == 'product_images' && !empty($tmp_file)) {
+        if (pathinfo($_FILES['files']['name'][$field_name], PATHINFO_EXTENSION) !== 'zip') {
           $error = t('Product images need to be uploaded in a .zip file');
           drupal_set_message($error, 'error');
         }
         else {
-          drupal_move_uploaded_file($value, file_build_uri('product_images.zip'));
+          drupal_move_uploaded_file($tmp_file, CommerceXlsImportSettings::imageZipUri());
         }
 
       }
-      elseif ($value != NULL && is_uploaded_file($_FILES['files']['tmp_name'][$field_name])) {
+      elseif ($tmp_file != NULL && is_uploaded_file($_FILES['files']['tmp_name'][$field_name])) {
         $validators = array('file_validate_extensions' => array('xls xlsx'));
         $file = file_save_upload($field_name, $validators);
         if ($file) {
@@ -222,7 +220,6 @@ function commerce_xls_import_start_submit($form, &$form_state) {
   global $user;
 
   if ($form_state['triggering_element']['#id'] == 'edit-import') {
-
     // Reset import tables.
     db_delete('commerce_xls_import')
       ->execute();
@@ -242,7 +239,7 @@ function commerce_xls_import_start_submit($form, &$form_state) {
           ))
           ->execute();
 
-        commerce_xls_import_batch_start($file, FALSE);
+        commerce_xls_import_main($file, FALSE);
       }
       else {
         drupal_set_message(t('You are currently running an import. Please wait until it is finished or cancel the current one'), 'error', FALSE);
@@ -250,7 +247,6 @@ function commerce_xls_import_start_submit($form, &$form_state) {
     }
   }
   elseif ($form_state['triggering_element']['#id'] == 'edit-validate') {
-
     // Reset import table.
     db_delete('commerce_xls_import')
       ->execute();
@@ -270,8 +266,7 @@ function commerce_xls_import_start_submit($form, &$form_state) {
           ))
           ->execute();
 
-        //$unpublish_products = (bool) $form_state['values']['unpublish_products'];
-        commerce_xls_import_batch_start($file, TRUE);
+        commerce_xls_import_main($file, TRUE);
       }
       else {
         drupal_set_message(t('You are currently running an file validation. Please wait until it is finished or cancel the current one'), 'error', FALSE);
@@ -289,7 +284,7 @@ function commerce_xls_import_start_submit($form, &$form_state) {
   }
   elseif ($form_state['clicked_button']['#id'] == 'edit-errors-button') {
 
-    $filename = 'product_import_results.xls';
+    $filename = 'product_import_results.xlsx';
     $path = file_build_uri($filename);
 
     if (is_readable($path)) {
@@ -311,7 +306,7 @@ function commerce_xls_import_start_submit($form, &$form_state) {
 
     commerce_xls_import_export('template', NULL, $product_type, $display_type);
 
-    $filename = $product_type . '_template.xls';
+    $filename = $product_type . '_template.xlsx';
     $path = file_build_uri($filename);
 
     readfile($path);

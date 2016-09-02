@@ -22,13 +22,12 @@ import of Drupal Commerce Products from an XLS file.
 FEATURES
 --------
 
- * Import Commerce products from XLS
- * Import product images
- * Generate template XLS for each product type
- * Exports XLS containing information on successful and unsuccessful product
-   imports
+ * Import Commerce products from XLSX.
+ * Import product images.
+ * Generate template XLSX for each product type.
+ * Exports XLSX results containing information on successful and unsuccessful product
+   imports.
  * Export data for all existing products.
-
 
 REQUIREMENTS
 ------------
@@ -38,23 +37,13 @@ work properly with Drupal Commerce depending on your set-up.
 
  - Modules -
 
- * PHPExcel (https://www.drupal.org/project/phpexcel)
  * Background Process (https://www.drupal.org/project/background_process)
  * Commerce Product (https://www.drupal.org/project/commerce)
 
  - Libraries -
 
- * PHPExcel 1.7.8 or higher (https://phpexcel.codeplex.com/releases/view/96183)
-
-   PHPExcel library can be extracted in any libraries folder you want
-   (sites/*/libraries)
-
- * PHP_XLSXWriter 0.22 or higher (https://packagist.org/packages/mk-j/php_xlsxwriter)
-   Required for exporting products only.
-
-   Install in the libraries folder as with PHPExcel.
-
-
+ * Spout August 2016 dev or higher (https://github.com/box/spout)
+   Install in the libraries folder as spout.
 
 KNOWN PROBLEMS
 ______________

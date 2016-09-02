@@ -13,6 +13,37 @@ class CommerceXlsImportSettings {
   private static $rowErrorStatus = array();
 
   /**
+   * A list of field types that are excluded from being imported or exported.
+   *
+   * @var string[]
+   */
+  private static $excludedFieldTypes = array(
+    'fivestar',
+    'commerce_product_reference',
+  );
+
+  /**
+   * The real path to extract the import images.
+   *
+   * @var string
+   */
+  private static $imageExtractPath;
+
+  /**
+   * The URI to the uploaded images archive.
+   *
+   * @var string
+   */
+  private static $imageZipUri;
+
+  /**
+   * An array of files extracted from the images archive.
+   *
+   * @var array
+   */
+  private static $extractedImageFiles;
+
+  /**
    * Field aliases keyed by field or property name.
    *
    * @var array
@@ -77,6 +108,72 @@ class CommerceXlsImportSettings {
   public static function rowHasError($row) {
     if (isset(self::$rowErrorStatus[$row])) {
       return TRUE;
+    }
+
+    return FALSE;
+  }
+
+  /**
+   * Determine if a field type is excluded from import or export.
+   *
+   * @param string $type
+   *   A field type.
+   *
+   * @return bool
+   *   TRUE if the type is excluded.
+   */
+  public static function isExcluded($type) {
+    return in_array($type, self::$excludedFieldTypes);
+  }
+
+  /**
+   * Get the path to extract the import images.
+   *
+   * @return string
+   *   The real path to extract the images.
+   */
+  public static function imageExtractPath() {
+    if (!isset(self::$imageExtractPath)) {
+      $temp_dir = drupal_realpath('temporary://');
+      $images_dir = "{$temp_dir}/commerce_xls_import/images";
+      $writable = file_prepare_directory($images_dir, FILE_CREATE_DIRECTORY|FILE_MODIFY_PERMISSIONS);
+      self::$imageExtractPath = ($writable) ? $images_dir : FALSE;
+    }
+
+    return self::$imageExtractPath;
+  }
+
+  /**
+   * Get the URI for the uploaded images zip file.
+   *
+   * @return string
+   */
+  public static function imageZipUri() {
+    if (!isset(self::$imageZipUri)) {
+      self::$imageZipUri = file_build_uri('product_images.zip');
+    }
+
+    return self::$imageZipUri;
+  }
+
+  /**
+   * Get the real path to an image from the images archive.
+   *
+   * @param string $filename
+   *   The name of the image file.
+   *
+   * @return FALSE|string
+   *   Returns the path if the file exists in the uploaded files, FALSE
+   *   otherwise.
+   */
+  public static function imagePath($filename) {
+    if (!isset(self::$extractedImageFiles)) {
+      self::$extractedImageFiles = array_diff(scandir(self::imageExtractPath()), array('.', '..'));
+    }
+
+    $index = array_search($filename, self::$extractedImageFiles);
+    if ($index !== FALSE) {
+      return self::imageExtractPath() . '/' . self::$extractedImageFiles[$index];
     }
 
     return FALSE;

@@ -69,9 +69,9 @@ function commerce_xls_import_start_export() {
     '#suffix' => '</div><div style="clear:both"></div>',
   );
 
-  $library = libraries_load('PHP_XLSXWriter');
+  $library = libraries_load('spout');
   if ($library['loaded'] === FALSE) {
-    drupal_set_message(t('The PHP_XLSXWriter library could not be loaded. It must be installed to export products.'), 'error');
+    drupal_set_message(t('The Spout library could not be loaded. It must be installed to export products.'), 'error');
   }
 
   if (!commerce_xls_import_is_running()) {
@@ -119,16 +119,5 @@ function commerce_xls_import_start_export_submit($form, &$form_state) {
   $product_type = $form_state['values']['product_type'];
   $display_type = $form_state['values']['display_type'];
 
-  $batch = array(
-    'operations' => array(
-      array('commerce_xls_import_export_batch_process', array($product_type, $display_type)),
-    ),
-    'finished' => 'commerce_xls_import_export_batch_finished',
-    'title' => t('Processing Export'),
-    'init_message' => t('Export is starting.'),
-    'progress_message' => t('Export in progress...'),
-    'error_message' => t('Export has encountered an error.'),
-  );
-
-  batch_set($batch);
+  commerce_xls_import_export_process($product_type, $display_type);
 }
