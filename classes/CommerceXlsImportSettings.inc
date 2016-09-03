@@ -58,6 +58,13 @@ class CommerceXlsImportSettings {
   private static $field_names = array();
 
   /**
+   * Settings for the import.
+   *
+   * @var array
+   */
+  private static $settings = array();
+
+  /**
    * sets the import status to validate
    */
   public static function setValidate() {
@@ -91,6 +98,56 @@ class CommerceXlsImportSettings {
    */
   private static function isType($type) {
     return $type == self::$type;
+  }
+
+  /**
+   * Set the settings for the import.
+   *
+   * @param array $settings
+   *   An array of settings which are arrays keyed by group.
+   */
+  public static function setSettings($settings) {
+    self::$settings = $settings;
+  }
+
+  /**
+   * Get the settings for the import.
+   *
+   * @return array
+   *   All of the import settings.
+   */
+  public static function getSettings() {
+    return self::$settings;
+  }
+
+  /**
+   * Get a specific setting.
+   *
+   * @param string $settings_group
+   *   The name of the settings group.
+   * @param string $setting
+   *   Optional name of a specific setting.
+   *
+   * @return mixed
+   *   The value of the setting if it exists, otherwise FALSE.
+   *
+   * Example usage:
+   * @code
+   * CommerceXlsImportSettings::getSetting('my_module', 'my_custom_setting');
+   * @endcode
+   */
+  public static function getSetting($settings_group, $setting = NULL) {
+    if (isset(self::$settings[$settings_group])) {
+      // Get a specific setting.
+      if (isset($setting) && isset(self::$settings[$settings_group][$setting])) {
+        return self::$settings[$settings_group][$setting];
+      }
+
+      // Get the whole settings group.
+      return self::$settings[$settings_group];
+    }
+
+    return FALSE;
   }
 
   /**

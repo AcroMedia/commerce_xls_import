@@ -63,6 +63,12 @@ function commerce_xls_import_start_export() {
     '#options' => $display_types,
   );
 
+  // Create a container for other modules to add custom settings to.
+  $form['settings'] = array(
+    '#type' => 'container',
+    '#tree' => TRUE,
+  );
+
   $form['export'] = array(
     '#type' => 'markup',
     '#prefix' => '<div class="product-options ' . t('export') . '">',
@@ -119,5 +125,9 @@ function commerce_xls_import_start_export_submit($form, &$form_state) {
   $product_type = $form_state['values']['product_type'];
   $display_type = $form_state['values']['display_type'];
 
-  commerce_xls_import_export_process($product_type, $display_type);
+  // Default settings to an empty array as it will not exist unless another
+  // module adds custom settings.
+  $settings = (!empty($form_state['values']['settings'])) ? $form_state['values']['settings'] : array();
+
+  commerce_xls_import_export_process($product_type, $display_type, $settings);
 }

@@ -115,6 +115,12 @@ function commerce_xls_import_start() {
     $last_import_message = '';
   }
 
+  // Create a container for other modules to add custom settings to.
+  $form['settings'] = array(
+    '#type' => 'container',
+    '#tree' => TRUE,
+  );
+
   $form['buttons'] = array(
     '#type' => 'markup',
     '#prefix' => '<div style="clear:both"></div><div class="import-buttons">',
@@ -219,6 +225,11 @@ function commerce_xls_import_start_validate($form, &$form_state) {
 function commerce_xls_import_start_submit($form, &$form_state) {
   global $user;
 
+  // Default settings to an empty array as it will not exist unless another
+  // module adds custom settings.
+  $settings = (!empty($form_state['values']['settings'])) ? $form_state['values']['settings'] : array();
+  CommerceXlsImportSettings::setSettings($settings);
+
   if ($form_state['triggering_element']['#id'] == 'edit-import') {
     // Reset import tables.
     db_delete('commerce_xls_import')
@@ -239,7 +250,7 @@ function commerce_xls_import_start_submit($form, &$form_state) {
           ))
           ->execute();
 
-        commerce_xls_import_main($file, FALSE);
+        commerce_xls_import_main($file, FALSE, $settings);
       }
       else {
         drupal_set_message(t('You are currently running an import. Please wait until it is finished or cancel the current one'), 'error', FALSE);
@@ -266,7 +277,7 @@ function commerce_xls_import_start_submit($form, &$form_state) {
           ))
           ->execute();
 
-        commerce_xls_import_main($file, TRUE);
+        commerce_xls_import_main($file, TRUE, $settings);
       }
       else {
         drupal_set_message(t('You are currently running an file validation. Please wait until it is finished or cancel the current one'), 'error', FALSE);

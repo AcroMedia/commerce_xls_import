@@ -370,8 +370,10 @@ function commerce_xls_import_generate_template_xls($product_type, $headers, $dat
  *   The XLS file info array containing product data to be imported.
  * @param bool $validate
  *   If true, don't create products. Otherwise create products.
+ * @param array $settings
+ *   Settings for the import.
  */
-function commerce_xls_import_main($file, $validate = FALSE) {
+function commerce_xls_import_main($file, $validate = FALSE, $settings) {
   module_load_include('inc', 'commerce_xls_import', 'includes/commerce_xls_import.errors');
 
   // Get the product type.
@@ -391,7 +393,7 @@ function commerce_xls_import_main($file, $validate = FALSE) {
   // Extract product images.
   $archive_path = drupal_realpath(CommerceXlsImportSettings::imageZipUri());
   commerce_xls_import_unpack_zip(CommerceXlsImportSettings::imageExtractPath(), $archive_path);
-  commerce_xls_import_import_process($file, $product_type, $display_type);
+  commerce_xls_import_import_process($file, $product_type, $display_type, $settings);
 }
 
 /**
@@ -404,10 +406,11 @@ function commerce_xls_import_main($file, $validate = FALSE) {
  * @param $display_type
  *   The node bundle to be processed.
  */
-function commerce_xls_import_import_process($file, $product_type, $display_type) {
+function commerce_xls_import_import_process($file, $product_type, $display_type, $settings) {
   libraries_load('spout');
   module_load_include('inc', 'commerce_xls_import', 'includes/commerce_xls_import.errors');
 
+  CommerceXlsImportSettings::setSettings($settings);
   CommerceXlsImportSettings::setAliases(variable_get('commerce_xls_import_field_aliases', array()));
 
   // 5 minutes should be more than enough to process 100 products at a time..
@@ -609,9 +612,10 @@ function commerce_xls_import_import_process($file, $product_type, $display_type)
  * @param string $display_type
  *   The product display type to be processed.
  */
-function commerce_xls_import_export_process($product_type, $display_type) {
+function commerce_xls_import_export_process($product_type, $display_type, $settings = NULL) {
   libraries_load('spout');
 
+  CommerceXlsImportSettings::setSettings($settings);
   CommerceXlsImportSettings::setAliases(variable_get('commerce_xls_import_field_aliases', array()));
 
   $filepath = drupal_realpath(commerce_xls_import_export_filepath($display_type));
