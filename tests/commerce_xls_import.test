@@ -76,11 +76,11 @@ class CommerceXlsImportTestCase extends CommerceBaseTestCase {
    */
   public function testCommerceXlsImportPermissions() {
     $this->drupalLogin($this->privilegedUser);
-    $this->drupalGet('admin/commerce/products/import_commerce');
+    $this->drupalGet('admin/commerce/products/commerce_xls_import');
     $this->assertResponse('200', 'Privileged user was able to correctly access the admin page');
 
     $this->drupalLogin($this->normalUser);
-    $this->drupalGet('admin/commerce/products/import_commerce');
+    $this->drupalGet('admin/commerce/products/commerce_xls_import');
     $this->assertResponse('403', 'Unprivileged user was unable to access the admin page');
   }
 
@@ -89,7 +89,7 @@ class CommerceXlsImportTestCase extends CommerceBaseTestCase {
    */
   public function testCommerceXlsImportProductTypes() {
     $this->drupalLogin($this->privilegedUser);
-    $this->drupalGet('admin/commerce/products/import_commerce');
+    $this->drupalGet('admin/commerce/products/commerce_xls_import');
     $this->assertFieldByXPath("//select[@name='product_type']/option[@value='product']", 'Product', 'Product type \'Product\' found');
   }
 
@@ -104,7 +104,7 @@ class CommerceXlsImportTestCase extends CommerceBaseTestCase {
       'files[import_file]' => drupal_get_path('module', 'commerce_xls_import') . '/sample_files/sample.xlsx',
       'files[product_images]' => drupal_get_path('module', 'commerce_xls_import') . '/sample_files/product_images.zip',
     );
-    $this->drupalPost('admin/commerce/products/import_commerce', $edit, 'Validate File');
+    $this->drupalPost('admin/commerce/products/commerce_xls_import', $edit, 'Validate File');
     $this->assertText('Validate Completed, 24 records checked', 'Import file validation completed');
   }
 
@@ -121,7 +121,7 @@ class CommerceXlsImportTestCase extends CommerceBaseTestCase {
       'files[import_file]' => drupal_get_path('module', 'commerce_xls_import') . '/sample_files/sample.xlsx',
       'files[product_images]' => drupal_get_path('module', 'commerce_xls_import') . '/sample_files/product_images.zip',
     );
-    $this->drupalPost('admin/commerce/products/import_commerce', $edit, 'Begin Full Import');
+    $this->drupalPost('admin/commerce/products/commerce_xls_import', $edit, 'Begin Full Import');
     $this->assertText('Import Completed, 24 records imported', 'Import file processed');
 
     // Check that each valid product exists on the product page and each invalid
@@ -179,7 +179,7 @@ class CommerceXlsImportTestCase extends CommerceBaseTestCase {
     $edit = array(
       'display_type' => 'product_display'
     );
-    $this->drupalPost('admin/commerce/products/export_commerce', $edit, 'Begin Export');
+    $this->drupalPost('admin/commerce/products/commerce_xls_import/export', $edit, 'Begin Export');
     $this->assertText('1 products exported', 'Export file generated');
 
     //Loop thru xls and check if all skus are in the product page, make sure #18 and above do not appear (no sku)

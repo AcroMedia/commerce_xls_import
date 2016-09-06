@@ -23,9 +23,9 @@ define('COMMERCE_XLS_IMPORT_DATA_SUCCESS', 1);
 function commerce_xls_import_menu() {
   $items = array();
 
-  $items['admin/commerce/products/import_commerce'] = array(
-    'title' => 'Commerce Import',
-    'description' => 'Import commerce XLS or generate XLS headers form',
+  $items['admin/commerce/products/commerce_xls_import'] = array(
+    'title' => 'Commerce XLS Import',
+    'description' => 'Import products from spreadsheets.',
     'page callback' => 'drupal_get_form',
     'page arguments' => array('commerce_xls_import_start'),
     'access arguments' => array('administer commerce import'),
@@ -33,32 +33,27 @@ function commerce_xls_import_menu() {
     'type' => MENU_LOCAL_TASK,
   );
 
-  $items['admin/commerce/products/import_commerce/aliases'] = array(
-    'title' => 'Configure Commerce Import Aliases',
-    'description' => 'Configure aliases for fields',
+  $items['admin/commerce/products/commerce_xls_import/import'] = $items['admin/commerce/products/commerce_xls_import'];
+  $items['admin/commerce/products/commerce_xls_import/import']['title'] = 'Import Products';
+
+  $items['admin/commerce/products/commerce_xls_import/aliases'] = array(
+    'title' => 'Configure Commerce XLS Import Aliases',
+    'description' => 'Configure aliases for fields.',
     'page callback' => 'drupal_get_form',
     'page arguments' => array('commerce_xls_import_aliases_form'),
     'access arguments' => array('administer commerce import'),
     'file' => 'includes/commerce_xls_import.admin.inc',
-    'type' => MENU_LOCAL_ACTION,
+    'type' => MENU_LOCAL_TASK,
   );
 
-  $items['admin/commerce/products/export_commerce'] = array(
-    'title' => 'Commerce Export',
-    'description' => 'Export products to XLS.',
+  $items['admin/commerce/products/commerce_xls_import/export'] = array(
+    'title' => 'Export Products',
+    'description' => 'Export products to XLSX.',
     'page callback' => 'drupal_get_form',
     'page arguments' => array('commerce_xls_import_start_export'),
     'access arguments' => array('administer commerce import'),
     'file' => 'includes/commerce_xls_import.export.inc',
     'type' => MENU_LOCAL_TASK,
-  );
-
-  $items['admin/commerce/products/import_commerce/get_import_status'] = array(
-    'title' => 'Commerce Import Status Update',
-    'description' => 'Update the status of the current commerce xls import',
-    'page callback' => 'commerce_xls_import_current_status',
-    'access arguments' => array('administer commerce import'),
-    'file' => NULL,
   );
 
   return $items;
@@ -971,54 +966,6 @@ function commerce_xls_import_get_field_owner($field_name) {
       return 'parent';
     }
   }
-}
-
-/**
- * Checks the status of the current import.
- */
-function commerce_xls_import_current_status() {
-  $current = variable_get('commerce_xls_import_import_count_status', '');
-
-  $is_running = commerce_xls_import_is_running();
-
-  if (($current == '' && $is_running)) {
-    $message = t('Working...');
-    $status = 0;
-  }
-  elseif ($current == '' && !$is_running) {
-    $message = t('Done');
-    $status = 1;
-    variable_set('commerce_xls_import_completed', 1);
-  }
-  else {
-    $message = t('Status : @current/@total products evaluated with @errors errors',
-      array(
-        '@current' => $current['completed'],
-        '@total' => $current['total'],
-        '@errors' => commerce_xls_import_count_errors(),
-      ));
-    $message .= '<br /><progress id="commerce-xls-import-progress" value=' . $current['completed'] . ' max=' . $current['total'] . ' style="clear:both"></progress>';
-    $status = 0;
-  }
-
-  if ($current == '') {
-    $output = array(
-      'completed' => 0,
-      'total' => 0,
-      'message' => $message,
-      'status' => $status,
-    );
-  }
-  else {
-    $output = array(
-      'completed' => $current['completed'],
-      'total' => $current['total'],
-      'message' => $message,
-      'status' => $status,
-    );
-  }
-
-  drupal_json_output($output);
 }
 
 /**
