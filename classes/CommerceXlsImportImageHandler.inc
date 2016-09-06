@@ -108,6 +108,10 @@ class CommerceXlsImportImageHandler extends CommerceXlsImportValueHandler implem
     $files = array();
     $messages = array();
     foreach ($file_names as $filename) {
+      if (empty($filename)) {
+        break;
+      }
+
       // Validate the file and skip it if it's invalid.
       $valid_filename = self::validImage($filename, $file_destination);
       if ($valid_filename['status'] !== COMMERCE_XLS_IMPORT_DATA_SUCCESS) {
