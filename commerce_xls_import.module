@@ -539,13 +539,9 @@ function commerce_xls_import_import_process($file, $product_type, $display_type,
 
           if (!$product_already_referenced) {
             $referenced_products[] = $product;
+            $node_wrapper->field_product = $referenced_products;
           }
         }
-        else {
-          $referenced_products = array($product);
-        }
-
-        $node_wrapper->field_product = $referenced_products;
 
         if (CommerceXlsImportSettings::isImport() && !$row_has_errors) {
           $node_wrapper->save();
