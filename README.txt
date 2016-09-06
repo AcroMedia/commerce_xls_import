@@ -10,7 +10,7 @@ INTRODUCTION
 ------------
 
 The Commerce XLS Import module is a Drupal Commerce module that allows the
-import of Drupal Commerce Products from an XLS file.
+import of Drupal Commerce Products from an XLSX file.
 
  * For a full description of the module, visit the project page:
    https://www.drupal.org/project/commerce_xls_import
@@ -32,9 +32,6 @@ FEATURES
 REQUIREMENTS
 ------------
 
-This module was built and tested to work with Commerce Kickstart and may not
-work properly with Drupal Commerce depending on your set-up.
-
  - Modules -
 
  * Background Process (https://www.drupal.org/project/background_process)
@@ -44,8 +41,3 @@ work properly with Drupal Commerce depending on your set-up.
 
  * Spout August 2016 dev or higher (https://github.com/box/spout)
    Install in the libraries folder as spout.
-
-KNOWN PROBLEMS
-______________
-
- * Can't set variation titles (https://www.drupal.org/node/2509178)

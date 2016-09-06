@@ -81,7 +81,7 @@ function commerce_xls_import_start() {
   $form['import_file'] = array(
     '#type' => 'file',
     '#title' => t('Import File'),
-    '#description' => t('Upload the .xls file that contains products of the selected type'),
+    '#description' => t('Upload the .xlsx file that contains products of the selected type'),
     '#attributes' => array(
       'id' => array('commerce-xls-import-file-upload'),
     ),
@@ -197,10 +197,13 @@ function commerce_xls_import_start_validate($form, &$form_state) {
 
       }
       elseif ($tmp_file != NULL && is_uploaded_file($_FILES['files']['tmp_name'][$field_name])) {
-        $validators = array('file_validate_extensions' => array('xls xlsx'));
-        $file = file_save_upload($field_name, $validators);
-        if ($file) {
-          $form_state['files'][] = array('uri' => $file->uri, 'product_type' => $field_name);
+        if (pathinfo($_FILES['files']['name'][$field_name], PATHINFO_EXTENSION) !== 'xlsx') {
+          form_set_error('import_file', t('Only XLSX files are allowed.'));
+        }
+        else {
+          $file_name = "temporary://{$_FILES['files']['name'][$field_name]}";
+          drupal_move_uploaded_file($tmp_file, $file_name);
+          $form_state['files'][] = array('uri' => $file_name, 'product_type' => $field_name);
         }
       }
     }
