@@ -850,13 +850,18 @@ function commerce_xls_import_get_possible_fields($product_type = NULL, $node_typ
   );
 
   $instances = field_info_instances('commerce_product', $product_type);
-  foreach($instances as $field_name => $instance) {
-    // Don't allow overwriting the default values in case we've used a custom
-    // type.
-    if (!isset($fields['commerce_product'][$field_name])) {
-      $field = field_info_field($field_name);
-      if (!CommerceXlsImportSettings::isExcluded($field['type'])) {
-        $fields['commerce_product'][$field_name] = $field['type'];
+  if (isset($product_type)) {
+    $instances = array($product_type => $instances);
+  }
+  foreach($instances as $product_type => $product_fields) {
+    foreach ($product_fields as $field_name => $instance) {
+      // Don't allow overwriting the default values in case we've used a custom
+      // type.
+      if (!isset($fields['commerce_product'][$field_name])) {
+        $field = field_info_field($field_name);
+        if (!CommerceXlsImportSettings::isExcluded($field['type'])) {
+          $fields['commerce_product'][$field_name] = $field['type'];
+        }
       }
     }
   }

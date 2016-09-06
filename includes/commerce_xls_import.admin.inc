@@ -351,40 +351,17 @@ function commerce_xls_import_aliases_form($form, &$form_state) {
     '#tree' => TRUE,
   );
 
-  $fields = array();
-  $product_properties = entity_get_property_info('commerce_product');
-  $node_properties = entity_get_property_info('node');
-
-  foreach ($product_properties['properties'] as $property_name => $property_info) {
-    $fields[$property_name] = $property_info['label'];
-  }
-
-  foreach ($node_properties['properties'] as $property_name => $property_info) {
-    $fields[$property_name] = $property_info['label'];
-  }
-
-  $product_fields = field_info_instances('commerce_product');
-  $node_fields = field_info_instances('node');
-
-  foreach ($product_fields as $bundle => $bundle_fields) {
-    foreach ($bundle_fields as $field_name => $field_info) {
-      $fields[$field_name] = $field_info['label'];
-    }
-  }
-
-  foreach ($node_fields as $bundle => $bundle_fields) {
-    foreach ($bundle_fields as $field_name => $field_info) {
-      $fields[$field_name] = $field_info['label'];
-    }
-  }
+  $fields = commerce_xls_import_get_possible_fields();
+  $fields = $fields['commerce_product'] + $fields['node'];
+  $fields = array_keys($fields);
 
   // Order fields alphabetically by label to make it easier to find.
   asort($fields);
 
-  foreach ($fields as $field_name => $field_label) {
+  foreach ($fields as $field_name) {
     $form['aliases'][$field_name] = array(
       '#type' => 'textfield',
-      '#title' => $field_label,
+      '#title' => $field_name,
       '#default_value' => (!empty($default_values[$field_name])) ? $default_values[$field_name] : $field_name,
     );
   }
