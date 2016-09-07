@@ -517,26 +517,33 @@ function commerce_xls_import_import_process($file, $product_type, $display_type,
         }
 
         // If the node does not already reference the new product, set it now.
-        $referenced_products = $node_wrapper->field_product->value();
-        if (!empty($referenced_products)) {
-          $product_already_referenced = FALSE;
+        $field_info = field_info_field('field_product');
+        if (isset($field_info['cardinality']) && (int) $field_info['cardinality'] !== 1) {
+          $referenced_products = $node_wrapper->field_product->value();
+          if (!empty($referenced_products)) {
+            $product_already_referenced = FALSE;
 
-          if (!is_array($referenced_products)) {
-            $referenced_products = array($referenced_products);
-          }
+            if (!is_array($referenced_products)) {
+              $referenced_products = array($referenced_products);
+            }
 
-          foreach ($referenced_products as $referenced_product) {
-            if ($referenced_product->product_id === $product->product_id) {
-              $product_already_referenced = TRUE;
-              break;
+            foreach ($referenced_products as $referenced_product) {
+              if ($referenced_product->product_id === $product->product_id) {
+                $product_already_referenced = TRUE;
+                break;
+              }
+            }
+
+            if (!$product_already_referenced) {
+              $referenced_products[] = $product;
             }
           }
-
-          if (!$product_already_referenced) {
-            $referenced_products[] = $product;
-            $node_wrapper->field_product = $referenced_products;
-          }
         }
+        else {
+          $referenced_products = $product;
+        }
+
+        $node_wrapper->field_product = $referenced_products;
 
         if (CommerceXlsImportSettings::isImport() && !$row_has_errors) {
           $node_wrapper->save();
