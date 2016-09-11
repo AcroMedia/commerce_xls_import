@@ -444,7 +444,7 @@ function commerce_xls_import_import_process($file, $product_type, $display_type,
         $headers = array();
         // Populate headers from the first row of the sheet.
         foreach ($row as $header) {
-          $headers[] = $header;
+          $headers[] = trim($header);
         }
 
         //add extra column for import errors
