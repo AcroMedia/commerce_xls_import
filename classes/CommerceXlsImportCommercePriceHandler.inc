@@ -10,6 +10,37 @@
 class CommerceXlsImportCommercePriceHandler extends CommerceXlsImportValueHandler implements CommerceXlsImportValueHandlerInterface {
 
   /**
+   * Sanitize the price value for use by removing symbols.
+   *
+   * @param string $value
+   *
+   * @return string
+   */
+  public static function sanitizeValue($value) {
+    $currency = commerce_currency_load(commerce_default_currency());
+
+    if (!empty($currency['symbol'])) {
+      $value = str_replace($currency['symbol'], '', $value);
+    }
+
+    if (!empty($currency['thousands_separator'])) {
+      $value = str_replace($currency['thousands_separator'], '', $value);
+    }
+
+    if (!empty($currency['code'])) {
+      $value = str_replace($currency['code'], '', $value);
+    }
+
+    $value = trim($value);
+
+    if (!empty($currency['decimal_separator'])) {
+      $value = str_replace($currency['decimal_separator'], '.', $value);
+    }
+
+    return $value;
+  }
+
+  /**
    * {@inheritdoc}
    */
   public static function validate($value, $wrapper, $field_name) {
@@ -24,6 +55,7 @@ class CommerceXlsImportCommercePriceHandler extends CommerceXlsImportValueHandle
    * {@inheritdoc}
    */
   public static function set($value, $wrapper, $field_name) {
+    $value = self::sanitizeValue($value);
     $valid = self::validate($value, $wrapper, $field_name);
 
     if ($valid['status'] === COMMERCE_XLS_IMPORT_DATA_SUCCESS) {
