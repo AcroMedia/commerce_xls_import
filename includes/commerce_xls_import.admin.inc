@@ -18,11 +18,6 @@ function commerce_xls_import_start() {
   $product_types = array();
   $display_types = array();
 
-  if (variable_get('commerce_xls_import_completed', '') == 1) {
-    drupal_set_message(t('Import/Validate Complete with @errors errors', array('@errors' => commerce_xls_import_count_errors())));
-    variable_del('commerce_xls_import_completed');
-  }
-
   $form['title'] = array(
     '#markup' => '<h1>' . t('Commerce XLS Import') . '</h1>',
   );
@@ -37,8 +32,6 @@ function commerce_xls_import_start() {
   $form['legend']['output'] = array(
     '#markup' => theme('commerce_xls_import_instructions'),
   );
-
-  include('commerce_xls_import.errors.inc');
 
   foreach (commerce_product_types() as $product_type) {
     $product_types[$product_type['type']] = $product_type['name'];
@@ -108,7 +101,7 @@ function commerce_xls_import_start() {
       array(
         '@row' => $last_import['row'],
         '@total' => $last_import['total'],
-        '@errors' => commerce_xls_import_count_errors()
+        '@errors' => $last_import['error_count'],
       ));
   }
   else {
@@ -237,8 +230,6 @@ function commerce_xls_import_start_submit($form, &$form_state) {
     // Reset import tables.
     db_delete('commerce_xls_import')
       ->execute();
-    db_delete('commerce_xls_import_errors')
-      ->execute();
 
     foreach ($form_state['files'] as $file) {
       $file['product_type'] = $form_state['values']['product_type'];
@@ -263,8 +254,6 @@ function commerce_xls_import_start_submit($form, &$form_state) {
   elseif ($form_state['triggering_element']['#id'] == 'edit-validate') {
     // Reset import table.
     db_delete('commerce_xls_import')
-      ->execute();
-    db_delete('commerce_xls_import_errors')
       ->execute();
 
     foreach ($form_state['files'] as $file) {

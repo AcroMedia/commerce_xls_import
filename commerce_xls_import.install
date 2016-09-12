@@ -49,25 +49,6 @@ function commerce_xls_import_schema() {
     ),
   );
 
-  $schema['commerce_xls_import_errors'] = array(
-    'fields' => array(
-      'row' => array(
-        'type' => 'int',
-        'not null' => TRUE,
-      ),
-      'column' => array(
-        'type' => 'varchar',
-        'length' => 255,
-        'not null' => TRUE,
-        'default' => '',
-      ),
-      'message' => array(
-        'type' => 'blob',
-      ),
-    ),
-    'indexes' => array('rowcolumn' => array('row', 'column'), 'row' => array('row')),
-  );
-
   return $schema;
 }
 
@@ -99,4 +80,13 @@ function commerce_xls_import_requirements($phase) {
   }
 
   return $requirements;
+}
+
+/**
+ * Drop the errors table.
+ */
+function commerce_xls_import_update_7000() {
+  if (db_table_exists('commerce_xls_import_errors')) {
+    db_drop_table('commerce_xls_import_errors');
+  }
 }

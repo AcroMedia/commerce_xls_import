@@ -295,30 +295,21 @@ function commerce_xls_import_stopped() {
  *   The node type for the export.
  */
 function commerce_xls_import_export($op, $product_info = NULL, $product_type = NULL, $display_type = NULL) {
-  module_load_include('inc', 'commerce_xls_import', 'includes/commerce_xls_import.errors');
-
   CommerceXlsImportSettings::setAliases(variable_get('commerce_xls_import_field_aliases', array()));
 
   $data = array('Products' => array());
   $headers = commerce_xls_import_generate_headers($product_type, $display_type);
-  $options = array('format' => 'xls', 'title' => t('Product Import Template'));
+  $options = array('format' => 'xlsx', 'title' => t('Product Import Template'));
 
   if ($product_info != NULL && $op != 'template') {
     $data['Products'] = $product_info;
   }
 
   switch ($op) {
-    case 'errors':
-      if (!commerce_xls_import_generate_errors_xls($options, $headers, $data)) {
-        // If error, refresh page to display error.
-        drupal_goto('admin/commerce/products/import_commerce');
-      }
-      break;
-
     case 'template':
       if (!commerce_xls_import_generate_template_xls($product_type, $headers, $data, $options)) {
         // If error, refresh page to display error.
-        drupal_goto('admin/commerce/products/import_commerce');
+        drupal_goto('admin/commerce/products/commerce_xls_import');
       }
 
       break;
@@ -369,8 +360,6 @@ function commerce_xls_import_generate_template_xls($product_type, $headers, $dat
  *   Settings for the import.
  */
 function commerce_xls_import_main($file, $validate = FALSE, $settings) {
-  module_load_include('inc', 'commerce_xls_import', 'includes/commerce_xls_import.errors');
-
   // Get the product type.
   $product_type = $file['product_type'];
   $display_type = $file['display_type'];
@@ -403,7 +392,6 @@ function commerce_xls_import_main($file, $validate = FALSE, $settings) {
  */
 function commerce_xls_import_import_process($file, $product_type, $display_type, $settings) {
   libraries_load('spout');
-  module_load_include('inc', 'commerce_xls_import', 'includes/commerce_xls_import.errors');
 
   CommerceXlsImportSettings::setSettings($settings);
   CommerceXlsImportSettings::setAliases(variable_get('commerce_xls_import_field_aliases', array()));
@@ -432,6 +420,9 @@ function commerce_xls_import_import_process($file, $product_type, $display_type,
   if (commerce_xls_import_stopped()) {
     return;
   }
+
+  // Track total number of errors encountered.
+  $error_count = 0;
 
   // Populate our row array.
   $count = 0;
@@ -467,17 +458,22 @@ function commerce_xls_import_import_process($file, $product_type, $display_type,
       $sku = isset($values['commerce_product']['sku']) ? $values['commerce_product']['sku'] : NULL;
       $price = isset($values['commerce_product']['commerce_price']) ? $values['commerce_product']['commerce_price'] : NULL;
 
-      $node = commerce_xls_import_load_node_by_title($title, $display_type);
+      $errors = array();
+
       if (empty($title)) {
-        commerce_xls_import_set_error($index, 'title', t("Product doesn't have a title."));
+        $errors['title'] = t("Product doesn't have a title.");
       }
-      elseif (empty($sku)) {
-        commerce_xls_import_set_error($index, 'sku', t("Product doesn't have a sku."));
+
+      if (empty($sku)) {
+        $errors['sku'] = t("Product doesn't have a sku.");
       }
-      elseif (empty($price)) {
-        commerce_xls_import_set_error($index, 'sku', t("Product doesn't have a price."));
+
+      if (empty($price)) {
+        $errors['commerce_price'] = t("Product doesn't have a price.");
       }
-      else {
+
+      if (empty($errors)) {
+        $node = commerce_xls_import_load_node_by_title($title, $display_type);
         if (!$node) {
           $node = new stdClass();
           $node->type = $display_type;
@@ -503,16 +499,15 @@ function commerce_xls_import_import_process($file, $product_type, $display_type,
               $set = $handler::set($value, $wrapper, $field_name);
               if ($set['status'] === COMMERCE_XLS_IMPORT_DATA_ERROR) {
                 $message = (!empty($set['message'])) ? $set['message'] : t('Unknown error.');
-                commerce_xls_import_set_error($index, $field_name, $message);
+                $errors[$field_name] = $message;
               }
             } catch (Exception $e) {
-              commerce_xls_import_set_error($index, $field_name, $e->getMessage());
+              $errors[$field_name] = $e->getMessage();
             }
           }
         }
 
-        $row_has_errors = commerce_xls_import_get_row_error($index);
-        if (CommerceXlsImportSettings::isImport() && !$row_has_errors) {
+        if (CommerceXlsImportSettings::isImport() && empty($errors)) {
           $product_wrapper->save();
         }
 
@@ -538,7 +533,7 @@ function commerce_xls_import_import_process($file, $product_type, $display_type,
 
         $node_wrapper->field_product = $referenced_products;
 
-        if (CommerceXlsImportSettings::isImport() && !$row_has_errors) {
+        if (CommerceXlsImportSettings::isImport() && empty($errors)) {
           $node_wrapper->save();
         }
       }
@@ -554,25 +549,15 @@ function commerce_xls_import_import_process($file, $product_type, $display_type,
         }
       }
 
-      $errors = '';
-      foreach($data as $key => $value) {
-        $row_error = commerce_xls_import_get_error($index, $key);
-        if($row_error != '') {
-          if($errors != ''){
-            $errors .= "\n";
-          }
-          $errors .= $key . ': ' . $row_error;
-        }
-      }
+      $error_count += count($errors);
+      $row_errors = array_map(function($col, $message) {
+        $col = CommerceXlsImportSettings::field_alias($col);
+        return "{$col}: {$message}";
+      }, array_keys($errors), $errors);
 
-      $row_values[] = $errors;
+      $row_values[] = implode("\n", $row_errors);
 
-      if($errors == '') {
-        $style = $style_success;
-      }
-      else{
-        $style = $style_error;
-      }
+      $style = (empty($errors)) ? $style_success : $style_error;
       $writer->addRowWithStyle($row_values, $style);
 
       $index++;
@@ -587,15 +572,22 @@ function commerce_xls_import_import_process($file, $product_type, $display_type,
     'completed' => time(),
     'row' => $count,
     'total' => $count,
+    'error_count' => $error_count,
   ));
 
   commerce_xls_import_set_finish_import();
 
   if (CommerceXlsImportSettings::isImport()) {
-    drupal_set_message(t('Import Completed, @count records imported', array('@count' => $count)));
+    drupal_set_message(t('Import Completed, @count records processed with @error_count errors.', array(
+      '@count' => $count,
+      '@error_count' => $error_count,
+    )));
   }
   else {
-    drupal_set_message(t('Validate Completed, @count records checked', array('@count' => $count)));
+    drupal_set_message(t('Validate Completed, @count records checked with @error_count errors.', array(
+      '@count' => $count,
+      '@error_count' => $error_count,
+    )));
   }
 }
 
