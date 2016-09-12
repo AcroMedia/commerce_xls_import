@@ -94,16 +94,6 @@ function commerce_xls_import_start_export() {
     drupal_set_message(t('You are currently running an import or validation, you will not be able to run an export until it is finished or stopped manually'), 'warning', FALSE);
   }
 
-  $form['link']['import_products'] = array(
-    '#type' => 'link',
-    '#href' => 'admin/commerce/products/import_commerce',
-    '#title' => t('Import Products'),
-    '#prefix' => '<div style="clear:both"></div>',
-    '#attributes' => array(
-      'id' => array('commerce-xls-import-export-products'),
-    ),
-  );
-
   return $form;
 }
 

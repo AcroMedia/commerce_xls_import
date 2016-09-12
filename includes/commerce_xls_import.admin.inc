@@ -307,7 +307,7 @@ function commerce_xls_import_start_submit($form, &$form_state) {
     $product_type = $form_state['values']['product_type'];
     $display_type = $form_state['values']['display_type'];
 
-    commerce_xls_import_export('template', NULL, $product_type, $display_type);
+    commerce_xls_import_template($product_type, $display_type);
 
     $filename = $product_type . '_template.xlsx';
     $path = file_build_uri($filename);

@@ -294,25 +294,15 @@ function commerce_xls_import_stopped() {
  * @param string $display_type
  *   The node type for the export.
  */
-function commerce_xls_import_export($op, $product_info = NULL, $product_type = NULL, $display_type = NULL) {
+function commerce_xls_import_template($product_type = NULL, $display_type = NULL) {
   CommerceXlsImportSettings::setAliases(variable_get('commerce_xls_import_field_aliases', array()));
 
-  $data = array('Products' => array());
   $headers = commerce_xls_import_generate_headers($product_type, $display_type);
   $options = array('format' => 'xlsx', 'title' => t('Product Import Template'));
 
-  if ($product_info != NULL && $op != 'template') {
-    $data['Products'] = $product_info;
-  }
-
-  switch ($op) {
-    case 'template':
-      if (!commerce_xls_import_generate_template_xls($product_type, $headers, $data, $options)) {
-        // If error, refresh page to display error.
-        drupal_goto('admin/commerce/products/commerce_xls_import');
-      }
-
-      break;
+  if (!commerce_xls_import_generate_template_xls($product_type, $headers, array(), $options)) {
+    // If error, refresh page to display error.
+    drupal_goto('admin/commerce/products/commerce_xls_import');
   }
 }
 
@@ -332,6 +322,9 @@ function commerce_xls_import_generate_template_xls($product_type, $headers, $dat
   if (file_exists($path)) {
     file_unmanaged_delete($path);
   }
+
+  dpm($headers, "headers");
+  dpm($data, "data");
 
   $writer = WriterFactory::create(Type::XLSX);
   $writer->openToFile(drupal_realpath($path));
@@ -646,7 +639,7 @@ function commerce_xls_import_generate_records($writer, $product_type, $display_t
   $headers = array();
   $sheet_headers = array();
   $headers_list = commerce_xls_import_generate_headers($product_type, $display_type);
-  foreach ($headers_list['Products'] as $field_name) {
+  foreach ($headers_list as $field_name) {
     // Create an array keyed by the column header with an empty string that will
     // serve as the default value of each column.
     $headers[CommerceXlsImportSettings::field_alias($field_name)] = '';
@@ -781,10 +774,6 @@ function commerce_xls_import_unpack_zip($extract_path, $filepath) {
   }
 
   if($success){
-    drupal_set_message(t('@filename extracted successfully to @extract_dir', array(
-      '@filename' => basename($filepath),
-      '@extract_dir' => $extract_path,
-    )));
     return TRUE;
   }
   else{
@@ -792,6 +781,7 @@ function commerce_xls_import_unpack_zip($extract_path, $filepath) {
       '@filename' => basename($filepath),
     )), 'error');
     watchdog('commerce_xls_import', 'Error extracting zip file @filename', array('@filename' => $filepath));
+
     return FALSE;
   }
 
@@ -914,7 +904,7 @@ function commerce_xls_import_generate_headers($product_type = NULL, $display_typ
   $fields = commerce_xls_import_get_possible_fields($product_type, $display_type, TRUE);
   $headers = array_keys($fields['commerce_product'] + $fields['node']);
   $headers = array_map(array('CommerceXlsImportSettings', 'field_alias'), $headers);
-  $headers = array('Products' => $headers);
+
   return $headers;
 }
 
