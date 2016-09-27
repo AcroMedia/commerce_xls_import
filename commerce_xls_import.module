@@ -323,9 +323,6 @@ function commerce_xls_import_generate_template_xls($product_type, $headers, $dat
     file_unmanaged_delete($path);
   }
 
-  dpm($headers, "headers");
-  dpm($data, "data");
-
   $writer = WriterFactory::create(Type::XLSX);
   $writer->openToFile(drupal_realpath($path));
   $writer->addRow($headers);
