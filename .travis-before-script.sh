@@ -18,4 +18,4 @@ mkdir -p "$DRUPAL_TI_DRUPAL_DIR/$DRUPAL_TI_MODULES_PATH"
 drush dl -y commerce
 drush en -y commerce_xls_import
 git clone https://github.com/box/spout.git
-mv spout sites/all/libraries
+mv spout sites/all/libraries/spout
