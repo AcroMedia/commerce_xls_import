@@ -4,8 +4,8 @@ core = 7.x
 package = Commerce (contrib)
 
 dependencies[] = commerce
-dependencies[] = commerce_product
-dependencies[] = commerce_product_ui
+dependencies[] = commerce:commerce_product
+dependencies[] = commerce:commerce_product_ui
 dependencies[] = libraries
 
 stylesheets[all][] = css/commerce_xls_import.css
