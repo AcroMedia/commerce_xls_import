@@ -283,7 +283,7 @@ function commerce_xls_import_start_submit($form, &$form_state) {
     else {
       drupal_set_message(t('Failed to Stop Import'), 'error', FALSE);
     }
-    drupal_goto('admin/commerce/products/import_commerce');
+    drupal_goto('admin/commerce/products/commerce_xls_import');
   }
   elseif ($form_state['clicked_button']['#id'] == 'edit-errors-button') {
 
