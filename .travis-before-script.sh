@@ -15,6 +15,7 @@ cd "$DRUPAL_TI_DRUPAL_DIR"
 # For D8, this is modules
 mkdir -p "$DRUPAL_TI_DRUPAL_DIR/$DRUPAL_TI_MODULES_PATH"
 
+drush dl -y commerce
 drush en -y commerce_xls_import
 mkdir sites/all/libraries
 git clone https://github.com/box/spout.git
