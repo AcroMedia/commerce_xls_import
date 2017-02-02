@@ -55,7 +55,12 @@ class CommerceXlsImportTaxonomyTermReferenceHandler extends CommerceXlsImportVal
       }
     }
 
-    $wrapper->{$field_name} = ($multivalue) ? $terms : reset($terms);
+    if ($multivalue) {
+      $wrapper->{$field_name} = $terms;
+    }
+    else {
+      $wrapper->{$field_name} = (!empty($terms)) ? reset($terms) : NULL;
+    }
 
     return array(
       'status' => COMMERCE_XLS_IMPORT_DATA_SUCCESS,
