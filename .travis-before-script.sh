@@ -20,3 +20,5 @@ drush en -y commerce_xls_import
 git clone https://github.com/box/spout.git
 mv spout sites/all/libraries/spout
 drush cc all
+wget https://www.drupal.org/files/issues/DATE_RFC7231-2877243-1.patch
+git apply DATE_RFC7231-2877243-1.patch
