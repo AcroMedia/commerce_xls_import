@@ -71,21 +71,27 @@ class CommerceXlsImportTaxonomyTermReferenceHandler extends CommerceXlsImportVal
    * {@inheritdoc}
    */
   public static function get($wrapper, $field_name) {
-    $value = array();
-    $terms = $wrapper->{$field_name}->value();
+    $field_info = field_info_field($field_name);
+    $multivalue = ((int) $field_info['cardinality'] !== 1);
 
-    if (empty($terms)) {
-      return '';
+    $value = $wrapper->{$field_name}->value();
+
+    if ($multivalue) {
+      $terms = is_array($value) ? $value : array($value);
+
+      if (empty($terms)) {
+        return '';
+      }
+
+      $value = array();
+      foreach ($terms as $term) {
+        $value[] = $term->name;
+      }
+
+      return self::toCsv($value);
     }
 
-    if (!is_array($terms)) {
-      $terms = array($terms);
-    }
-
-    foreach ($terms as $term) {
-      $value[] = $term->name;
-    }
-
-    return self::toCsv($value);
+    return $value;
   }
+
 }
