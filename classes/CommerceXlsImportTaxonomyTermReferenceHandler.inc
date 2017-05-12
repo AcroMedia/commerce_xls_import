@@ -73,6 +73,11 @@ class CommerceXlsImportTaxonomyTermReferenceHandler extends CommerceXlsImportVal
   public static function get($wrapper, $field_name) {
     $value = array();
     $terms = $wrapper->{$field_name}->value();
+
+    if (empty($terms)) {
+      return '';
+    }
+
     if (!is_array($terms)) {
       $terms = array($terms);
     }
