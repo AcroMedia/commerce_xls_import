@@ -800,7 +800,7 @@ function commerce_xls_import_unpack_zip($extract_path, $filepath) {
  *   type.
  */
 function commerce_xls_import_get_possible_fields($product_type = NULL, $node_type = NULL, $reset = FALSE) {
-  $fields = &drupal_static(__FUNCTION__, array());
+  $fields = &drupal_static(__FUNCTION__ . $product_type, array());
   if (!$reset && !empty($fields)) {
     return $fields;
   }
