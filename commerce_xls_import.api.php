@@ -37,3 +37,15 @@ function hook_commerce_xls_import_field_type_handler_info_alter(&$handlers) {
     $handlers['foo_type']['class_name'] = 'MyModuleCommerceXlsImportFooTypeHandler';
   }
 }
+
+/**
+ * Alter the list of headers for the export and import template.
+ *
+ * @param array $headers
+ *   An array containing the field names for the template.
+ * @param string $product_type
+ *   The type of the selected product.
+ */
+function hook_commerce_xls_import_generate_headers_alter(&$headers, &$product_type) {
+  $headers = array('field_name');
+}

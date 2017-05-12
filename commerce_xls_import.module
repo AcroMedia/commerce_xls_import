@@ -675,6 +675,8 @@ function commerce_xls_import_generate_records($writer, $product_type, $display_t
         $data[CommerceXlsImportSettings::field_alias($field_name)] = $handler::get($product_wrapper, $field_name);
       }
 
+      // Keep only the keys present in headers.
+      $data = array_intersect_key($data, $headers);
       // Put keys in proper order for export.
       $data = array_merge($headers, $data);
       $data = array_values($data);
@@ -904,6 +906,7 @@ function commerce_xls_import_generate_headers($product_type = NULL, $display_typ
   $fields = commerce_xls_import_get_possible_fields($product_type, $display_type, TRUE);
   $headers = array_keys($fields['commerce_product'] + $fields['node']);
   $headers = array_map(array('CommerceXlsImportSettings', 'field_alias'), $headers);
+  drupal_alter('commerce_xls_import_generate_headers', $headers, $product_type);
 
   return $headers;
 }
