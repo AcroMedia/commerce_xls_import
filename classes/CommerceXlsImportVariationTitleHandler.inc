@@ -20,7 +20,7 @@ class CommerceXlsImportVariationTitleHandler extends CommerceXlsImportValueHandl
    * @return string
    *   The product's title.
    */
-  public static function get($wrapper, $field_name) {
+  public static function get(\EntityDrupalWrapper $wrapper, $field_name) {
     return $wrapper->title->value();
   }
 
@@ -38,7 +38,7 @@ class CommerceXlsImportVariationTitleHandler extends CommerceXlsImportValueHandl
    *   Information about whether or not the value was set and a message if
    *   applicable.
    */
-  public static function set($value, $wrapper, $field_name) {
+  public static function set($value, \EntityDrupalWrapper $wrapper, $field_name) {
     $valid = is_string($value);
 
     if ($valid) {

@@ -18,7 +18,7 @@ abstract class CommerceXlsImportValueHandler implements CommerceXlsImportValueHa
    * @param mixed $value
    *   A string or array of strings.
    * @param string $delimiter
-   *  The character to separate values by.
+   *   The character to separate values by.
    * @param string $enclosure
    *   The character to enclose values in.
    *
@@ -36,7 +36,7 @@ abstract class CommerceXlsImportValueHandler implements CommerceXlsImportValueHa
 
       // Value smaller than 5MB will be kept in memory instead of writing to a
       // temporary file.
-      $fp = fopen('php://temp/maxmemory:' . (5*1024*1024), 'r+b');
+      $fp = fopen('php://temp/maxmemory:' . (5 * 1024 * 1024), 'r+b');
       fputcsv($fp, $value, $delimiter, $enclosure);
       rewind($fp);
       $value = rtrim(stream_get_contents($fp), "\n");
@@ -53,7 +53,7 @@ abstract class CommerceXlsImportValueHandler implements CommerceXlsImportValueHa
    * Get each value from a CSV-formatted string.
    *
    * @param string $value
-   *  A string that may be a CSV format.
+   *   A string that may be a CSV format.
    *
    * @return array
    *   An array of values
@@ -73,7 +73,7 @@ abstract class CommerceXlsImportValueHandler implements CommerceXlsImportValueHa
   /**
    * {@inheritdoc}
    */
-  public static function validate($value, $wrapper, $field_name) {
+  public static function validate($value, \EntityDrupalWrapper $wrapper, $field_name) {
     return array(
       'status' => COMMERCE_XLS_IMPORT_DATA_SUCCESS,
     );
@@ -82,7 +82,7 @@ abstract class CommerceXlsImportValueHandler implements CommerceXlsImportValueHa
   /**
    * {@inheritdoc}
    */
-  public static function set($value, $wrapper, $field_name) {
+  public static function set($value, \EntityDrupalWrapper $wrapper, $field_name) {
     $field_info = field_info_field($field_name);
     $multivalue = (isset($field_info['cardinality']) && (int) $field_info['cardinality'] !== 1);
 
@@ -99,8 +99,9 @@ abstract class CommerceXlsImportValueHandler implements CommerceXlsImportValueHa
   /**
    * {@inheritdoc}
    */
-  public static function get($wrapper, $field_name) {
+  public static function get(\EntityDrupalWrapper $wrapper, $field_name) {
     $value = $wrapper->{$field_name}->value();
     return self::toCsv($value);
   }
+
 }

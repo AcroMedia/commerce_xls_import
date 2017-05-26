@@ -21,7 +21,7 @@ class CommerceXlsImportLanguageHandler extends CommerceXlsImportValueHandler imp
   /**
    * {@inheritdoc}
    */
-  public static function validate($value, $wrapper, $field_name) {
+  public static function validate($value, \EntityDrupalWrapper $wrapper, $field_name) {
     if (!isset(self::$languages)) {
       self::$languages = language_list();
     }
@@ -51,7 +51,7 @@ class CommerceXlsImportLanguageHandler extends CommerceXlsImportValueHandler imp
   /**
    * {@inheritdoc}
    */
-  public static function set($value, $wrapper, $field_name) {
+  public static function set($value, \EntityDrupalWrapper $wrapper, $field_name) {
     $valid = self::validate($value, $wrapper, $field_name);
 
     if (empty($value) || $value === LANGUAGE_NONE) {
@@ -76,7 +76,7 @@ class CommerceXlsImportLanguageHandler extends CommerceXlsImportValueHandler imp
   /**
    * {@inheritdoc}
    */
-  public static function get($wrapper, $field_name) {
+  public static function get(\EntityDrupalWrapper $wrapper, $field_name) {
     $value = $wrapper->{$field_name}->value();
     return $value;
   }

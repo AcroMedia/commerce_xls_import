@@ -7,5 +7,5 @@
 /**
  * Class CommerceXlsImportListBooleanHandler
  */
-class CommerceXlsImportListBooleanHandler extends CommerceXlsImportBooleanHandler  implements CommerceXlsImportValueHandlerInterface {
+class CommerceXlsImportListBooleanHandler extends CommerceXlsImportBooleanHandler implements CommerceXlsImportValueHandlerInterface {
 }

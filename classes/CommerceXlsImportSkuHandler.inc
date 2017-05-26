@@ -12,7 +12,7 @@ class CommerceXlsImportSkuHandler extends CommerceXlsImportValueHandler implemen
   /**
    * {@inheritdoc}
    */
-  public static function validate($value, $wrapper, $field_name) {
+  public static function validate($value, \EntityDrupalWrapper $wrapper, $field_name) {
     $valid = commerce_product_validate_sku($value) && commerce_product_validate_sku_unique($value, $wrapper->product_id->value());
 
     return array(
@@ -24,7 +24,7 @@ class CommerceXlsImportSkuHandler extends CommerceXlsImportValueHandler implemen
   /**
    * {@inheritdoc}
    */
-  public static function set($value, $wrapper, $field_name) {
+  public static function set($value, \EntityDrupalWrapper $wrapper, $field_name) {
     $valid = self::validate($value, $wrapper, $field_name);
 
     if ($valid['status'] === COMMERCE_XLS_IMPORT_DATA_SUCCESS) {
@@ -37,7 +37,8 @@ class CommerceXlsImportSkuHandler extends CommerceXlsImportValueHandler implemen
   /**
    * {@inheritdoc}
    */
-  public static function get($wrapper, $field_name) {
+  public static function get(\EntityDrupalWrapper $wrapper, $field_name) {
     return $wrapper->{$field_name}->value();
   }
+
 }
