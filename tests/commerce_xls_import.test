@@ -45,15 +45,17 @@ class CommerceXlsImportTestCase extends CommerceBaseTestCase {
     // Create a dummy product display content type.
     $this->createDummyProductDisplayContentType();
 
-
     // Add an image field to the product display node type.
-    $field = array(
-      'field_name' => 'field_image',
-      'type' => 'image',
-      'cardinality' => FIELD_CARDINALITY_UNLIMITED,
-      'translatable' => FALSE,
-    );
-    field_create_field($field);
+    $field_info = field_info_field('field_image');
+    if (empty($field_info)) {
+      $field = array(
+        'field_name' => 'field_image',
+        'type' => 'image',
+        'cardinality' => FIELD_CARDINALITY_UNLIMITED,
+        'translatable' => FALSE,
+      );
+      field_create_field($field);
+    }
 
     $instance = array(
       'field_name' => 'field_image',
@@ -176,7 +178,6 @@ class CommerceXlsImportTestCase extends CommerceBaseTestCase {
 
     $result->close();
     $import->close();
-    //unlink(drupal_realpath(file_build_uri('product_import_results.xlsx')));
   }
 
   /**
