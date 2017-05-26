@@ -12,7 +12,7 @@ class CommerceXlsImportCommerceProductReferenceHandler extends CommerceXlsImport
   /**
    * {@inheritdoc}
    */
-  public static function validate($value, $wrapper, $field_name) {
+  public static function validate($value, \EntityDrupalWrapper $wrapper, $field_name) {
     $valid = TRUE;
     $message = FALSE;
 
@@ -47,7 +47,7 @@ class CommerceXlsImportCommerceProductReferenceHandler extends CommerceXlsImport
   /**
    * {@inheritdoc}
    */
-  public static function set($value, $wrapper, $field_name) {
+  public static function set($value, \EntityDrupalWrapper $wrapper, $field_name) {
     $field_info = field_info_field($field_name);
     $multivalue = (int) $field_info['cardinality'] !== 1;
 
@@ -76,7 +76,7 @@ class CommerceXlsImportCommerceProductReferenceHandler extends CommerceXlsImport
   /**
    * {@inheritdoc}
    */
-  public static function get($wrapper, $field_name) {
+  public static function get(\EntityDrupalWrapper $wrapper, $field_name) {
     $products = $wrapper->{$field_name}->value();
 
     if (!is_array($products)) {
@@ -89,4 +89,5 @@ class CommerceXlsImportCommerceProductReferenceHandler extends CommerceXlsImport
 
     return self::toCsv($products);
   }
+
 }

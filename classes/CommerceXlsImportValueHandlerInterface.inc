@@ -36,7 +36,7 @@ interface CommerceXlsImportValueHandlerInterface {
    *     This SHOULD be used if the value was not set so the message can be
    *     returned to a user.
    */
-  public static function validate($value, $wrapper, $field_name);
+  public static function validate($value, EntityDrupalWrapper $wrapper, $field_name);
 
   /**
    * Set a value on a field of an entity.
@@ -57,7 +57,7 @@ interface CommerceXlsImportValueHandlerInterface {
    *     This SHOULD be used if the value was not set so the message can be
    *     returned to a user.
    */
-  public static function set($value, $wrapper, $field_name);
+  public static function set($value, EntityDrupalWrapper $wrapper, $field_name);
 
   /**
    * Get the value from a field in a form suitable to insert into a spreadsheet.
@@ -70,5 +70,6 @@ interface CommerceXlsImportValueHandlerInterface {
    * @return string
    *   The value to insert into the spreadsheet.
    */
-  public static function get($wrapper, $field_name);
+  public static function get(EntityDrupalWrapper $wrapper, $field_name);
+
 }

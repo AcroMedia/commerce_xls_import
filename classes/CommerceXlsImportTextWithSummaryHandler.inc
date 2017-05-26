@@ -12,14 +12,14 @@ class CommerceXlsImportTextWithSummaryHandler extends CommerceXlsImportValueHand
   /**
    * {@inheritdoc}
    */
-  public static function set($value, $wrapper, $field_name) {
+  public static function set($value, \EntityDrupalWrapper $wrapper, $field_name) {
     $field_info = field_info_field($field_name);
     $multivalue = ((int) $field_info['cardinality'] !== 1);
 
     if ($multivalue) {
       $value = array();
       $values = self::fromCsv($value);
-      foreach ($values as $val)  {
+      foreach ($values as $val) {
         $value[] = array(
           'value' => $val,
           'format' => 'full_html',
@@ -43,14 +43,14 @@ class CommerceXlsImportTextWithSummaryHandler extends CommerceXlsImportValueHand
   /**
    * {@inheritdoc}
    */
-  public static function get($wrapper, $field_name) {
+  public static function get(\EntityDrupalWrapper $wrapper, $field_name) {
     $field_info = field_info_field($field_name);
     $multivalue = ((int) $field_info['cardinality'] !== 1);
 
     $value = $wrapper->{$field_name}->value();
 
     if ($multivalue) {
-      $value = array_map(function($item) {
+      $value = array_map(function ($item) {
         return $item['value'];
       }, $value);
       $value = self::toCsv($value);
@@ -61,4 +61,5 @@ class CommerceXlsImportTextWithSummaryHandler extends CommerceXlsImportValueHand
 
     return $value;
   }
+
 }

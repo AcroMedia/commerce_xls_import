@@ -1,4 +1,5 @@
 <?php
+
 /**
  * @file
  * Class definition for CommerceXlsImportImageHandler.
@@ -29,7 +30,7 @@ class CommerceXlsImportImageHandler extends CommerceXlsImportValueHandler implem
       $image_path = $file_directory . $filename;
     }
 
-    if (file_exists($image_path)){
+    if (file_exists($image_path)) {
       $mime_type = file_get_mimetype($image_path);
       if (!preg_match('/^image/', $mime_type)) {
         $valid = FALSE;
@@ -53,9 +54,9 @@ class CommerceXlsImportImageHandler extends CommerceXlsImportValueHandler implem
   }
 
   /**
-   * {@inheritdoc]
+   * {@inheritdoc}
    */
-  public static function validate($value, $wrapper, $field_name) {
+  public static function validate($value, \EntityDrupalWrapper $wrapper, $field_name) {
     $valid = TRUE;
 
     $field_info = field_info_field($field_name);
@@ -88,9 +89,9 @@ class CommerceXlsImportImageHandler extends CommerceXlsImportValueHandler implem
   }
 
   /**
-   * {@inheritdoc]
+   * {@inheritdoc}
    */
-  public static function set($value, $wrapper, $field_name) {
+  public static function set($value, \EntityDrupalWrapper $wrapper, $field_name) {
     $valid = TRUE;
     $field_info = field_info_field($field_name);
 
@@ -122,7 +123,7 @@ class CommerceXlsImportImageHandler extends CommerceXlsImportValueHandler implem
 
       $file_uri = $file_destination . $filename;
       if ($path = CommerceXlsImportSettings::imagePath($filename)) {
-        $writable = file_prepare_directory($file_destination, FILE_CREATE_DIRECTORY|FILE_MODIFY_PERMISSIONS);
+        $writable = file_prepare_directory($file_destination, FILE_CREATE_DIRECTORY | FILE_MODIFY_PERMISSIONS);
         if (!$writable) {
           $valid = FALSE;
           $messages[] = t('File @filename can not be saved. Unable to write to @dir.', array(
@@ -171,7 +172,7 @@ class CommerceXlsImportImageHandler extends CommerceXlsImportValueHandler implem
 
     //TODO, move this check up so as to not waste time?
     //the field could have an instance, but now be deleted and not be part of this wrapper anymore
-    if(isset($wrapper->{$field_name})) {
+    if (isset($wrapper->{$field_name})) {
       $wrapper->{$field_name} = (!empty($files)) ? $files : NULL;
     }
 
@@ -182,9 +183,9 @@ class CommerceXlsImportImageHandler extends CommerceXlsImportValueHandler implem
   }
 
   /**
-   * {@inheritdoc]
+   * {@inheritdoc}
    */
-  public static function get($wrapper, $field_name) {
+  public static function get(\EntityDrupalWrapper $wrapper, $field_name) {
     $field_info = field_info_field($field_name);
     $multivalue = (int) $field_info['cardinality'] !== 1;
 
@@ -199,4 +200,5 @@ class CommerceXlsImportImageHandler extends CommerceXlsImportValueHandler implem
 
     return self::toCsv($images);
   }
+
 }

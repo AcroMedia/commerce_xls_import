@@ -22,7 +22,7 @@ class CommerceXlsImportEntityReferenceHandler extends CommerceXlsImportValueHand
    * @return int[]
    *   An array of entity IDs.
    */
-  protected static function label_lookup($label, $type, $bundles = array()) {
+  protected static function labelLookup($label, $type, array $bundles = array()) {
     $ids = array();
 
     $entity_info = entity_get_info($type);
@@ -49,7 +49,7 @@ class CommerceXlsImportEntityReferenceHandler extends CommerceXlsImportValueHand
   /**
    * {@inheritdoc}
    */
-  public static function set($value, $wrapper, $field_name) {
+  public static function set($value, \EntityDrupalWrapper $wrapper, $field_name) {
     $field_info = field_info_field($field_name);
     $type = $field_info['settings']['target_type'];
     $bundles = (!empty($field_info['settings']['handler_settings']['target_bundles'])) ? $field_info['settings']['handler_settings']['target_bundles'] : NULL;
@@ -61,7 +61,7 @@ class CommerceXlsImportEntityReferenceHandler extends CommerceXlsImportValueHand
       $entity_labels = self::fromCsv($value);
       $entity_ids = array();
       foreach ($entity_labels as $label) {
-        if ($found_ids = self::label_lookup($label, $type, $bundles)) {
+        if ($found_ids = self::labelLookup($label, $type, $bundles)) {
           // Take only the first result if multiple entities match a label.
           $entity_ids[] = reset($found_ids);
         }
@@ -81,7 +81,7 @@ class CommerceXlsImportEntityReferenceHandler extends CommerceXlsImportValueHand
   /**
    * {@inheritdoc}
    */
-  public static function get($wrapper, $field_name) {
+  public static function get(\EntityDrupalWrapper $wrapper, $field_name) {
     $field_info = field_info_field($field_name);
     $type = $field_info['settings']['target_type'];
 
@@ -97,4 +97,5 @@ class CommerceXlsImportEntityReferenceHandler extends CommerceXlsImportValueHand
 
     return self::toCsv($labels);
   }
+
 }

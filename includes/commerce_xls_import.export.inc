@@ -10,8 +10,8 @@
  *
  * Contains the buttons export products.
  *
- * @return array $form
- *  The array containing the export and import buttons.
+ * @return array
+ *   The array containing the export and import buttons.
  */
 function commerce_xls_import_start_export() {
   $form = array();
@@ -101,12 +101,11 @@ function commerce_xls_import_start_export() {
  * Submit handler for the import start form.
  *
  * @param array $form
- *  The form containing the values being submitted.
- *
+ *   The form containing the values being submitted.
  * @param array $form_state
- *  The form state array, passed by reference.
+ *   The form state array, passed by reference.
  */
-function commerce_xls_import_start_export_submit($form, &$form_state) {
+function commerce_xls_import_start_export_submit(array $form, array &$form_state) {
   if (commerce_xls_import_is_running()) {
     drupal_set_message(t('You are currently running an file validation. Please wait until it is finished or cancel the current one'), 'error', FALSE);
     return;
