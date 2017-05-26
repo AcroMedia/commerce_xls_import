@@ -113,7 +113,7 @@ function commerce_xls_import_libraries_info() {
  *
  * @return string
  */
-function commerce_xls_import_spout_version($library) {
+function commerce_xls_import_spout_version(array $library) {
   // The version is not available in composer.json so we don't have anything to
   // go off of here.
   return 'N/A';
@@ -211,7 +211,7 @@ function commerce_xls_import_commerce_xls_import_field_type_handler_info() {
  * Returns True if one is running, otherwise false.
  *
  * @return bool
- *  A boolean value representing whether an import is running or not.
+ *   A boolean value representing whether an import is running or not.
  */
 function commerce_xls_import_is_running() {
   $result = db_select('commerce_xls_import', 'ci')
@@ -246,7 +246,7 @@ function commerce_xls_import_set_finish_import() {
  * Stops current import.
  *
  * @return bool
- *  A boolean value representing whether the import was successfully stopped or not.
+ *   A boolean value representing whether the import was successfully stopped or not.
  */
 function commerce_xls_import_stop_import() {
   // Set all updates to stopped status.
@@ -266,7 +266,7 @@ function commerce_xls_import_stop_import() {
  * Check to see if current import has been stopped.
  *
  * @return bool
- *  A boolean value representing whether the current has been stopped or not.
+ *   A boolean value representing whether the current has been stopped or not.
  */
 function commerce_xls_import_stopped() {
   $result = db_select('commerce_xls_import', 'i')
@@ -285,10 +285,6 @@ function commerce_xls_import_stopped() {
 /**
  * Main function for the drupal commerce XLS export.
  *
- * @param string $op
- *   A string representing the respective operation to be performed.
- * @param array $product_info
- *   An array containing product information.
  * @param string $product_type
  *   The commerce_product type for the export.
  * @param string $display_type
@@ -311,7 +307,7 @@ function commerce_xls_import_template($product_type = NULL, $display_type = NULL
  * Generate template xls.
  *
  * @return bool
- *    Returns TRUE upon success and False upon failure.
+ *   Returns TRUE upon success and False upon failure.
  */
 function commerce_xls_import_generate_template_xls($product_type, $headers, $data, $options) {
   libraries_load('spout');
@@ -354,8 +350,8 @@ function commerce_xls_import_main($file, $validate = FALSE, $settings) {
   $product_type = $file['product_type'];
   $display_type = $file['display_type'];
 
-  if($validate) {
-    //I think there currently isn't any validate functionality?
+  if ($validate) {
+    // I think there currently isn't any validate functionality?
     CommerceXlsImportSettings::setValidate();
   }
 
@@ -375,12 +371,12 @@ function commerce_xls_import_main($file, $validate = FALSE, $settings) {
  *
  * @param array $file
  *   The file to be processed.
- * @param $product_type
+ * @param string $product_type
  *   The commerce_product bundle to be processed.
- * @param $display_type
+ * @param string $display_type
  *   The node bundle to be processed.
  */
-function commerce_xls_import_import_process($file, $product_type, $display_type, $settings) {
+function commerce_xls_import_import_process(array $file, $product_type, $display_type, $settings) {
   libraries_load('spout');
 
   CommerceXlsImportSettings::setSettings($settings);
@@ -418,9 +414,9 @@ function commerce_xls_import_import_process($file, $product_type, $display_type,
   $count = 0;
   foreach ($reader->getSheetIterator() as $sheet) {
     $index = 0;
-    $headers_set = false;
-    foreach($sheet->getRowIterator() as $row) {
-      //headers row
+    $headers_set = FALSE;
+    foreach ($sheet->getRowIterator() as $row) {
+      // Headers row.
       if (!$headers_set) {
         $headers = array();
         // Populate headers from the first row of the sheet.
@@ -428,18 +424,18 @@ function commerce_xls_import_import_process($file, $product_type, $display_type,
           $headers[] = trim($header);
         }
 
-        //add extra column for import errors
+        // Add extra column for import errors.
         $headers[] = 'ERRORS';
         $writer->addRow($headers);
 
-        $headers_set = true;
+        $headers_set = TRUE;
         continue;
       }
 
       $possible_fields = commerce_xls_import_get_possible_fields($product_type, $display_type);
-      //map into assoc array
+      // Map into assoc array.
       $data = array();
-      foreach($row as $key => $value){
+      foreach ($row as $key => $value) {
         $data[$headers[$key]] = $value;
       }
       $values = commerce_xls_import_get_values_by_entity_type($data, $possible_fields);
@@ -494,7 +490,8 @@ function commerce_xls_import_import_process($file, $product_type, $display_type,
                 $message = (!empty($set['message'])) ? $set['message'] : t('Unknown error.');
                 $errors[$field_name] = $message;
               }
-            } catch (Exception $e) {
+            }
+            catch (Exception $e) {
               $errors[$field_name] = $e->getMessage();
             }
           }
@@ -543,7 +540,7 @@ function commerce_xls_import_import_process($file, $product_type, $display_type,
       }
 
       $error_count += count($errors);
-      $row_errors = array_map(function($col, $message) {
+      $row_errors = array_map(function ($col, $message) {
         $col = CommerceXlsImportSettings::field_alias($col);
         return "{$col}: {$message}";
       }, array_keys($errors), $errors);
@@ -585,9 +582,9 @@ function commerce_xls_import_import_process($file, $product_type, $display_type,
 }
 
 /**
- * process function for the product export.
+ * Process function for the product export.
  *
- * @param $product_type
+ * @param string $product_type
  *   The product type to be processed.
  * @param string $display_type
  *   The product display type to be processed.
@@ -610,21 +607,17 @@ function commerce_xls_import_export_process($product_type, $display_type, $setti
 }
 
 /**
- * @param Spout/Writer $writer
+ * @param Box\Spout\Writer\XLSX\Writer $writer
  *   The Spout writer object.
  * @param string $product_type
  *   The commerce_product bundle to export.
  * @param string $display_type
  *   The node bundle to export.
- * @param int $offset
- *   The number of products exported so far.
- * @param int $batch_size
- *   The number of records to generate.
  *
  * @return int
  *   The number of records processed.
  */
-function commerce_xls_import_generate_records($writer, $product_type, $display_type) {
+function commerce_xls_import_generate_records(Box\Spout\Writer\XLSX\Writer $writer, $product_type, $display_type) {
   $products_processed = 0;
   // Track if we've written headers to the file so we don't do it more than
   // once.
@@ -696,7 +689,7 @@ function commerce_xls_import_generate_records($writer, $product_type, $display_t
  * @param string $title
  *   The title of the node.
  *
- * @return object|array|FALSE
+ * @return object|array|false
  *   The loaded node or FALSE if no node exists with the title. Returns an array
  *   of node ids if multiple are found.
  */
@@ -740,11 +733,11 @@ function commerce_xls_import_load_node_by_title($title, $bundle) {
  *
  * @see commerce_xls_import_get_possible_fields()
  */
-function commerce_xls_import_get_values_by_entity_type($row, $possible_fields) {
+function commerce_xls_import_get_values_by_entity_type(array $row, array $possible_fields) {
   $values = array();
 
   foreach ($possible_fields as $entity_type => $fields) {
-    foreach($fields as $field_name => $field_type) {
+    foreach ($fields as $field_name => $field_type) {
       if (isset($row[CommerceXlsImportSettings::field_alias($field_name)])) {
         $values[$entity_type][$field_name] = $row[CommerceXlsImportSettings::field_alias($field_name)];
       }
@@ -758,27 +751,26 @@ function commerce_xls_import_get_values_by_entity_type($row, $possible_fields) {
  * Extract files from a zip archive.
  *
  * @param string $extract_path
- *  The directory to extract the files to.
- *
+ *   The directory to extract the files to.
  * @param string $filepath
- *  The path to the zip file.
+ *   The path to the zip file.
  *
  * @return bool
- *  TRUE if file is zip file is successfully extracted, otherwise FALSE.
+ *   TRUE if file is zip file is successfully extracted, otherwise FALSE.
  */
 function commerce_xls_import_unpack_zip($extract_path, $filepath) {
-  $zip = new ZipArchive;
+  $zip = new ZipArchive();
   $success = $zip->open($filepath);
   if ($success === TRUE) {
-    // extract it to the path we determined above
+    // Extract it to the path we determined above.
     $success = $zip->extractTo($extract_path);
     $zip->close();
   }
 
-  if($success){
+  if ($success) {
     return TRUE;
   }
-  else{
+  else {
     drupal_set_message(t('There was an error extracting @filename.zip. Please try again, if the problem persists contact the system administrator', array(
       '@filename' => basename($filepath),
     )), 'error');
@@ -786,7 +778,6 @@ function commerce_xls_import_unpack_zip($extract_path, $filepath) {
 
     return FALSE;
   }
-
 
 }
 
@@ -832,7 +823,7 @@ function commerce_xls_import_get_possible_fields($product_type = NULL, $node_typ
   if (isset($product_type)) {
     $instances = array($product_type => $instances);
   }
-  foreach($instances as $product_type => $product_fields) {
+  foreach ($instances as $product_type => $product_fields) {
     foreach ($product_fields as $field_name => $instance) {
       // Don't allow overwriting the default values in case we've used a custom
       // type.
@@ -915,11 +906,10 @@ function commerce_xls_import_generate_headers($product_type = NULL, $display_typ
  * Gets the owner of the form field.
  *
  * @param string $field_name
- *  The field name to check ownwership against.
+ *   The field name to check ownwership against.
  *
  * @return string
- *  The owner of the given field
- *
+ *   The owner of the given field.
  */
 function commerce_xls_import_get_field_owner($field_name) {
   if ($field_name == 'title') {
