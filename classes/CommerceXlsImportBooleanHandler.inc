@@ -34,7 +34,7 @@ class CommerceXlsImportBooleanHandler extends CommerceXlsImportValueHandler impl
   /**
    * {@inheritdoc}
    */
-  public static function validate($value, $wrapper, $field_name) {
+  public static function validate($value, \EntityDrupalWrapper $wrapper, $field_name) {
     $lower_value = strtolower($value);
     $valid = in_array($lower_value, self::$validTrueValues) || in_array($lower_value, self::$validFalseValues);
     return array(
@@ -46,7 +46,7 @@ class CommerceXlsImportBooleanHandler extends CommerceXlsImportValueHandler impl
   /**
    * {@inheritdoc}
    */
-  public static function set($value, $wrapper, $field_name) {
+  public static function set($value, \EntityDrupalWrapper $wrapper, $field_name) {
     $valid = self::validate($value, $wrapper, $field_name);
 
     if ($valid['status'] === COMMERCE_XLS_IMPORT_DATA_SUCCESS) {
@@ -59,7 +59,7 @@ class CommerceXlsImportBooleanHandler extends CommerceXlsImportValueHandler impl
   /**
    * {@inheritdoc}
    */
-  public static function get($wrapper, $field_name) {
+  public static function get(\EntityDrupalWrapper $wrapper, $field_name) {
     $value = $wrapper->{$field_name}->value();
     // Export as an integer to avoid translating since we don't handle
     // translation on import either.

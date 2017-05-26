@@ -12,7 +12,7 @@ class CommerceXlsImportTaxonomyTermReferenceHandler extends CommerceXlsImportVal
   /**
    * {@inheritdoc}
    */
-  public static function validate($value, $wrapper, $field_name) {
+  public static function validate($value, \EntityDrupalWrapper $wrapper, $field_name) {
     // TODO: Implement validate() method.
     return array(
       'status' => COMMERCE_XLS_IMPORT_DATA_SUCCESS,
@@ -22,7 +22,7 @@ class CommerceXlsImportTaxonomyTermReferenceHandler extends CommerceXlsImportVal
   /**
    * {@inheritdoc}
    */
-  public static function set($value, $wrapper, $field_name) {
+  public static function set($value, \EntityDrupalWrapper $wrapper, $field_name) {
     $vocabulary = NULL;
     $terms = array();
 
@@ -70,7 +70,7 @@ class CommerceXlsImportTaxonomyTermReferenceHandler extends CommerceXlsImportVal
   /**
    * {@inheritdoc}
    */
-  public static function get($wrapper, $field_name) {
+  public static function get(\EntityDrupalWrapper $wrapper, $field_name) {
     $field_info = field_info_field($field_name);
     $multivalue = ((int) $field_info['cardinality'] !== 1);
 

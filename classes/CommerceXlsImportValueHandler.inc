@@ -73,7 +73,7 @@ abstract class CommerceXlsImportValueHandler implements CommerceXlsImportValueHa
   /**
    * {@inheritdoc}
    */
-  public static function validate($value, $wrapper, $field_name) {
+  public static function validate($value, \EntityDrupalWrapper $wrapper, $field_name) {
     return array(
       'status' => COMMERCE_XLS_IMPORT_DATA_SUCCESS,
     );
@@ -82,7 +82,7 @@ abstract class CommerceXlsImportValueHandler implements CommerceXlsImportValueHa
   /**
    * {@inheritdoc}
    */
-  public static function set($value, $wrapper, $field_name) {
+  public static function set($value, \EntityDrupalWrapper $wrapper, $field_name) {
     $field_info = field_info_field($field_name);
     $multivalue = (isset($field_info['cardinality']) && (int) $field_info['cardinality'] !== 1);
 
@@ -99,7 +99,7 @@ abstract class CommerceXlsImportValueHandler implements CommerceXlsImportValueHa
   /**
    * {@inheritdoc}
    */
-  public static function get($wrapper, $field_name) {
+  public static function get(\EntityDrupalWrapper $wrapper, $field_name) {
     $value = $wrapper->{$field_name}->value();
     return self::toCsv($value);
   }

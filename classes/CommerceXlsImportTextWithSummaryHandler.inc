@@ -12,7 +12,7 @@ class CommerceXlsImportTextWithSummaryHandler extends CommerceXlsImportValueHand
   /**
    * {@inheritdoc}
    */
-  public static function set($value, $wrapper, $field_name) {
+  public static function set($value, \EntityDrupalWrapper $wrapper, $field_name) {
     $field_info = field_info_field($field_name);
     $multivalue = ((int) $field_info['cardinality'] !== 1);
 
@@ -43,7 +43,7 @@ class CommerceXlsImportTextWithSummaryHandler extends CommerceXlsImportValueHand
   /**
    * {@inheritdoc}
    */
-  public static function get($wrapper, $field_name) {
+  public static function get(\EntityDrupalWrapper $wrapper, $field_name) {
     $field_info = field_info_field($field_name);
     $multivalue = ((int) $field_info['cardinality'] !== 1);
 

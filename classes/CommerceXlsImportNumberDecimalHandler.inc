@@ -12,7 +12,7 @@ class CommerceXlsImportNumberDecimalHandler extends CommerceXlsImportValueHandle
   /**
    * {@inheritdoc}
    */
-  public static function validate($value, $wrapper, $field_name) {
+  public static function validate($value, \EntityDrupalWrapper $wrapper, $field_name) {
     $valid = is_numeric($value);
     return array(
       'status' => ($valid) ? COMMERCE_XLS_IMPORT_DATA_SUCCESS : COMMERCE_XLS_IMPORT_DATA_ERROR,
@@ -23,7 +23,7 @@ class CommerceXlsImportNumberDecimalHandler extends CommerceXlsImportValueHandle
   /**
    * {@inheritdoc}
    */
-  public static function set($value, $wrapper, $field_name) {
+  public static function set($value, \EntityDrupalWrapper $wrapper, $field_name) {
     $valid = self::validate($value, $wrapper, $field_name);
 
     if ($valid['status'] === COMMERCE_XLS_IMPORT_DATA_SUCCESS) {
@@ -36,7 +36,7 @@ class CommerceXlsImportNumberDecimalHandler extends CommerceXlsImportValueHandle
   /**
    * {@inheritdoc}
    */
-  public static function get($wrapper, $field_name) {
+  public static function get(\EntityDrupalWrapper $wrapper, $field_name) {
     return $wrapper->{$field_name}->value();
   }
 }

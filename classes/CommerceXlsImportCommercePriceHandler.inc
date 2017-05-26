@@ -43,7 +43,7 @@ class CommerceXlsImportCommercePriceHandler extends CommerceXlsImportValueHandle
   /**
    * {@inheritdoc}
    */
-  public static function validate($value, $wrapper, $field_name) {
+  public static function validate($value, \EntityDrupalWrapper $wrapper, $field_name) {
     $valid = is_numeric($value);
     return array(
       'status' => ($valid) ? COMMERCE_XLS_IMPORT_DATA_SUCCESS : COMMERCE_XLS_IMPORT_DATA_ERROR,
@@ -54,7 +54,7 @@ class CommerceXlsImportCommercePriceHandler extends CommerceXlsImportValueHandle
   /**
    * {@inheritdoc}
    */
-  public static function set($value, $wrapper, $field_name) {
+  public static function set($value, \EntityDrupalWrapper $wrapper, $field_name) {
     $value = self::sanitizeValue($value);
     $valid = self::validate($value, $wrapper, $field_name);
 
@@ -70,7 +70,7 @@ class CommerceXlsImportCommercePriceHandler extends CommerceXlsImportValueHandle
   /**
    * {@inheritdoc}
    */
-  public static function get($wrapper, $field_name) {
+  public static function get(\EntityDrupalWrapper $wrapper, $field_name) {
     $price = $wrapper->{$field_name}->value();
     return (string) commerce_currency_amount_to_decimal($price['amount'], $price['currency_code']);
   }
