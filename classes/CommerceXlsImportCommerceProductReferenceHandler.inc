@@ -89,4 +89,5 @@ class CommerceXlsImportCommerceProductReferenceHandler extends CommerceXlsImport
 
     return self::toCsv($products);
   }
+
 }

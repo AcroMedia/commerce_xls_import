@@ -29,7 +29,7 @@ class CommerceXlsImportImageHandler extends CommerceXlsImportValueHandler implem
     if (!$image_path) {
       $image_path = $file_directory . $filename;
     }
-    
+
     if (file_exists($image_path)) {
       $mime_type = file_get_mimetype($image_path);
       if (!preg_match('/^image/', $mime_type)) {

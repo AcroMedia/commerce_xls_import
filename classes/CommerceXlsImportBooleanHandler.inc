@@ -14,7 +14,7 @@ class CommerceXlsImportBooleanHandler extends CommerceXlsImportValueHandler impl
    *
    * @var array
    */
-  protected static $valid_true_values = array(
+  protected static $validTrueValues = array(
     '1',
     'yes',
     'true',
@@ -25,7 +25,7 @@ class CommerceXlsImportBooleanHandler extends CommerceXlsImportValueHandler impl
    *
    * @var array
    */
-  protected static $valid_false_values = array(
+  protected static $validFalseValues = array(
     '0',
     'no',
     'false',
@@ -36,7 +36,7 @@ class CommerceXlsImportBooleanHandler extends CommerceXlsImportValueHandler impl
    */
   public static function validate($value, $wrapper, $field_name) {
     $lower_value = strtolower($value);
-    $valid = in_array($lower_value, self::$valid_true_values) || in_array($lower_value, self::$valid_false_values);
+    $valid = in_array($lower_value, self::$validTrueValues) || in_array($lower_value, self::$validFalseValues);
     return array(
       'status' => ($valid) ? COMMERCE_XLS_IMPORT_DATA_SUCCESS : COMMERCE_XLS_IMPORT_DATA_ERROR,
       'message' => (!$valid) ? t('Invalid value. Allowed values are 0, 1, yes, no, true, and false.') : NULL,
@@ -65,4 +65,5 @@ class CommerceXlsImportBooleanHandler extends CommerceXlsImportValueHandler impl
     // translation on import either.
     return ($value) ? "1" : "0";
   }
+
 }

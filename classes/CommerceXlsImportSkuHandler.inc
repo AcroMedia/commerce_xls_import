@@ -40,4 +40,5 @@ class CommerceXlsImportSkuHandler extends CommerceXlsImportValueHandler implemen
   public static function get($wrapper, $field_name) {
     return $wrapper->{$field_name}->value();
   }
+
 }

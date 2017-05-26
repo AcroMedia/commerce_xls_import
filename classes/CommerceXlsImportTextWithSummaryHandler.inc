@@ -19,7 +19,7 @@ class CommerceXlsImportTextWithSummaryHandler extends CommerceXlsImportValueHand
     if ($multivalue) {
       $value = array();
       $values = self::fromCsv($value);
-      foreach ($values as $val)  {
+      foreach ($values as $val) {
         $value[] = array(
           'value' => $val,
           'format' => 'full_html',
@@ -50,7 +50,7 @@ class CommerceXlsImportTextWithSummaryHandler extends CommerceXlsImportValueHand
     $value = $wrapper->{$field_name}->value();
 
     if ($multivalue) {
-      $value = array_map(function($item) {
+      $value = array_map(function ($item) {
         return $item['value'];
       }, $value);
       $value = self::toCsv($value);
@@ -61,4 +61,5 @@ class CommerceXlsImportTextWithSummaryHandler extends CommerceXlsImportValueHand
 
     return $value;
   }
+
 }

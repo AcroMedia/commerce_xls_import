@@ -131,7 +131,9 @@ class CommerceXlsImportTestCase extends CommerceBaseTestCase {
       'files[product_images]' => drupal_get_path('module', 'commerce_xls_import') . '/sample_files/product_images.zip',
     );
     $this->drupalPost('admin/commerce/products/commerce_xls_import', $edit, 'Begin Full Import');
-    $this->assertText('Import Completed, 24 records processed', 'Import file processed');
+
+    // The test file contains 5 bad rows on purpose, so we expect 5 errors.
+    $this->assertText('Import Completed, 24 records processed with 5 errors.', 'Import file processed');
 
     // Check that each valid product exists on the product page and each invalid
     // product does not.

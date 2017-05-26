@@ -55,7 +55,7 @@ class CommerceXlsImportSettings {
    *
    * @var array
    */
-  private static $field_names = array();
+  private static $fieldNames = array();
 
   /**
    * Settings for the import.
@@ -65,36 +65,41 @@ class CommerceXlsImportSettings {
   private static $settings = array();
 
   /**
-   * sets the import status to validate
+   * Sets the import status to validate.
    */
   public static function setValidate() {
     self::setType('Validate');
   }
 
   /**
-   * @param $type string of the status to set
+   * @param string $type
+   *   String of the status to set.
    */
   private static function setType($type) {
     self::$type = $type;
   }
 
   /**
-   * @return bool true if the status is validate
+   * @return bool
+   *   If the status is validate.
    */
   public static function isValidate() {
     return self::isType('Validate');
   }
 
   /**
-   * @return bool true if the status is import
+   * @return bool
+   *   If the status is import.
    */
   public static function isImport() {
     return self::isType('Import');
   }
 
   /**
-   * @param $type string the status you wish to check
-   * @return bool if the status matches
+   * @param string $type
+   *   The status you wish to check.
+   * @return bool
+   *   If the status matches
    */
   private static function isType($type) {
     return $type == self::$type;
@@ -106,7 +111,7 @@ class CommerceXlsImportSettings {
    * @param array $settings
    *   An array of settings which are arrays keyed by group.
    */
-  public static function setSettings($settings) {
+  public static function setSettings(array $settings) {
     self::$settings = $settings;
   }
 
@@ -245,7 +250,7 @@ class CommerceXlsImportSettings {
    */
   public static function setAliases($aliases) {
     self::$aliases = $aliases;
-    self::$field_names = array_flip($aliases);
+    self::$fieldNames = array_flip($aliases);
   }
 
   /**
@@ -257,7 +262,7 @@ class CommerceXlsImportSettings {
    * @return string
    */
   public static function field_name($alias) {
-    return (!empty(self::$field_names[$alias])) ? self::$field_names[$alias] : $alias;
+    return (!empty(self::$fieldNames[$alias])) ? self::$fieldNames[$alias] : $alias;
   }
 
   /**

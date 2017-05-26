@@ -7,7 +7,7 @@
 /**
  * Class CommerceXlsImportTaxonomyTermReferenceHandler
  */
-class CommerceXlsImportTaxonomyTermReferenceHandler extends CommerceXlsImportValueHandler  implements CommerceXlsImportValueHandlerInterface {
+class CommerceXlsImportTaxonomyTermReferenceHandler extends CommerceXlsImportValueHandler implements CommerceXlsImportValueHandlerInterface {
 
   /**
    * {@inheritdoc}

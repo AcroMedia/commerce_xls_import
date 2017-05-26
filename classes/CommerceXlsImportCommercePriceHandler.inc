@@ -74,4 +74,5 @@ class CommerceXlsImportCommercePriceHandler extends CommerceXlsImportValueHandle
     $price = $wrapper->{$field_name}->value();
     return (string) commerce_currency_amount_to_decimal($price['amount'], $price['currency_code']);
   }
+
 }

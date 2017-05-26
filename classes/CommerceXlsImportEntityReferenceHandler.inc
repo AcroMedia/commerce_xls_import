@@ -22,7 +22,7 @@ class CommerceXlsImportEntityReferenceHandler extends CommerceXlsImportValueHand
    * @return int[]
    *   An array of entity IDs.
    */
-  protected static function label_lookup($label, $type, $bundles = array()) {
+  protected static function label_lookup($label, $type, array $bundles = array()) {
     $ids = array();
 
     $entity_info = entity_get_info($type);
@@ -97,4 +97,5 @@ class CommerceXlsImportEntityReferenceHandler extends CommerceXlsImportValueHand
 
     return self::toCsv($labels);
   }
+
 }
