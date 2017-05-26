@@ -76,22 +76,20 @@ class CommerceXlsImportTaxonomyTermReferenceHandler extends CommerceXlsImportVal
 
     $value = $wrapper->{$field_name}->value();
 
+    // A field with no value returns NULL whether it's multi-value or not.
+    if (empty($value)) {
+      return '';
+    }
+
     if ($multivalue) {
-      $terms = is_array($value) ? $value : array($value);
-
-      if (empty($terms)) {
-        return '';
-      }
-
-      $value = array();
-      foreach ($terms as $term) {
-        $value[] = $term->name;
-      }
+      $value = array_map(function ($term) {
+        return $term->name;
+      }, $value);
 
       return self::toCsv($value);
     }
 
-    return $value;
+    return $value->name;
   }
 
 }
