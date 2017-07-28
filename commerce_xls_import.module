@@ -463,6 +463,10 @@ function commerce_xls_import_import_process(array $file, $product_type, $display
         if (!$node) {
           $node = new stdClass();
           $node->type = $display_type;
+
+          global $user;
+
+          $node->uid = $user->uid;
         }
 
         /** @var EntityDrupalWrapper $node_wrapper */
@@ -471,6 +475,10 @@ function commerce_xls_import_import_process(array $file, $product_type, $display
         $product = commerce_product_load_by_sku($sku, TRUE);
         if (!$product) {
           $product = commerce_product_new($product_type);
+
+          global $user;
+
+          $product->uid = $user->uid;
         }
         elseif ($product->type != $product_type) {
           $errors['sku'] = t('There is a product of a different type with this SKU');
