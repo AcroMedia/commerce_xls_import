@@ -438,6 +438,12 @@ function commerce_xls_import_import_process(array $file, $product_type, $display
       foreach ($row as $key => $value) {
         $data[$headers[$key]] = $value;
       }
+
+      // Add language header if doesn't exist and get the default site language.
+      if (!array_key_exists('language', $data) || $data['language'] == '') {
+        $data['language'] = LANGUAGE_NONE;
+      }
+
       $values = commerce_xls_import_get_values_by_entity_type($data, $possible_fields);
       // Test for required fields.
       $title = isset($values['node']['title']) ? $values['node']['title'] : NULL;
@@ -463,6 +469,7 @@ function commerce_xls_import_import_process(array $file, $product_type, $display
         if (!$node) {
           $node = new stdClass();
           $node->type = $display_type;
+          $node->language = $data['language'];
 
           global $user;
 
