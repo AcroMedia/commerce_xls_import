@@ -244,7 +244,7 @@ function commerce_xls_import_start_submit($form, &$form_state) {
           ))
           ->execute();
 
-        commerce_xls_import_main($file, FALSE, $settings);
+        commerce_xls_import_main($file, $settings,FALSE);
       }
       else {
         drupal_set_message(t('You are currently running an import. Please wait until it is finished or cancel the current one'), 'error', FALSE);
@@ -269,7 +269,7 @@ function commerce_xls_import_start_submit($form, &$form_state) {
           ))
           ->execute();
 
-        commerce_xls_import_main($file, TRUE, $settings);
+        commerce_xls_import_main($file, $settings, TRUE);
       }
       else {
         drupal_set_message(t('You are currently running an file validation. Please wait until it is finished or cancel the current one'), 'error', FALSE);
