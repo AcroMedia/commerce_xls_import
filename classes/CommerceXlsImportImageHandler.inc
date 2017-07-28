@@ -121,7 +121,10 @@ class CommerceXlsImportImageHandler extends CommerceXlsImportValueHandler implem
         break;
       }
 
-      $file_uri = $file_destination . $filename;
+      $file_uri = $file_destination . basename($filename);
+
+      // Break if file does not exist in the archive images or the image field's
+      // directory.
       if ($path = CommerceXlsImportSettings::imagePath($filename)) {
         $writable = file_prepare_directory($file_destination, FILE_CREATE_DIRECTORY | FILE_MODIFY_PERMISSIONS);
         if (!$writable) {
@@ -132,11 +135,7 @@ class CommerceXlsImportImageHandler extends CommerceXlsImportValueHandler implem
           ));
           break;
         }
-      }
 
-      // Break if file does not exist in the archive images or the image field's
-      // directory.
-      if (file_exists($path)) {
         if (!file_unmanaged_copy($path, $file_uri, FILE_EXISTS_REPLACE)) {
           $valid = FALSE;
           $messages[] = t('Unable to move file @filename to @uri.', array('@filename' => $filename, '@uri' => $file_uri));
@@ -170,10 +169,10 @@ class CommerceXlsImportImageHandler extends CommerceXlsImportValueHandler implem
       $files[] = (array) $file;
     }
 
-    //TODO, move this check up so as to not waste time?
-    //the field could have an instance, but now be deleted and not be part of this wrapper anymore
+    // TODO move this check up so as to not waste time?
+    // The field could have an instance, but now be deleted and not be part of this wrapper anymore.
     if (isset($wrapper->{$field_name})) {
-      $wrapper->{$field_name} = (!empty($files)) ? $files : NULL;
+      $wrapper->{$field_name} = (!empty($files)) ? $files : array();
     }
 
     return array(

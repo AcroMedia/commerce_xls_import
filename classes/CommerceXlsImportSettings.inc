@@ -37,13 +37,6 @@ class CommerceXlsImportSettings {
   private static $imageZipUri;
 
   /**
-   * An array of files extracted from the images archive.
-   *
-   * @var array
-   */
-  private static $extractedImageFiles;
-
-  /**
    * Field aliases keyed by field or property name.
    *
    * @var array
@@ -229,16 +222,8 @@ class CommerceXlsImportSettings {
    *   otherwise.
    */
   public static function imagePath($filename) {
-    if (!isset(self::$extractedImageFiles)) {
-      self::$extractedImageFiles = array_diff(scandir(self::imageExtractPath()), array('.', '..'));
-    }
-
-    $index = array_search($filename, self::$extractedImageFiles);
-    if ($index !== FALSE) {
-      return self::imageExtractPath() . '/' . self::$extractedImageFiles[$index];
-    }
-
-    return FALSE;
+    $filepath = self::imageExtractPath() . '/' . $filename;
+    return file_exists($filepath) ? $filepath : FALSE;
   }
 
   /**
