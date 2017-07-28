@@ -548,9 +548,9 @@ function commerce_xls_import_import_process(array $file, $product_type, $display
       // Use numeric values for column index.
       $row_values = array();
       foreach ($headers as $name) {
-        $name = CommerceXlsImportSettings::field_name($name);
-        if (isset($values[$name])) {
-          $row_values[] = $values[$name];
+        if ($name != 'ERRORS') {
+          $name = CommerceXlsImportSettings::field_name($name);
+          $row_values[] = isset($values[$name]) ? $values[$name] : '';
         }
       }
 
