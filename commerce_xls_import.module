@@ -465,7 +465,7 @@ function commerce_xls_import_import_process(array $file, $product_type, $display
       }
 
       if (empty($errors)) {
-        $node = commerce_xls_import_load_node_by_title($title, $display_type);
+        $node = commerce_xls_import_load_node_by_referenced_sku($sku, $display_type);
         if (!$node) {
           $node = new stdClass();
           $node->type = $display_type;
@@ -699,38 +699,52 @@ function commerce_xls_import_generate_records(Box\Spout\Writer\XLSX\Writer $writ
 }
 
 /**
- * Load a node by its title.
+ * Load a node by an SKU of a variation it references.
  *
- * @param string $title
- *   The title of the node.
+ * @param string $sku
+ *   The sku of a product variation.
+ * @param string $bundle
+ *   The node type.
  *
- * @return object|array|false
- *   The loaded node or FALSE if no node exists with the title. Returns an array
- *   of node ids if multiple are found.
+ * @return object|false
+ *   The loaded node or FALSE if no node exists with the title or multiple nodes are found.
  */
-function commerce_xls_import_load_node_by_title($title, $bundle) {
-  $node = FALSE;
+function commerce_xls_import_load_node_by_referenced_sku($sku, $bundle) {
+  $product = commerce_product_load_by_sku($sku, TRUE);
+  if ($product) {
+    $product_reference_field = commerce_xls_import_product_reference_field_name($bundle);
+    $query = new EntityFieldQuery();
+    $results = $query->entityCondition('entity_type', 'node')
+      ->entityCondition('bundle', $bundle)
+      ->fieldCondition($product_reference_field, 'product_id', $product->product_id)
+      ->execute();
 
-  $query = new EntityFieldQuery();
-  $results = $query->entityCondition('entity_type', 'node')
-    ->entityCondition('bundle', $bundle)
-    ->propertyCondition('title', $title, '=')
-    ->execute();
-
-  if (isset($results['node'])) {
-    $nids = array_map(function ($item) {
-      return $item->nid;
-    }, $results['node']);
-    if (count($nids) === 1) {
-      $nid = reset($nids);
-      return node_load($nid);
-    }
-    elseif (count($nids) > 1) {
-      return $nids;
+    if (isset($results['node'])) {
+      $nids = array_keys($results['node']);
+      if (count($nids) === 1) {
+        $nid = reset($nids);
+        return node_load($nid);
+      }
     }
   }
 
-  return $node;
+  return FALSE;
+}
+
+/**
+ * Returns the name of the product reference field for the specified bundle.
+ *
+ * @param string $bundle
+ *   The node type.
+ */
+function commerce_xls_import_product_reference_field_name($bundle) {
+  foreach (field_info_instances('node', $bundle) as $field_name => $instance) {
+    $field = field_info_field($field_name);
+    if ($field['type'] == 'commerce_product_reference') {
+      return $field_name;
+    }
+  }
+  return FALSE;
 }
 
 /**
