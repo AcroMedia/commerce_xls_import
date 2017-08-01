@@ -11,7 +11,27 @@
  * Contains the buttons to begin the import or to generate example headers.
  *
  * @return
- *  The form array representing the from to initiate the import or generate examples headers.
+ *   The form array representing the from to initiate the import or generate examples headers.
+ */
+function commerce_xls_import_admin() {
+  $form = array();
+  $product_types = array();
+  $display_types = array();
+
+  $form['admin_list'] = array(
+    '#markup' => theme('commerce_xls_import_admin_list'),
+  );
+
+  return $form;
+}
+
+/**
+ * Import Menu Form.
+ *
+ * Contains the buttons to begin the import or to generate example headers.
+ *
+ * @return
+ *   The form array representing the from to initiate the import or generate examples headers.
  */
 function commerce_xls_import_start() {
   $form = array();
@@ -62,13 +82,13 @@ function commerce_xls_import_start() {
   );
 
   $form['download_template'] = array(
-      '#type' => 'submit',
-      '#name' => 'download_template',
-      '#value' => t('Download Template'),
-      '#suffix' => '<div style="clear:both"></div>',
-      '#attributes' => array(
-          'id' => array('commerce-xls-import-download-template'),
-      ),
+    '#type' => 'submit',
+    '#name' => 'download_template',
+    '#value' => t('Download Template'),
+    '#suffix' => '<div style="clear:both"></div>',
+    '#attributes' => array(
+      'id' => array('commerce-xls-import-download-template'),
+    ),
   );
 
   $form['import_file'] = array(
@@ -131,8 +151,8 @@ function commerce_xls_import_start() {
       '#value' => t('Validate File'),
     );
     $form['buttons']['import'] = array(
-        '#type' => 'submit',
-        '#value' => t('Begin Full Import'),
+      '#type' => 'submit',
+      '#value' => t('Begin Full Import'),
     );
     $form['import_status'] = array(
       '#type' => 'hidden',
@@ -170,10 +190,10 @@ function commerce_xls_import_start() {
  * Validation handler for the import start form.
  *
  * @param array $form
- *  The form that is being validated.
+ *   The form that is being validated.
  *
  * @param array $form_state
- *  The form state array, passed by reference.
+ *   The form state array, passed by reference.
  */
 function commerce_xls_import_start_validate($form, &$form_state) {
 
@@ -213,10 +233,10 @@ function commerce_xls_import_start_validate($form, &$form_state) {
  * Submit handler for the import start form.
  *
  * @param $form
- *  The form that is being submitted.
+ *   The form that is being submitted.
  *
  * @param $form_state
- *  The form state array, passed by reference.
+ *   The form state array, passed by reference.
  */
 function commerce_xls_import_start_submit($form, &$form_state) {
   global $user;
@@ -244,7 +264,7 @@ function commerce_xls_import_start_submit($form, &$form_state) {
           ))
           ->execute();
 
-        commerce_xls_import_main($file, $settings,FALSE);
+        commerce_xls_import_main($file, $settings, FALSE);
       }
       else {
         drupal_set_message(t('You are currently running an import. Please wait until it is finished or cancel the current one'), 'error', FALSE);

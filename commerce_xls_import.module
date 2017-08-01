@@ -32,7 +32,7 @@ function commerce_xls_import_menu() {
     'page arguments' => array('commerce_xls_import_admin'),
     'access arguments' => array('administer commerce import'),
     'file' => 'includes/commerce_xls_import.admin.inc',
-    'type' => MENU_LOCAL_ACTION,
+    'type' => MENU_LOCAL_TASK,
   );
 
   $items['admin/commerce/products/commerce_xls_import/import'] = array(
@@ -89,7 +89,7 @@ function commerce_xls_import_help($path, $arg) {
       $output = '';
       $output .= '<h1>' . t('Commerce XLS Import') . '</h1>';
       $output .= '<fieldset>';
-      $output .= '<legend><span class="fieldset-legend">Welcome, here\'s a few tips if you are just getting started:</span></legend>';
+      $output .= '<div class="fieldset-xml-legend">Welcome, here\'s a few tips if you are just getting started:</div>';
       $output .= '<div class="fieldset-wrapper">';
 
       $output .= '<ul>';
@@ -101,37 +101,6 @@ function commerce_xls_import_help($path, $arg) {
       $output .= '</fieldset>';
       return $output;
   }
-}
-
-/**
- * Implements hook_theme_registry_alter().
- */
-function commerce_xls_import_theme_registry_alter(&$theme_registry) {
-  $theme_registry['menu_local_action']['function'] = 'commerce_xls_import_action_links';
-  $theme_registry['menu_local_action']['includes'] = array();
-}
-
-/**
- * Generates Actions links for module.
- */
-function commerce_xls_import_action_links($variables) {
-  $link = $variables['element']['#link'];
-  $output = '<li class="leaf xls-leaf">';
-  if (isset($link['href'])) {
-    $output .= l($link['title'], $link['href'], isset($link['localized_options']) ? $link['localized_options'] : array());
-  }
-  elseif (!empty($link['localized_options']['html'])) {
-    $output .= $link['title'];
-  }
-  else {
-    $output .= check_plain($link['title']);
-  }
-  if (isset($link['description'])) {
-    $output .= '<div class="description">' . $link['description'] . '</div>';
-  }
-  $output .= "</li>\n";
-
-  return $output;
 }
 
 /**
