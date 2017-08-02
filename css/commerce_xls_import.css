@@ -205,6 +205,12 @@ div.divider {
   font-size: 14px;
   text-transform: uppercase;
 }
+.page-admin-commerce-products-commerce-xls-import .tabs-secondary{
+  display:none;
+}
+body[class*="page-admin-commerce-products-commerce-xls-import-"] .tabs-secondary{
+ display: block;
+}
 progress#commerce-xls-import-progress {
     /* Reset the default appearance */
     -webkit-appearance: none;
