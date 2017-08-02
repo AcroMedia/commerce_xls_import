@@ -208,6 +208,10 @@ div.divider {
 .page-admin-commerce-products-commerce-xls-import .tabs-secondary{
   display:none;
 }
+.overlay.page-admin-commerce-products-commerce-xls-import ul.secondary {
+  background: transparent none;
+  margin: 0;
+}
 body[class*="page-admin-commerce-products-commerce-xls-import-"] .tabs-secondary{
  display: block;
 }
