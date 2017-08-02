@@ -33,6 +33,7 @@ function commerce_xls_import_menu() {
     'access arguments' => array('administer commerce import'),
     'file' => 'includes/commerce_xls_import.admin.inc',
     'type' => MENU_LOCAL_TASK,
+    'hide_from_menu' => 1,
   );
 
   $items['admin/commerce/products/commerce_xls_import/import'] = array(
@@ -43,7 +44,7 @@ function commerce_xls_import_menu() {
     'access arguments' => array('administer commerce import'),
     'file' => 'includes/commerce_xls_import.admin.inc',
     'weight' => 1,
-    'type' => MENU_LOCAL_ACTION,
+    'type' => MENU_LOCAL_TASK,
   );
   $items['admin/commerce/products/commerce_xls_import/export'] = array(
     'title' => 'Product Export',
@@ -53,7 +54,7 @@ function commerce_xls_import_menu() {
     'access arguments' => array('administer commerce import'),
     'file' => 'includes/commerce_xls_import.export.inc',
     'weight' => 2,
-    'type' => MENU_LOCAL_ACTION,
+    'type' => MENU_LOCAL_TASK,
   );
   $items['admin/commerce/products/commerce_xls_import/validate'] = array(
     'title' => 'Validate Only',
@@ -63,7 +64,7 @@ function commerce_xls_import_menu() {
     'access arguments' => array('administer commerce import'),
     'file' => 'includes/commerce_xls_import.admin.inc',
     'weight' => 3,
-    'type' => MENU_LOCAL_ACTION,
+    'type' => MENU_LOCAL_TASK,
   );
   $items['admin/commerce/products/commerce_xls_import/aliases'] = array(
     'title' => 'Field Mapping',
@@ -73,7 +74,7 @@ function commerce_xls_import_menu() {
     'access arguments' => array('administer commerce import'),
     'file' => 'includes/commerce_xls_import.admin.inc',
     'weight' => 4,
-    'type' => MENU_LOCAL_ACTION,
+    'type' => MENU_LOCAL_TASK,
   );
   return $items;
 }
