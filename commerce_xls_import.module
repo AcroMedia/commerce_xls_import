@@ -450,13 +450,19 @@ function commerce_xls_import_import_process(array $file, $product_type, $display
       $sku = isset($values['commerce_product']['sku']) ? $values['commerce_product']['sku'] : NULL;
       $price = isset($values['commerce_product']['commerce_price']) ? $values['commerce_product']['commerce_price'] : NULL;
 
+      // Check if Commerce AutoSKU module is enabled.
+      if (module_exists('commerce_autosku')) {
+        $product_info = commerce_product_types();
+        $autosku_pattern = $product_info[$product_type]['autosku']['pattern'];
+      }
+
       $errors = array();
 
       if (empty($title)) {
         $errors['title'] = t("Product doesn't have a title.");
       }
 
-      if (empty($sku)) {
+      if (empty($sku) && empty($autosku_pattern)) {
         $errors['sku'] = t("Product doesn't have a sku.");
       }
 
