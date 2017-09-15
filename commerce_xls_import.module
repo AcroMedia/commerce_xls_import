@@ -1,4 +1,5 @@
 <?php
+
 /**
  * @file
  * Imports Drupal Commerce Entities from an XLS file.
@@ -6,6 +7,7 @@
  * Returns an XLS file highlighting success and failures.
  */
 
+use Box\Spout\Writer\XLSX\Writer;
 use Box\Spout\Common\Type;
 use Box\Spout\Reader\ReaderFactory;
 use Box\Spout\Writer\WriterFactory;
@@ -24,39 +26,82 @@ function commerce_xls_import_menu() {
   $items = array();
 
   $items['admin/commerce/products/commerce_xls_import'] = array(
-    'title' => 'Commerce XLS Import',
+    'title' => 'Product Import',
     'description' => 'Import products from spreadsheets.',
+    'page callback' => 'drupal_get_form',
+    'page arguments' => array('commerce_xls_import_admin'),
+    'access arguments' => array('administer commerce import'),
+    'file' => 'includes/commerce_xls_import.admin.inc',
+    'type' => MENU_LOCAL_TASK,
+    'hide_from_menu' => 1,
+  );
+
+  $items['admin/commerce/products/commerce_xls_import/import'] = array(
+    'title' => 'Products Import',
+    'description' => 'Use a preformatted XLS file to add or update the products in your store.',
     'page callback' => 'drupal_get_form',
     'page arguments' => array('commerce_xls_import_start'),
     'access arguments' => array('administer commerce import'),
     'file' => 'includes/commerce_xls_import.admin.inc',
+    'weight' => 1,
     'type' => MENU_LOCAL_TASK,
   );
-
-  $items['admin/commerce/products/commerce_xls_import/import'] = $items['admin/commerce/products/commerce_xls_import'];
-  $items['admin/commerce/products/commerce_xls_import/import']['title'] = 'Import Products';
-
-  $items['admin/commerce/products/commerce_xls_import/aliases'] = array(
-    'title' => 'Configure Commerce XLS Import Aliases',
-    'description' => 'Configure aliases for fields.',
-    'page callback' => 'drupal_get_form',
-    'page arguments' => array('commerce_xls_import_aliases_form'),
-    'access arguments' => array('administer commerce import'),
-    'file' => 'includes/commerce_xls_import.admin.inc',
-    'type' => MENU_LOCAL_TASK,
-  );
-
   $items['admin/commerce/products/commerce_xls_import/export'] = array(
-    'title' => 'Export Products',
-    'description' => 'Export products to XLSX.',
+    'title' => 'Product Export',
+    'description' => 'Export an XLS file containing your product information, or a blank template (useful for creating a product import.)',
     'page callback' => 'drupal_get_form',
     'page arguments' => array('commerce_xls_import_start_export'),
     'access arguments' => array('administer commerce import'),
     'file' => 'includes/commerce_xls_import.export.inc',
+    'weight' => 2,
     'type' => MENU_LOCAL_TASK,
   );
-
+  $items['admin/commerce/products/commerce_xls_import/validate'] = array(
+    'title' => 'Validate Only',
+    'description' => 'Check the quality of your import data without making any updates to your products/store.)',
+    'page callback' => 'drupal_get_form',
+    'page arguments' => array('commerce_xls_import_start'),
+    'access arguments' => array('administer commerce import'),
+    'file' => 'includes/commerce_xls_import.admin.inc',
+    'weight' => 3,
+    'type' => MENU_LOCAL_TASK,
+  );
+  $items['admin/commerce/products/commerce_xls_import/aliases'] = array(
+    'title' => 'Field Mapping',
+    'description' => 'Useful if the headings in your import file do not exactly match your product fields.',
+    'page callback' => 'drupal_get_form',
+    'page arguments' => array('commerce_xls_import_aliases_form'),
+    'access arguments' => array('administer commerce import'),
+    'file' => 'includes/commerce_xls_import.admin.inc',
+    'weight' => 4,
+    'type' => MENU_LOCAL_TASK,
+  );
   return $items;
+}
+
+/**
+ * Implements hook_help().
+ *
+ * Shows information before menu hook.
+ */
+function commerce_xls_import_help($path, $arg) {
+  switch ($path) {
+    case 'admin/commerce/products/commerce_xls_import':
+      $output = '';
+      $output .= '<h1>' . t('Commerce XLS Import') . '</h1>';
+      $output .= '<fieldset>';
+      $output .= '<div class="fieldset-xml-legend">Welcome, here\'s a few tips if you are just getting started:</div>';
+      $output .= '<div class="fieldset-wrapper">';
+
+      $output .= '<ul>';
+      $output .= '<li>Use the Product Export to export a blank template with the proper column headers.</li>';
+      $output .= '<li>Use Validate Only to check your data before doing a full import, errors are flagged in the XLS for easy correction.</li>';
+      $output .= '<li>Import partial lists that update or add just a few products.</li>';
+      $output .= '</ul>';
+      $output .= '</div>';
+      $output .= '</fieldset>';
+      return $output;
+  }
 }
 
 /**
@@ -76,6 +121,16 @@ function commerce_xls_import_permission() {
  */
 function commerce_xls_import_theme() {
   return array(
+    'commerce_xls_import_welcome_tips' => array(
+      'file' => 'includes/commerce_xls_import.theme.inc',
+      'template' => 'templates/commerce_xls_import_welcome_tips',
+      'variables' => array(),
+    ),
+    'commerce_xls_import_admin_list' => array(
+      'file' => 'includes/commerce_xls_import.theme.inc',
+      'template' => 'templates/commerce_xls_import_admin_list',
+      'variables' => array('content' => NULL),
+    ),
     'commerce_xls_import_instructions' => array(
       'file' => 'includes/commerce_xls_import.theme.inc',
       'template' => 'templates/commerce_xls_import_instructions',
@@ -112,6 +167,7 @@ function commerce_xls_import_libraries_info() {
  *   An array of library information from hook_libraries_info().
  *
  * @return string
+ *   String is returned.
  */
 function commerce_xls_import_spout_version(array $library) {
   // The version is not available in composer.json so we don't have anything to
@@ -126,6 +182,7 @@ function commerce_xls_import_spout_version(array $library) {
  *   The type of field defined by hook_field_info().
  *
  * @return CommerceXlsImportValueHandlerInterface
+ *   An object from the module
  *
  * @see hook_commerce_xls_import_field_type_handler_info()
  * @see hook_commerce_xls_import_field_type_handler_info_alter()
@@ -246,7 +303,8 @@ function commerce_xls_import_set_finish_import() {
  * Stops current import.
  *
  * @return bool
- *   A boolean value representing whether the import was successfully stopped or not.
+ *   A boolean value representing whether the import,
+ *    was successfully stopped or not.
  */
 function commerce_xls_import_stop_import() {
   // Set all updates to stopped status.
@@ -302,9 +360,11 @@ function commerce_xls_import_template($product_type = NULL, $display_type = NULL
   }
 }
 
-//TODO - we should probably split this into 1 function that does the actual generation and 1 that just provides the download
 /**
  * Generate template xls.
+ *
+ * @TODO - we should probably split this into 1 function that,
+ *   does the actual generation and 1 that just provides the download.
  *
  * @return bool
  *   Returns TRUE upon success and False upon failure.
@@ -337,15 +397,8 @@ function commerce_xls_import_generate_template_xls($product_type, $headers, $dat
  *
  * Extracts product_images.zip, then imports XLS file. If the XLS import is
  * successful the results will then be processed and the import will be started.
- *
- * @param array $file
- *   The XLS file info array containing product data to be imported.
- * @param bool $validate
- *   If true, don't create products. Otherwise create products.
- * @param array $settings
- *   Settings for the import.
  */
-function commerce_xls_import_main($file, $validate = FALSE, $settings) {
+function commerce_xls_import_main($file, $settings, $validate = FALSE) {
   // Get the product type.
   $product_type = $file['product_type'];
   $display_type = $file['display_type'];
@@ -357,7 +410,7 @@ function commerce_xls_import_main($file, $validate = FALSE, $settings) {
 
   variable_set('commerce_xls_import_import_count_status', array(
     'completed' => 0,
-    'total' => 0
+    'total' => 0,
   ));
 
   // Extract product images.
@@ -628,6 +681,8 @@ function commerce_xls_import_export_process($product_type, $display_type, $setti
 }
 
 /**
+ * Process XLS records.
+ *
  * @param Box\Spout\Writer\XLSX\Writer $writer
  *   The Spout writer object.
  * @param string $product_type
@@ -638,11 +693,10 @@ function commerce_xls_import_export_process($product_type, $display_type, $setti
  * @return int
  *   The number of records processed.
  */
-function commerce_xls_import_generate_records(Box\Spout\Writer\XLSX\Writer $writer, $product_type, $display_type) {
+function commerce_xls_import_generate_records(Writer $writer, $product_type, $display_type) {
   $products_processed = 0;
   // Track if we've written headers to the file so we don't do it more than
   // once.
-
   $query = db_select('node', 'n');
   $query->addField('n', 'nid');
   $query->orderBy('n.nid');
@@ -925,8 +979,8 @@ function commerce_xls_import_nids_of_type($product_type) {
  * @param string $display_type
  *   The node type for the selected import.
  *
- * @return array $headers
- *
+ * @return array
+ *   Return arrat headers from the keys
  */
 function commerce_xls_import_generate_headers($product_type = NULL, $display_type = NULL) {
   $fields = commerce_xls_import_get_possible_fields($product_type, $display_type, TRUE);
