@@ -523,9 +523,10 @@ function commerce_xls_import_import_process(array $file, $product_type, $display
         }
 
         // If the node does not already reference the new product, set it now.
-        $field_info = field_info_field('field_product');
+        $product_ref_field_name = commerce_xls_import_product_reference_field_name($display_type);
+        $field_info = field_info_field($product_ref_field_name);
         if (isset($field_info['cardinality']) && (int) $field_info['cardinality'] !== 1) {
-          $referenced_products = $node_wrapper->field_product->value();
+          $referenced_products = $node_wrapper->{$product_ref_field_name}->value();
           $product_already_referenced = FALSE;
           foreach ($referenced_products as $referenced_product) {
             if ($referenced_product->product_id === $product->product_id) {
@@ -542,7 +543,7 @@ function commerce_xls_import_import_process(array $file, $product_type, $display
           $referenced_products = $product;
         }
 
-        $node_wrapper->field_product = $referenced_products;
+        $node_wrapper->{$product_ref_field_name} = $referenced_products;
 
         if (CommerceXlsImportSettings::isImport() && empty($errors)) {
           $node_wrapper->save();
@@ -667,7 +668,8 @@ function commerce_xls_import_generate_records(Box\Spout\Writer\XLSX\Writer $writ
 
     /** @var EntityDrupalWrapper $node_wrapper */
     $node_wrapper = entity_metadata_wrapper('node', $product_display);
-    $product_wrappers = $node_wrapper->field_product;
+    $product_ref_field_name = commerce_xls_import_product_reference_field_name($display_type);
+    $product_wrappers = $node_wrapper->{$product_ref_field_name};
     // Ensure that we can iterate over a list of products, even if the field has
     // a cardinality of one.
     if (is_object($product_wrappers) && get_class($product_wrappers) !== 'EntityListWrapper') {
