@@ -24,7 +24,7 @@ class CommerceXlsImportTextLongHandler extends CommerceXlsImportValueHandler imp
         $format = isset($field[$key]['format']) ? $field[$key]['format'] : 'full_html';
         $value[] = array(
           'value' => $val,
-          'format' => 'full_html',
+          'format' => $format,
           'safe_value' => check_markup($val, $format),
         );
       }
@@ -33,7 +33,7 @@ class CommerceXlsImportTextLongHandler extends CommerceXlsImportValueHandler imp
       $format = isset($field['format']) ? $field['format'] : 'full_html';
       $value = array(
         'value' => $value,
-        'format' => 'full_html',
+        'format' => $format,
         'safe_value' => check_markup($value, $format),
       );
     }
