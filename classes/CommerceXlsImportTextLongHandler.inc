@@ -15,7 +15,14 @@ class CommerceXlsImportTextLongHandler extends CommerceXlsImportValueHandler imp
   public static function set($value, \EntityDrupalWrapper $wrapper, $field_name) {
     $field_info = field_info_field($field_name);
     $multivalue = ((int) $field_info['cardinality'] !== 1);
+
+    $field_info = $wrapper->{$field_name}->info();
     $field = $wrapper->{$field_name}->value();
+
+    // handle plain text format text_long fields per normal
+    if (!isset($field_info['type']) || $field_info['type'] != 'text_formatted') {
+      return CommerceXlsImportValueHandler::set($value, $wrapper, $field_name);
+    }
 
     if ($multivalue) {
       $value = array();
