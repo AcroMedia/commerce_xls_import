@@ -206,6 +206,7 @@ class CommerceXlsImportTestCase extends CommerceBaseTestCase {
     $this->assertText('1 products exported', 'Export file generated');
 
     // Loop thru xls and check if all skus are in the product page, make sure #18 and above do not appear (no sku).
+    
     $filepath = drupal_realpath(file_build_uri('export/commerce_xls_export_product_display.xlsx'));
     $reader = ReaderFactory::create(Type::XLSX);
     $reader->open($filepath);
