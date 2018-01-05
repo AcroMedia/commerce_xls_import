@@ -160,6 +160,10 @@ class CommerceXlsImportTestCase extends CommerceBaseTestCase {
         $result_row = $sheet1->getRowIterator()->current();
 
         foreach ($row as $label => $data) {
+          if($result_row[$label] == 'und') {
+              $result_row[$label] = '';
+          }  
+
           $this->assertEqual(
             $data,
             $result_row[$label],
