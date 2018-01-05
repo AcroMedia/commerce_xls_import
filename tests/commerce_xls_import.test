@@ -43,7 +43,7 @@ class CommerceXlsImportTestCase extends CommerceBaseTestCase {
     parent::setUp($modules);
 
     // Create a dummy product display content type.
-    $this->createDummyProductDisplayContentType();
+    $this->createDummyProductDisplayContentType('product_display', TRUE, 'field_product', -1);
 
     // Add an image field to the product display node type.
     $field_info = field_info_field('field_image');
@@ -118,6 +118,149 @@ class CommerceXlsImportTestCase extends CommerceBaseTestCase {
     );
     $this->drupalPost('admin/commerce/products/commerce_xls_import', $edit, 'Validate File');
     $this->assertText('Validate Completed, 24 records checked', 'Import file validation completed');
+  }
+
+  /**
+   * Test that the import re-uses the same product display with a shared title.
+   */
+  public function testCommerceXlsImportUsesSameNodes() {
+    libraries_load('spout');
+
+    $this->drupalLogin($this->privilegedUser);
+
+    // Programmatically create an import sheet.
+    $import_sheet_path = drupal_realpath(file_build_uri('test_import.xlsx'));
+    $import_sheet = WriterFactory::create(Type::XLSX);
+    $import_sheet->openToFile($import_sheet_path);
+
+    // Make the rows for the import sheet.
+    $header_row = array(
+      'title',
+      'variation_title',
+      'sku',
+      'body',
+      'commerce_price',
+      'status',
+      'language',
+    );
+    $product_rows = array(
+      array(
+        'Awesome Shirt',
+        'Awesome Shirt (Green, Small)',
+        'awsh-gr-sm',
+        'This is an awesome shirt',
+        '15.99',
+        '1',
+      ),
+      array(
+        'Awesome Shirt',
+        'Awesome Shirt (Green, Medium)',
+        'awsh-gr-md',
+        'This is an awesome shirt',
+        '15.99',
+        '1',
+      ),
+    );
+    $product_row_count = count($product_rows);
+
+    $import_sheet->addRow($header_row);
+    $import_sheet->addRows($product_rows);
+    $import_sheet->close();
+
+    $edit = array(
+      'display_type' => 'product_display',
+      'files[import_file]' => $import_sheet_path,
+    );
+    $this->drupalPost('admin/commerce/products/commerce_xls_import', $edit, 'Begin Full Import');
+
+    // Assert the import completed with no errors.
+    $this->assertText('Import Completed, ' . $product_row_count . ' records processed with 0 errors.', 'Import file processed');
+
+    // Assert there is only a single product display node created.
+    $query = new EntityFieldQuery();
+    $results = $query->entityCondition('entity_type', 'node')
+      ->entityCondition('bundle', 'product_display')
+      ->execute();
+    $nids = array_keys($results['node']);
+    $this->assertEqual(count($nids), 1, 'Only one product display node is created');
+
+    // Assert the product display has reference to both products.
+    $nid = reset($nids);
+    $node_wrapper = entity_metadata_wrapper('node', $nid);
+    $node_products = $node_wrapper->field_product->value();
+    $this->assertEqual(count($node_products), 2, 'Product display has reference to two products');
+  }
+
+  /**
+   * Test that the import creates new nodes with different titles.
+   */
+  public function testCommerceXlsImportCreatesMultipleNodes() {
+    libraries_load('spout');
+
+    $this->drupalLogin($this->privilegedUser);
+
+    // Programmatically create an import sheet.
+    $import_sheet_path = drupal_realpath(file_build_uri('test_import.xlsx'));
+    $import_sheet = WriterFactory::create(Type::XLSX);
+    $import_sheet->openToFile($import_sheet_path);
+
+    // Make the rows for the import sheet.
+    $header_row = array(
+      'title',
+      'variation_title',
+      'sku',
+      'body',
+      'commerce_price',
+      'status',
+      'language',
+    );
+    $product_rows = array(
+      array(
+        'Cool Shirt',
+        'Cool Shirt (Green, Small)',
+        'cosh-gr-sm',
+        'This is a cool shirt',
+        '15.99',
+        '1',
+      ),
+      array(
+        'Awesome Shirt',
+        'Awesome Shirt (Green, Small)',
+        'awsh-gr-sm',
+        'This is an awesome shirt',
+        '15.99',
+        '1',
+      ),
+    );
+    $product_row_count = count($product_rows);
+
+    $import_sheet->addRow($header_row);
+    $import_sheet->addRows($product_rows);
+    $import_sheet->close();
+
+    $edit = array(
+      'display_type' => 'product_display',
+      'files[import_file]' => $import_sheet_path,
+    );
+    $this->drupalPost('admin/commerce/products/commerce_xls_import', $edit, 'Begin Full Import');
+
+    // Assert the import completed with no errors.
+    $this->assertText('Import Completed, ' . $product_row_count . ' records processed with 0 errors.', 'Import file processed');
+
+    // Assert there is only a single product display node created.
+    $query = new EntityFieldQuery();
+    $results = $query->entityCondition('entity_type', 'node')
+      ->entityCondition('bundle', 'product_display')
+      ->execute();
+    $nids = array_keys($results['node']);
+    $this->assertEqual(count($nids), 2, 'Two product display nodes are created');
+
+    // Assert the product display has reference to both products.
+    foreach ($nids as $nid) {
+      $node_wrapper = entity_metadata_wrapper('node', $nid);
+      $node_products = $node_wrapper->field_product->value();
+      $this->assertEqual(count($node_products), 1, 'Product display has reference to one product');
+    }
   }
 
   /**

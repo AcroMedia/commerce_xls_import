@@ -470,16 +470,13 @@ function commerce_xls_import_import_process(array $file, $product_type, $display
         $errors['commerce_price'] = t("Product doesn't have a price.");
       }
 
+      $node = NULL;
       if (empty($errors)) {
-        $node = commerce_xls_import_load_node_by_referenced_sku($sku, $display_type);
-        if (!$node) {
-          $node = new stdClass();
-          $node->type = $display_type;
-          $node->language = $data['language'];
-
-          global $user;
-
-          $node->uid = $user->uid;
+        try {
+          $node = commerce_xls_import_get_node($sku, $title, $display_type, $data['language']);
+        }
+        catch (Exception $e) {
+          $errors['node'] = $e->getMessage();
         }
 
         /** @var EntityDrupalWrapper $node_wrapper */
@@ -522,27 +519,29 @@ function commerce_xls_import_import_process(array $file, $product_type, $display
           $product_wrapper->save();
         }
 
-        // If the node does not already reference the new product, set it now.
-        $field_info = field_info_field('field_product');
-        if (isset($field_info['cardinality']) && (int) $field_info['cardinality'] !== 1) {
-          $referenced_products = $node_wrapper->field_product->value();
-          $product_already_referenced = FALSE;
-          foreach ($referenced_products as $referenced_product) {
-            if ($referenced_product->product_id === $product->product_id) {
-              $product_already_referenced = TRUE;
-              break;
+        if (isset($node_wrapper->field_product)) {
+          // If the node does not already reference the new product, set it now.
+          $field_info = field_info_field('field_product');
+          if (isset($field_info['cardinality']) && (int) $field_info['cardinality'] !== 1) {
+            $referenced_products = $node_wrapper->field_product->value();
+            $product_already_referenced = FALSE;
+            foreach ($referenced_products as $referenced_product) {
+              if ($referenced_product->product_id === $product->product_id) {
+                $product_already_referenced = TRUE;
+                break;
+              }
+            }
+
+            if (!$product_already_referenced) {
+              $referenced_products[] = $product;
             }
           }
-
-          if (!$product_already_referenced) {
-            $referenced_products[] = $product;
+          else {
+            $referenced_products = $product;
           }
-        }
-        else {
-          $referenced_products = $product;
-        }
 
-        $node_wrapper->field_product = $referenced_products;
+          $node_wrapper->field_product = $referenced_products;
+        }
 
         if (CommerceXlsImportSettings::isImport() && empty($errors)) {
           $node_wrapper->save();
@@ -705,17 +704,101 @@ function commerce_xls_import_generate_records(Box\Spout\Writer\XLSX\Writer $writ
 }
 
 /**
- * Load a node by an SKU of a variation it references.
+ * Finds or creates a node for the product variation.
+ *
+ * It first tries to find an existing node with a product reference to the SKU.
+ * If that fails, it tries to find an existing node with a matching title.
+ * Finally, if that fails, it creates a new node.
+ *
+ * @param string $sku
+ *   The sku of the product variation.
+ * @param string $title
+ *   The title of the node.
+ * @param string $bundle
+ *   The node type.
+ * @param string $language
+ *   The language of the node.
+ *
+ * @return object
+ *   The node object.
+ *
+ * @throws \Exception
+ *   If multiple nodes are found, an exception is thrown as it's too ambiguous.
+ */
+function commerce_xls_import_get_node($sku, $title, $bundle, $language) {
+  // Try and find a node that already has a reference to this sku.
+  $nids = commerce_xls_import_get_multiple_nids_by_referenced_sku($sku, $bundle);
+  if (count($nids) > 1) {
+    throw new Exception(t('More than one node exists with a reference to this product.'));
+  }
+  if (count($nids) == 1) {
+    $node = node_load(reset($nids));
+    return $node;
+  }
+
+  // If not, then it's possibly a new variation on an existing node. Try
+  // and find a node based on the product title.
+  $nids = commerce_xls_import_get_multiple_nids_by_title($title, $bundle);
+  if (count($nids) > 1) {
+    throw new Exception(t('More than one node exists with the same title.'));
+  }
+  elseif (count($nids) == 1) {
+    $node = node_load(reset($nids));
+    return $node;
+  }
+
+  // Finally, if there's still no node, then it creates a new one.
+  global $user;
+
+  $node = new stdClass();
+  $node->type = $bundle;
+  $node->language = $language;
+  $node->uid = $user->uid;
+
+  return $node;
+}
+
+/**
+ * Find nodes that match a specific title.
+ *
+ * @param string $title
+ *   The title of the node.
+ * @param string $bundle
+ *   The node type.
+ *
+ * @return array
+ *   An array of node IDs that match a specific title.
+ *   An empty array if no nodes are found.
+ */
+function commerce_xls_import_get_multiple_nids_by_title($title, $bundle) {
+  $nids = array();
+  $query = new EntityFieldQuery();
+  $results = $query->entityCondition('entity_type', 'node')
+    ->entityCondition('bundle', $bundle)
+    ->propertyCondition('title', $title, '=')
+    ->execute();
+
+  if (isset($results['node'])) {
+    $nids = array_keys($results['node']);
+  }
+
+  return $nids;
+}
+
+/**
+ * Find nodes that have a product reference to a specific SKU.
  *
  * @param string $sku
  *   The sku of a product variation.
  * @param string $bundle
  *   The node type.
  *
- * @return object|false
- *   The loaded node or FALSE if no node exists with the title or multiple nodes are found.
+ * @return array
+ *   An array of node IDs that have a reference to the product SKU.
+ *   An empty array if no nodes are found.
  */
-function commerce_xls_import_load_node_by_referenced_sku($sku, $bundle) {
+function commerce_xls_import_get_multiple_nids_by_referenced_sku($sku, $bundle) {
+  $nids = array();
   $product = commerce_product_load_by_sku($sku, TRUE);
   if ($product) {
     $product_reference_field = commerce_xls_import_product_reference_field_name($bundle);
@@ -727,14 +810,10 @@ function commerce_xls_import_load_node_by_referenced_sku($sku, $bundle) {
 
     if (isset($results['node'])) {
       $nids = array_keys($results['node']);
-      if (count($nids) === 1) {
-        $nid = reset($nids);
-        return node_load($nid);
-      }
     }
   }
 
-  return FALSE;
+  return $nids;
 }
 
 /**
