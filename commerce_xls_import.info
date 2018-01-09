@@ -11,6 +11,7 @@ dependencies[] = libraries
 stylesheets[all][] = css/commerce_xls_import.css
 
 files[] = tests/commerce_xls_import.test
+files[] = tests/commerce_xls_import_physical.unit.test
 files[] = classes/CommerceXlsImportSettings.inc
 files[] = classes/CommerceXlsImportReadFilter.inc
 
@@ -30,3 +31,5 @@ files[] = classes/CommerceXlsImportTaxonomyTermReferenceHandler.inc
 files[] = classes/CommerceXlsImportTextHandler.inc
 files[] = classes/CommerceXlsImportTextWithSummaryHandler.inc
 files[] = classes/CommerceXlsImportVariationTitleHandler.inc
+files[] = classes/CommerceXlsImportDimensionsHandler.inc
+files[] = classes/CommerceXlsImportWeightHandler.inc

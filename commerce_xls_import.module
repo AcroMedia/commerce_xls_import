@@ -202,6 +202,14 @@ function commerce_xls_import_commerce_xls_import_field_type_handler_info() {
     'class_name' => 'CommerceXlsImportVariationTitleHandler',
   );
 
+  $handlers['physical_dimensions'] = array(
+    'class_name' => 'CommerceXlsImportDimensionsHandler',
+  );
+
+  $handlers['physical_weight'] = array(
+    'class_name' => 'CommerceXlsImportWeightHandler',
+  );
+
   return $handlers;
 }
 

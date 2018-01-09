@@ -1,0 +1,142 @@
+<?php
+
+/**
+ * @file
+ * Commerce_xls_import.unit.test.
+ *
+ * Unit tests for handling the 'physical' module.
+ */
+
+/**
+ * Class CommerceXlsImportPhysicalUnitTestCase.
+ */
+class CommerceXlsImportPhysicalUnitTestCase extends DrupalUnitTestCase {
+
+  /**
+   * GetInfo().
+   *
+   * @return array
+   *   An array containing name, description, and group text.
+   */
+  public static function getInfo() {
+    return array(
+      'name' => 'Commerce XLS Import (commerce_physical) Unit Tests',
+      'description' => 'Ensure Commerce XLS Import functions properly with the commerce_physical module',
+      'group' => 'Drupal Commerce XLS Import',
+    );
+  }
+
+  /**
+   * Setup().
+   *
+   * @{inheritdoc}
+   */
+  public function setup() {
+    parent::setUp();
+    module_load_include('inc', 'commerce_xls_import', 'classes/CommerceXlsImportValueHandlerInterface');
+    module_load_include('inc', 'commerce_xls_import', 'classes/CommerceXlsImportValueHandler');
+    module_load_include('inc', 'commerce_xls_import', 'classes/CommerceXlsImportDimensionsHandler');
+    module_load_include('inc', 'commerce_xls_import', 'classes/CommerceXlsImportWeightHandler');
+  }
+
+  /**
+   * Tests that the DimensionsHandler serializes data correctly for a CSV.
+   */
+  public function testWeightHandlerToCsv() {
+    // Assert that proper dimensions work.
+    $weight = array(
+      'weight' => '30.000',
+      'unit' => 'lb',
+    );
+    $serialized = \CommerceXlsImportWeightHandler::toCsv($weight);
+    $expected = 'weight=30.000,unit=lb';
+    $this->assertEqual($serialized, $expected, 'ToCsv function result matches expected string');
+
+    // Assert that leading/trailing whitespace is trimmed.
+    $weight = array(
+      'weight' => '10  ',
+      'unit' => '  kg  ',
+    );
+    $serialized = \CommerceXlsImportWeightHandler::toCsv($weight);
+    $expected = 'weight=10,unit=kg';
+    $this->assertEqual($serialized, $expected, 'ToCsv function trims whitespace');
+  }
+
+  /**
+   * Tests that the DimensionsHandler parses the data correctly from a CSV.
+   */
+  public function testWeightHandlerFromCsv() {
+    // Assert that proper dimensions work.
+    $weight = 'weight=30.000,unit=lb';
+    $parsed = \CommerceXlsImportWeightHandler::fromCsv($weight);
+    $expected = array(
+      'weight' => '30.000',
+      'unit' => 'lb',
+    );
+    $this->assertEqual($parsed, $expected, 'FromCsv function result matches expected array');
+
+    // Assert that leading/trailing whitespace is trimmed.
+    $weight = '  weight = 30 , unit=lb  ';
+    $parsed = \CommerceXlsImportWeightHandler::fromCsv($weight);
+    $expected = array(
+      'weight' => '30',
+      'unit' => 'lb',
+    );
+    $this->assertEqual($parsed, $expected, 'FromCsv function trims whitespace');
+  }
+
+  /**
+   * Tests that the DimensionsHandler serializes data correctly for a CSV.
+   */
+  public function testDimensionsHandlerToCsv() {
+    // Assert that proper dimensions work.
+    $dimensions = array(
+      'length' => '24.000',
+      'width' => '10.000',
+      'height' => '30.000',
+      'unit' => 'in',
+    );
+    $serialized = \CommerceXlsImportDimensionsHandler::toCsv($dimensions);
+    $expected = 'length=24.000,width=10.000,height=30.000,unit=in';
+    $this->assertEqual($serialized, $expected, 'ToCsv function result matches expected string');
+
+    // Assert that leading/trailing whitespace is trimmed.
+    $dimensions = array(
+      'length' => '20.00  ',
+      'width' => '  50.000',
+      'height' => '  10  ',
+      'unit' => 'ft  ',
+    );
+    $serialized = \CommerceXlsImportDimensionsHandler::toCsv($dimensions);
+    $expected = 'length=20.00,width=50.000,height=10,unit=ft';
+    $this->assertEqual($serialized, $expected, 'ToCsv function trims whitespace');
+  }
+
+  /**
+   * Tests that the DimensionsHandler parses the data correctly from a CSV.
+   */
+  public function testDimensionsHandlerFromCsv() {
+    // Assert that proper dimensions work.
+    $dimensions = 'length=24.000,width=10.000,height=30.000,unit=in';
+    $parsed = \CommerceXlsImportDimensionsHandler::fromCsv($dimensions);
+    $expected = array(
+      'length' => '24.000',
+      'width' => '10.000',
+      'height' => '30.000',
+      'unit' => 'in',
+    );
+    $this->assertEqual($parsed, $expected, 'FromCsv function result matches expected array');
+
+    // Assert that leading/trailing whitespace is trimmed.
+    $dimensions = '  length = 24  ,width= 10.0000 , height =30.0,unit=ft  ';
+    $parsed = \CommerceXlsImportDimensionsHandler::fromCsv($dimensions);
+    $expected = array(
+      'length' => '24',
+      'width' => '10.0000',
+      'height' => '30.0',
+      'unit' => 'ft',
+    );
+    $this->assertEqual($parsed, $expected, 'FromCsv function trims whitespace');
+  }
+
+}

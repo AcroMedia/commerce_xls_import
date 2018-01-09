@@ -1,0 +1,89 @@
+<?php
+/**
+ * @file
+ * Class definition for CommerceXlsImportWeightHandler.
+ */
+
+/**
+ * Class CommerceXlsImportWeightHandler.
+ */
+class CommerceXlsImportWeightHandler extends CommerceXlsImportValueHandler implements CommerceXlsImportValueHandlerInterface {
+
+  /**
+   * {@inheritdoc}
+   */
+  public static function validate($value, EntityDrupalWrapper $wrapper, $field_name) {
+    $allowed_units = array_keys(physical_weight_units());
+    $weight = self::fromCsv($value);
+    $valid = isset($weight['weight'], $weight['unit'])
+      && is_numeric($weight['weight'])
+      && in_array($weight['unit'], $allowed_units);
+
+    return array(
+      'status' => ($valid) ? COMMERCE_XLS_IMPORT_DATA_SUCCESS : COMMERCE_XLS_IMPORT_DATA_ERROR,
+      'message' => (!$valid) ? t('Invalid Dimensions (format must look like weight=23,unit=lb)') : NULL,
+    );
+  }
+
+  /**
+   * {@inheritdoc}
+   */
+  public static function set($value, EntityDrupalWrapper $wrapper, $field_name) {
+    $valid = self::validate($value, $wrapper, $field_name);
+
+    if ($valid['status'] === COMMERCE_XLS_IMPORT_DATA_SUCCESS && !empty($value)) {
+      $weight = self::fromCsv($value);
+      module_load_include('module', 'physical', 'physical');
+
+      $field_value = physical_weight_field_data_auto_creation();
+      $field_value['weight'] = $weight['weight'];
+      $field_value['unit'] = $weight['unit'];
+
+      $wrapper->{$field_name} = $field_value;
+    }
+
+    return $valid;
+  }
+
+  /**
+   * {@inheritdoc}
+   */
+  public static function get(EntityDrupalWrapper $wrapper, $field_name) {
+    $weight = $wrapper->{$field_name}->value();
+    return self::toCsv($weight);
+  }
+
+  /**
+   * {@inheritdoc}
+   */
+  public static function toCsv($value, $delimiter = ',', $enclosure = '"') {
+    $formatted = array();
+    if (is_array($value)) {
+      foreach ($value as $size => $unit) {
+        $formatted[] = (trim($size) . '=' . trim($unit));
+      }
+    }
+    return parent::toCsv($formatted);
+  }
+
+  /**
+   * {@inheritdoc}
+   */
+  public static function fromCsv($value) {
+    $dimensions = parent::fromCsv($value);
+    $unserialized = array();
+
+    if (is_array($dimensions)) {
+      foreach ($dimensions as $dimension) {
+        $dimension = trim($dimension);
+        $split = explode('=', $dimension);
+        $key = trim($split[0]);
+        $value = trim($split[1]);
+        $unserialized[$key] = $value;
+      }
+    }
+
+    return $unserialized;
+  }
+
+}
