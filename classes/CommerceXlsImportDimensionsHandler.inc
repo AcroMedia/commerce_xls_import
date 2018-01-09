@@ -1,4 +1,5 @@
 <?php
+
 /**
  * @file
  * Class definition for CommerceXlsImportDimensionsHandler.
@@ -61,8 +62,10 @@ class CommerceXlsImportDimensionsHandler extends CommerceXlsImportValueHandler i
   public static function toCsv($value, $delimiter = ',', $enclosure = '"') {
     $formatted = array();
     if (is_array($value)) {
-      foreach ($value as $size => $unit) {
-        $formatted[] = (trim($size) . '=' . trim($unit));
+      foreach ($value as $k => $v) {
+        $k = strtolower(trim($k));
+        $v = strtolower(trim($v));
+        $formatted[] = ($k . '=' . $v);
       }
     }
     return parent::toCsv($formatted);
@@ -79,9 +82,11 @@ class CommerceXlsImportDimensionsHandler extends CommerceXlsImportValueHandler i
       foreach ($dimensions as $dimension) {
         $dimension = trim($dimension);
         $split = explode('=', $dimension);
-        $key = trim($split[0]);
-        $value = trim($split[1]);
-        $unserialized[$key] = $value;
+        if (count($split) == 2) {
+          $key = strtolower(trim($split[0]));
+          $value = strtolower(trim($split[1]));
+          $unserialized[$key] = $value;
+        }
       }
     }
 

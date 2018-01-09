@@ -60,6 +60,15 @@ class CommerceXlsImportPhysicalUnitTestCase extends DrupalUnitTestCase {
     $serialized = \CommerceXlsImportWeightHandler::toCsv($weight);
     $expected = 'weight=10,unit=kg';
     $this->assertEqual($serialized, $expected, 'ToCsv function trims whitespace');
+
+    // Assert that capitalization is turned to lowercase.
+    $weight = array(
+      'weIGht' => '10',
+      'uNiT' => 'kG',
+    );
+    $serialized = \CommerceXlsImportWeightHandler::toCsv($weight);
+    $expected = 'weight=10,unit=kg';
+    $this->assertEqual($serialized, $expected, 'ToCsv function transforms text to lowercase');
   }
 
   /**
@@ -83,6 +92,15 @@ class CommerceXlsImportPhysicalUnitTestCase extends DrupalUnitTestCase {
       'unit' => 'lb',
     );
     $this->assertEqual($parsed, $expected, 'FromCsv function trims whitespace');
+
+    // Assert that capitalization is turned to lowercase.
+    $weight = 'weIGht=30,UnIt=Lb';
+    $parsed = \CommerceXlsImportWeightHandler::fromCsv($weight);
+    $expected = array(
+      'weight' => '30',
+      'unit' => 'lb',
+    );
+    $this->assertEqual($parsed, $expected, 'FromCsv function transforms text to lowercase');
   }
 
   /**
@@ -110,6 +128,17 @@ class CommerceXlsImportPhysicalUnitTestCase extends DrupalUnitTestCase {
     $serialized = \CommerceXlsImportDimensionsHandler::toCsv($dimensions);
     $expected = 'length=20.00,width=50.000,height=10,unit=ft';
     $this->assertEqual($serialized, $expected, 'ToCsv function trims whitespace');
+
+    // Assert that capitalization is turned to lowercase.
+    $dimensions = array(
+      'leNGth' => '20.00',
+      'widtH' => '50.000',
+      'Height' => '10',
+      'uNIt' => 'fT',
+    );
+    $serialized = \CommerceXlsImportDimensionsHandler::toCsv($dimensions);
+    $expected = 'length=20.00,width=50.000,height=10,unit=ft';
+    $this->assertEqual($serialized, $expected, 'ToCsv function transforms text to lowercase');
   }
 
   /**
@@ -137,6 +166,17 @@ class CommerceXlsImportPhysicalUnitTestCase extends DrupalUnitTestCase {
       'unit' => 'ft',
     );
     $this->assertEqual($parsed, $expected, 'FromCsv function trims whitespace');
+
+    // Assert that capitalization is turned to lowercase.
+    $dimensions = 'leNGth=24,Width=10.0000,heighT=30.0,uNIt=FT';
+    $parsed = \CommerceXlsImportDimensionsHandler::fromCsv($dimensions);
+    $expected = array(
+      'length' => '24',
+      'width' => '10.0000',
+      'height' => '30.0',
+      'unit' => 'ft',
+    );
+    $this->assertEqual($parsed, $expected, 'FromCsv function transforms text to lowercase');
   }
 
 }
