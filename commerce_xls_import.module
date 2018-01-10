@@ -349,6 +349,7 @@ function commerce_xls_import_main($file, $validate = FALSE, $settings) {
   // Get the product type.
   $product_type = $file['product_type'];
   $display_type = $file['display_type'];
+  $product_ref_field = $file['product_ref_field'];
 
   if ($validate) {
     // I think there currently isn't any validate functionality?
@@ -363,7 +364,7 @@ function commerce_xls_import_main($file, $validate = FALSE, $settings) {
   // Extract product images.
   $archive_path = drupal_realpath(CommerceXlsImportSettings::imageZipUri());
   commerce_xls_import_unpack_zip(CommerceXlsImportSettings::imageExtractPath(), $archive_path);
-  commerce_xls_import_import_process($file, $product_type, $display_type, $settings);
+  commerce_xls_import_import_process($file, $product_type, $display_type, $product_ref_field, $settings);
 }
 
 /**
@@ -375,8 +376,10 @@ function commerce_xls_import_main($file, $validate = FALSE, $settings) {
  *   The commerce_product bundle to be processed.
  * @param string $display_type
  *   The node bundle to be processed.
+ * @param string $product_ref_field
+ *   The product reference field to use on the display node.
  */
-function commerce_xls_import_import_process(array $file, $product_type, $display_type, $settings) {
+function commerce_xls_import_import_process(array $file, $product_type, $display_type, $product_ref_field, $settings) {
   libraries_load('spout');
 
   CommerceXlsImportSettings::setSettings($settings);
@@ -473,7 +476,7 @@ function commerce_xls_import_import_process(array $file, $product_type, $display
       $node = NULL;
       if (empty($errors)) {
         try {
-          $node = commerce_xls_import_get_node($sku, $title, $display_type, $data['language']);
+          $node = commerce_xls_import_get_node($sku, $title, $display_type, $product_ref_field, $data['language']);
         }
         catch (Exception $e) {
           $errors['node'] = $e->getMessage();
@@ -519,11 +522,11 @@ function commerce_xls_import_import_process(array $file, $product_type, $display
           $product_wrapper->save();
         }
 
-        if (isset($node_wrapper->field_product)) {
+        if (isset($node_wrapper->{$product_ref_field})) {
           // If the node does not already reference the new product, set it now.
-          $field_info = field_info_field('field_product');
+          $field_info = field_info_field($product_ref_field);
           if (isset($field_info['cardinality']) && (int) $field_info['cardinality'] !== 1) {
-            $referenced_products = $node_wrapper->field_product->value();
+            $referenced_products = $node_wrapper->{$product_ref_field}->value();
             $product_already_referenced = FALSE;
             foreach ($referenced_products as $referenced_product) {
               if ($referenced_product->product_id === $product->product_id) {
@@ -540,7 +543,7 @@ function commerce_xls_import_import_process(array $file, $product_type, $display
             $referenced_products = $product;
           }
 
-          $node_wrapper->field_product = $referenced_products;
+          $node_wrapper->{$product_ref_field} = $referenced_products;
         }
 
         if (CommerceXlsImportSettings::isImport() && empty($errors)) {
@@ -608,8 +611,10 @@ function commerce_xls_import_import_process(array $file, $product_type, $display
  *   The product type to be processed.
  * @param string $display_type
  *   The product display type to be processed.
+ * @param string $product_ref_field
+ *   The product reference field to use on the display node.
  */
-function commerce_xls_import_export_process($product_type, $display_type, $settings = NULL) {
+function commerce_xls_import_export_process($product_type, $display_type, $product_ref_field, $settings = NULL) {
   libraries_load('spout');
 
   CommerceXlsImportSettings::setSettings($settings);
@@ -619,7 +624,7 @@ function commerce_xls_import_export_process($product_type, $display_type, $setti
   $writer = WriterFactory::create(Type::XLSX);
   $writer->openToFile($filepath);
 
-  $processed = commerce_xls_import_generate_records($writer, $product_type, $display_type);
+  $processed = commerce_xls_import_generate_records($writer, $product_type, $display_type, $product_ref_field);
 
   $writer->close();
 
@@ -633,11 +638,12 @@ function commerce_xls_import_export_process($product_type, $display_type, $setti
  *   The commerce_product bundle to export.
  * @param string $display_type
  *   The node bundle to export.
- *
+ * @param string $product_ref_field
+ *   The product reference field to use on the display node.
  * @return int
  *   The number of records processed.
  */
-function commerce_xls_import_generate_records(Box\Spout\Writer\XLSX\Writer $writer, $product_type, $display_type) {
+function commerce_xls_import_generate_records(Box\Spout\Writer\XLSX\Writer $writer, $product_type, $display_type, $product_ref_field) {
   $products_processed = 0;
   // Track if we've written headers to the file so we don't do it more than
   // once.
@@ -666,7 +672,7 @@ function commerce_xls_import_generate_records(Box\Spout\Writer\XLSX\Writer $writ
 
     /** @var EntityDrupalWrapper $node_wrapper */
     $node_wrapper = entity_metadata_wrapper('node', $product_display);
-    $product_wrappers = $node_wrapper->field_product;
+    $product_wrappers = $node_wrapper->{$product_ref_field};
     // Ensure that we can iterate over a list of products, even if the field has
     // a cardinality of one.
     if (is_object($product_wrappers) && get_class($product_wrappers) !== 'EntityListWrapper') {
@@ -716,6 +722,8 @@ function commerce_xls_import_generate_records(Box\Spout\Writer\XLSX\Writer $writ
  *   The title of the node.
  * @param string $bundle
  *   The node type.
+ * @param string $product_ref_field
+ *   The product reference field to use on the display node.
  * @param string $language
  *   The language of the node.
  *
@@ -725,9 +733,9 @@ function commerce_xls_import_generate_records(Box\Spout\Writer\XLSX\Writer $writ
  * @throws \Exception
  *   If multiple nodes are found, an exception is thrown as it's too ambiguous.
  */
-function commerce_xls_import_get_node($sku, $title, $bundle, $language) {
+function commerce_xls_import_get_node($sku, $title, $bundle, $product_ref_field, $language) {
   // Try and find a node that already has a reference to this sku.
-  $nids = commerce_xls_import_get_multiple_nids_by_referenced_sku($sku, $bundle);
+  $nids = commerce_xls_import_get_multiple_nids_by_referenced_sku($sku, $bundle, $product_ref_field);
   if (count($nids) > 1) {
     throw new Exception(t('More than one node exists with a reference to this product.'));
   }
@@ -792,20 +800,21 @@ function commerce_xls_import_get_multiple_nids_by_title($title, $bundle) {
  *   The sku of a product variation.
  * @param string $bundle
  *   The node type.
+ * @param string $product_ref_field
+ *   The product reference field to use on the display node.
  *
  * @return array
  *   An array of node IDs that have a reference to the product SKU.
  *   An empty array if no nodes are found.
  */
-function commerce_xls_import_get_multiple_nids_by_referenced_sku($sku, $bundle) {
+function commerce_xls_import_get_multiple_nids_by_referenced_sku($sku, $bundle, $product_ref_field) {
   $nids = array();
   $product = commerce_product_load_by_sku($sku, TRUE);
   if ($product) {
-    $product_reference_field = commerce_xls_import_product_reference_field_name($bundle);
     $query = new EntityFieldQuery();
     $results = $query->entityCondition('entity_type', 'node')
       ->entityCondition('bundle', $bundle)
-      ->fieldCondition($product_reference_field, 'product_id', $product->product_id)
+      ->fieldCondition($product_ref_field, 'product_id', $product->product_id)
       ->execute();
 
     if (isset($results['node'])) {
@@ -817,16 +826,20 @@ function commerce_xls_import_get_multiple_nids_by_referenced_sku($sku, $bundle) 
 }
 
 /**
- * Returns the name of the product reference field for the specified bundle.
+ * Check if a product reference field exists on a node.
  *
  * @param string $bundle
  *   The node type.
+ *
+ * @return bool
+ *   TRUE if the node has a product reference field.
+ *   FALSE if the node does not have a product reference field.
  */
-function commerce_xls_import_product_reference_field_name($bundle) {
+function commerce_xls_import_product_reference_field_exists($bundle) {
   foreach (field_info_instances('node', $bundle) as $field_name => $instance) {
     $field = field_info_field($field_name);
     if ($field['type'] == 'commerce_product_reference') {
-      return $field_name;
+      return TRUE;
     }
   }
   return FALSE;
