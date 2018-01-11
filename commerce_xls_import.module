@@ -826,14 +826,26 @@ function commerce_xls_import_get_multiple_nids_by_referenced_sku($sku, $bundle, 
 }
 
 /**
+ * Forms an array of all node types that have a product reference field.
+ *
+ * @return array
+ *   An array of node types with a product reference field.
+ */
+function commerce_xls_import_get_node_types_with_product_reference() {
+  $node_types = array_filter(node_type_get_types(), function ($node_type) {
+    return commerce_xls_import_product_reference_field_exists($node_type->type);
+  });
+  return $node_types;
+}
+
+/**
  * Check if a product reference field exists on a node.
  *
  * @param string $bundle
  *   The node type.
  *
  * @return bool
- *   TRUE if the node has a product reference field.
- *   FALSE if the node does not have a product reference field.
+ *   TRUE if the node type has a product reference field.
  */
 function commerce_xls_import_product_reference_field_exists($bundle) {
   foreach (field_info_instances('node', $bundle) as $field_name => $instance) {

@@ -31,9 +31,7 @@ function commerce_xls_import_start_export($form, &$form_state) {
   }
 
   // Only grab node types that have a reference to a product.
-  $node_types = array_filter(node_type_get_types(), function ($node_type) {
-    return commerce_xls_import_product_reference_field_exists($node_type->type);
-  });
+  $node_types = commerce_xls_import_get_node_types_with_product_reference();
   if (empty($node_types)) {
     $display_types['no_display_types'] = t('No product display types were found that have a product reference field');
   }
@@ -76,7 +74,7 @@ function commerce_xls_import_start_export($form, &$form_state) {
   $form['display_type'] = array(
     '#title' => t('Display Type'),
     '#type' => 'select',
-    '#description' => t('Select the display (node) type to export. (The node must have a product reference field to show up in this list.)'),
+    '#description' => t('Select the display (node) type to export. Only node types with product references are listed.'),
     '#options' => $display_types,
     '#ajax' => array(
       'callback' => 'commerce_xls_import_export_ajax_display_type_callback',
@@ -146,7 +144,7 @@ function commerce_xls_import_start_export_product_ref_field($bundle) {
   return array(
     '#title' => t('Product Reference Field'),
     '#type' => 'select',
-    '#description' => t('Select the product reference field to use in export.'),
+    '#description' => t('Select the product reference field to use for the product variations.'),
     '#prefix' => '<div id="commerce-xls-import-product-ref-field">',
     '#suffix' => '</div>',
     '#options' => $product_ref_types,
