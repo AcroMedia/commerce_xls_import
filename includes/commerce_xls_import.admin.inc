@@ -10,10 +10,15 @@
  *
  * Contains the buttons to begin the import or to generate example headers.
  *
+ * @param array $form
+ *   The form that is being built.
+ * @param array $form_state
+ *   The form state array, passed by reference.
+ *
  * @return
  *  The form array representing the from to initiate the import or generate examples headers.
  */
-function commerce_xls_import_start() {
+function commerce_xls_import_start($form, &$form_state) {
   $form = array();
   $product_types = array();
   $display_types = array();
@@ -36,6 +41,9 @@ function commerce_xls_import_start() {
   foreach (commerce_product_types() as $product_type) {
     $product_types[$product_type['type']] = $product_type['name'];
   }
+  if (empty($product_types)) {
+    $product_types['no_product_types'] = t('No product types were found');
+  }
 
   $form['product_type'] = array(
     '#title' => t('Product Type'),
@@ -47,19 +55,30 @@ function commerce_xls_import_start() {
     ),
   );
 
-  foreach (node_type_get_types() as $node_type) {
-    $display_types[$node_type->type] = $node_type->name;
+  // Only grab node types that have a reference to a product.
+  $node_types = commerce_xls_import_get_node_types_with_product_reference();
+  if (empty($node_types)) {
+    $display_types['no_display_types'] = t('No product display types were found that have a product reference field');
+  }
+  else {
+    foreach ($node_types as $node_type) {
+      $display_types[$node_type->type] = $node_type->name;
+    }
   }
 
   $form['display_type'] = array(
     '#title' => t('Display Type'),
     '#type' => 'select',
-    '#description' => t('Select the display (node) type to use in import.'),
+    '#description' => t('Select the display (node) type to use in import. Only node types with product references are listed.'),
     '#options' => $display_types,
-    '#attributes' => array(
-      'id' => array('commerce-xls-import-product-type'),
+    '#ajax' => array(
+      'callback' => 'commerce_xls_import_ajax_display_type_callback',
+      'wrapper' => 'commerce-xls-import-product-ref-field',
     ),
   );
+
+  $node_type = isset($form_state['values']['display_type']) ? $form_state['values']['display_type'] : reset($node_types)->type;
+  $form['product_ref_field'] = commerce_xls_import_start_product_ref_field($node_type);
 
   $form['download_template'] = array(
       '#type' => 'submit',
@@ -167,15 +186,87 @@ function commerce_xls_import_start() {
 }
 
 /**
+ * Generates the "Product Reference Field" select list.
+ *
+ * @param string $bundle
+ *   The node type to search for product references fields.
+ *
+ * @return array
+ *   The form array for the product reference select field.
+ */
+function commerce_xls_import_start_product_ref_field($bundle) {
+  $product_ref_types = array();
+  foreach (field_info_instances('node', $bundle) as $field_name => $instance) {
+    $field = field_info_field($field_name);
+    if ($field['type'] == 'commerce_product_reference') {
+      $product_ref_types[$field_name] = $field_name;
+    }
+  }
+
+  if (empty($product_ref_types)) {
+    return NULL;
+  }
+
+  return array(
+    '#title' => t('Product Reference Field'),
+    '#type' => 'select',
+    '#description' => t('Select the product reference field to use for the product variations.'),
+    '#prefix' => '<div id="commerce-xls-import-product-ref-field">',
+    '#suffix' => '</div>',
+    '#options' => $product_ref_types,
+  );
+}
+
+/**
+ * Ajax callback for "Display Type" select field.
+ *
+ * @param array $form
+ *   The form that is being submitted.
+ *
+ * @return array
+ *   Returns the form element for the product reference type.
+ */
+function commerce_xls_import_ajax_display_type_callback($form) {
+  return $form['product_ref_field'];
+}
+
+/**
  * Validation handler for the import start form.
  *
  * @param array $form
- *  The form that is being validated.
- *
+ *   The form that is being validated.
  * @param array $form_state
- *  The form state array, passed by reference.
+ *   The form state array, passed by reference.
  */
 function commerce_xls_import_start_validate($form, &$form_state) {
+  // Check that the product type exists.
+  $product_type = $form_state['values']['product_type'];
+  if ($product_type == 'no_product_types') {
+    form_set_error('product_type', t('No product types were found'));
+  }
+  else {
+    if (!commerce_product_type_get_name($product_type)) {
+      form_set_error('product_type', t('The product type %type was not found', array('%type' => $product_type)));
+    }
+  }
+
+  // Check that the display type exists and has a product reference.
+  $display_type = $form_state['values']['display_type'];
+  if ($display_type == 'no_display_types') {
+    form_set_error('display_type', t('No product display types were found that had a product reference'));
+  }
+  else {
+    if (!commerce_xls_import_product_reference_field_exists($display_type)) {
+      form_set_error('display_type', t('The product display type %type was not found with a product reference field', array('%type' => $display_type)));
+    }
+  }
+
+  // Check that the product reference field exists on the product display.
+  $product_ref_field = $form_state['values']['product_ref_field'];
+  $field = field_info_instance('node', $product_ref_field, $display_type);
+  if (!$field) {
+    form_set_error('product_ref_field', t('The product reference field %type does not exist on the product display %node', array('%type' => $product_ref_field, '%node' => $display_type)));
+  }
 
   if (isset($_FILES['files'])) {
     foreach ($_FILES['files']['tmp_name'] as $field_name => $tmp_file) {
@@ -234,6 +325,7 @@ function commerce_xls_import_start_submit($form, &$form_state) {
     foreach ($form_state['files'] as $file) {
       $file['product_type'] = $form_state['values']['product_type'];
       $file['display_type'] = $form_state['values']['display_type'];
+      $file['product_ref_field'] = $form_state['values']['product_ref_field'];
       if (!commerce_xls_import_is_running()) {
 
         db_insert('commerce_xls_import')
@@ -259,6 +351,7 @@ function commerce_xls_import_start_submit($form, &$form_state) {
     foreach ($form_state['files'] as $file) {
       $file['product_type'] = $form_state['values']['product_type'];
       $file['display_type'] = $form_state['values']['display_type'];
+      $file['product_ref_field'] = $form_state['values']['product_ref_field'];
       if (!commerce_xls_import_is_running()) {
 
         db_insert('commerce_xls_import')

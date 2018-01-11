@@ -113,6 +113,7 @@ class CommerceXlsImportTestCase extends CommerceBaseTestCase {
 
     $edit = array(
       'display_type' => 'product_display',
+      'product_ref_field' => 'field_product',
       'files[import_file]' => drupal_get_path('module', 'commerce_xls_import') . '/sample_files/sample.xlsx',
       'files[product_images]' => drupal_get_path('module', 'commerce_xls_import') . '/sample_files/product_images.zip',
     );
@@ -169,6 +170,7 @@ class CommerceXlsImportTestCase extends CommerceBaseTestCase {
 
     $edit = array(
       'display_type' => 'product_display',
+      'product_ref_field' => 'field_product',
       'files[import_file]' => $import_sheet_path,
     );
     $this->drupalPost('admin/commerce/products/commerce_xls_import', $edit, 'Begin Full Import');
@@ -240,6 +242,7 @@ class CommerceXlsImportTestCase extends CommerceBaseTestCase {
 
     $edit = array(
       'display_type' => 'product_display',
+      'product_ref_field' => 'field_product',
       'files[import_file]' => $import_sheet_path,
     );
     $this->drupalPost('admin/commerce/products/commerce_xls_import', $edit, 'Begin Full Import');
@@ -273,6 +276,7 @@ class CommerceXlsImportTestCase extends CommerceBaseTestCase {
 
     $edit = array(
       'display_type' => 'product_display',
+      'product_ref_field' => 'field_product',
       'files[import_file]' => drupal_get_path('module', 'commerce_xls_import') . '/sample_files/sample.xlsx',
       'files[product_images]' => drupal_get_path('module', 'commerce_xls_import') . '/sample_files/product_images.zip',
     );
@@ -347,7 +351,8 @@ class CommerceXlsImportTestCase extends CommerceBaseTestCase {
 
     $this->drupalLogin($this->privilegedUser);
     $edit = array(
-      'display_type' => 'product_display'
+      'display_type' => 'product_display',
+      'product_ref_field' => 'field_product',
     );
     $this->drupalPost('admin/commerce/products/commerce_xls_import/export', $edit, 'Begin Export');
     $this->assertText('1 products exported', 'Export file generated');
