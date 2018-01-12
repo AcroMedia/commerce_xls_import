@@ -1,0 +1,336 @@
+<?php
+
+/**
+ * @file
+ * Commerce_xls_import_physical.test.
+ *
+ * Tests.
+ */
+
+use Box\Spout\Writer\WriterFactory;
+use Box\Spout\Common\Type;
+
+/**
+ * Class CommerceXlsImportPhysicalTestCase.
+ */
+class CommerceXlsImportPhysicalTestCase extends CommerceBaseTestCase {
+  protected $privilegedUser;
+
+  /**
+   * GetInfo().
+   *
+   * @return array
+   *   An array containing name, description, and group text.
+   */
+  public static function getInfo() {
+    return array(
+      'name' => 'Commerce XLS Import (commerce_physical) Tests',
+      'description' => 'Ensure Commerce XLS Import functions properly with the commerce_physical module',
+      'group' => 'Drupal Commerce XLS Import',
+    );
+  }
+
+  /**
+   * Creates a physical field on the commerce_product 'product' bundle.
+   *
+   * @param string $field_type
+   *   The field type, e.g. 'physical_weight'.
+   */
+  private function createProductPhysicalField($field_type) {
+    if ($field_type == 'physical_dimensions') {
+      $field_name = 'field_dimensions';
+      $widget_type = 'physical_dimensions_textfields';
+      $display_type = 'physical_dimensions_formatted';
+    }
+    elseif ($field_type == 'physical_weight') {
+      $field_name = 'field_weight';
+      $widget_type = 'physical_weight_textfield';
+      $display_type = 'physical_weight_formatted';
+    }
+    else {
+      return;
+    }
+
+    $field_info = field_info_field($field_name);
+    if (empty($field_info)) {
+      $field = array(
+        'field_name' => $field_name,
+        'type' => $field_type,
+        'translatable' => FALSE,
+      );
+      field_create_field($field);
+    }
+
+    $instance = field_info_instance('commerce_product', $field_name, 'product');
+    if (empty($instance)) {
+      $instance = array(
+        'field_name' => $field_name,
+        'entity_type' => 'commerce_product',
+        'label' => 'Product',
+        'bundle' => 'product',
+        'description' => 'Test field.',
+        'required' => TRUE,
+
+        'widget' => array(
+          'type' => $widget_type,
+        ),
+
+        'display' => array(
+          'default' => array(
+            'label' => 'hidden',
+            'type' => $display_type,
+          ),
+          'line_item' => array(
+            'label' => 'hidden',
+            'type' => 'hidden',
+          ),
+          'node_teaser' => array(
+            'label' => 'hidden',
+            'type' => 'hidden',
+          ),
+        ),
+      );
+
+      field_create_instance($instance);
+    }
+  }
+
+  /**
+   * Setup().
+   *
+   * @{inheritdoc}
+   */
+  public function setUp() {
+    libraries_load('spout');
+
+    $modules = array('commerce_xls_import', 'physical');
+    $modules = parent::setUpHelper('all', $modules);
+    parent::setUp($modules);
+
+    // Create a dummy product display content type.
+    $this->createDummyProductDisplayContentType('product_display', TRUE, 'field_product', -1);
+    $this->createProductPhysicalField('physical_weight');
+    $this->createProductPhysicalField('physical_dimensions');
+
+    $this->privilegedUser = $this->drupalCreateUser(array(
+      'administer commerce import',
+      'administer commerce_product entities',
+    ));
+
+    $this->assertTrue(module_exists('physical'), 'physical module is enabled');
+
+    $this->drupalLogin($this->privilegedUser);
+  }
+
+  /**
+   * Creates an import sheet with a pre-made header row.
+   *
+   * @param string $path
+   *   The path for the sheet to be created.
+   *
+   * @return \Box\Spout\Writer\WriterInterface
+   *   The import writer.
+   */
+  private function createImportSheet($path) {
+    $import_writer = WriterFactory::create(Type::XLSX);
+    $import_writer->openToFile($path);
+
+    // Make the rows for the import sheet.
+    $header_row = array(
+      'title',
+      'variation_title',
+      'sku',
+      'body',
+      'commerce_price',
+      'status',
+      'language',
+      'field_weight',
+      'field_dimensions',
+    );
+
+    $import_writer->addRow($header_row);
+
+    return $import_writer;
+  }
+
+  /**
+   * Creates a product row for an import sheet.
+   *
+   * @param string $title
+   *   The product display title.
+   * @param string $variation_title
+   *   The variation title.
+   * @param string $sku
+   *   The product SKU.
+   * @param array $weight
+   *   An array of weight details.
+   * @param array $dimensions
+   *   An array of dimension details.
+   *
+   * @return array
+   *   The array of details for the product row.
+   */
+  private function createProductRow($title, $variation_title, $sku, $weight, $dimensions) {
+    return array(
+      $title,
+      $variation_title,
+      $sku,
+      'This is a test product',
+      '15.99',
+      '1',
+      'en',
+      'weight=' . $weight['weight'] . ',unit=' . $weight['unit'],
+      'length=' . $dimensions['length'] . ',width=' . $dimensions['width'] . ',height=' . $dimensions['height'] . ',unit=' . $dimensions['unit'],
+    );
+  }
+
+  /**
+   * Test that weight and dimensions import correctly on new product.
+   */
+  public function testCommerceXlsImportPhysicalWeightDimensionsNew() {
+    $import_sheet_path = drupal_realpath(file_build_uri('test_import.xlsx'));
+
+    $import_sheet = $this->createImportSheet($import_sheet_path);
+
+    $weight = array(
+      'weight' => '15',
+      'unit' => 'lb',
+    );
+    $dimensions = array(
+      'length' => '15',
+      'width' => '20',
+      'height' => '25',
+      'unit' => 'in',
+    );
+    $product_row = $this->createProductRow('Weight', 'Weight (Medium)', 'weight-md', $weight, $dimensions);
+
+    $import_sheet->addRow($product_row);
+    $import_sheet->close();
+
+    $edit = array(
+      'display_type' => 'product_display',
+      'files[import_file]' => $import_sheet_path,
+    );
+    $this->drupalPost('admin/commerce/products/commerce_xls_import', $edit, 'Begin Full Import');
+
+    // Assert the import completed with no errors.
+    $this->assertText('Import Completed, 1 records processed with 0 errors.', 'Import file processed');
+
+    // Grab the product.
+    $query = new EntityFieldQuery();
+    $results = $query->entityCondition('entity_type', 'commerce_product')
+      ->entityCondition('bundle', 'product')
+      ->propertyCondition('sku', 'weight-md')
+      ->execute();
+    $product_ids = array_keys($results['commerce_product']);
+    $product_id = reset($product_ids);
+    $product_wrapper = entity_metadata_wrapper('commerce_product', $product_id);
+
+    // Assert the product has proper weight.
+    $product_weight = $product_wrapper->field_weight->value();
+    $this->assertEqual($product_weight['weight'], $weight['weight'], 'Weight imported to newly created product');
+    $this->assertEqual($product_weight['unit'], $weight['unit'], 'Weight unit imported to newly created product');
+
+    // Assert the product has proper dimensions.
+    $product_dimensions = $product_wrapper->field_dimensions->value();
+    $this->assertEqual($product_dimensions['length'], $dimensions['length'], 'Length imported to newly created product');
+    $this->assertEqual($product_dimensions['width'], $dimensions['width'], 'Width imported to newly created product');
+    $this->assertEqual($product_dimensions['height'], $dimensions['height'], 'Height imported to newly created product');
+    $this->assertEqual($product_dimensions['unit'], $dimensions['unit'], 'Dimensions unit imported to newly created product');
+  }
+
+  /**
+   * Test that weight and dimensions import correctly on existing product.
+   */
+  public function testCommerceXlsImportPhysicalWeightDimensionsExisting() {
+    // Verify the product doesn't exist.
+    $query = new EntityFieldQuery();
+    $results = $query->entityCondition('entity_type', 'commerce_product')
+      ->entityCondition('bundle', 'product')
+      ->propertyCondition('sku', 'weight-md')
+      ->execute();
+    $this->assertEqual(count($results), 0, 'The product does not exist');
+
+    // Create a product.
+    $weight = array(
+      'weight' => '15',
+      'unit' => 'lb',
+    );
+    $dimensions = array(
+      'length' => '15',
+      'width' => '20',
+      'height' => '25',
+      'unit' => 'in',
+    );
+    $product = commerce_product_new('product');
+    $product_wrapper = entity_metadata_wrapper('commerce_product', $product);
+    $product_wrapper->sku->set('weight-md');
+    $product_wrapper->title->set('Weight (Medium)');
+    $product_wrapper->field_weight->set($weight);
+    $product_wrapper->field_dimensions->set($dimensions);
+    $product_wrapper->save();
+
+    // Verify the product now exists.
+    $query = new EntityFieldQuery();
+    $results = $query->entityCondition('entity_type', 'commerce_product')
+      ->entityCondition('bundle', 'product')
+      ->propertyCondition('sku', 'weight-md')
+      ->execute();
+    $this->assertEqual(count($results), 1, 'The product was created');
+
+    // Create the import sheet.
+    $import_sheet_path = drupal_realpath(file_build_uri('test_import.xlsx'));
+
+    $import_sheet = $this->createImportSheet($import_sheet_path);
+
+    $new_weight = array(
+      'weight' => '20',
+      'unit' => 'oz',
+    );
+    $new_dimensions = array(
+      'length' => '10.23',
+      'width' => '10.66',
+      'height' => '33',
+      'unit' => 'ft',
+    );
+    $product_row = $this->createProductRow('Weight', 'Weight (Medium)', 'weight-md', $new_weight, $new_dimensions);
+
+    $import_sheet->addRow($product_row);
+    $import_sheet->close();
+
+    $edit = array(
+      'display_type' => 'product_display',
+      'files[import_file]' => $import_sheet_path,
+    );
+    $this->drupalPost('admin/commerce/products/commerce_xls_import', $edit, 'Begin Full Import');
+
+    // Assert the import completed with no errors.
+    $this->assertText('Import Completed, 1 records processed with 0 errors.', 'Import file processed');
+
+    // Reset entity cache to grab fresh version of product.
+    entity_get_controller('commerce_product')->resetCache();
+
+    // Grab the product.
+    $query = new EntityFieldQuery();
+    $results = $query->entityCondition('entity_type', 'commerce_product')
+      ->entityCondition('bundle', 'product')
+      ->propertyCondition('sku', 'weight-md')
+      ->execute();
+    $product_ids = array_keys($results['commerce_product']);
+    $product_id = reset($product_ids);
+    $product_wrapper = entity_metadata_wrapper('commerce_product', $product_id);
+
+    // Assert the product has the changed weight.
+    $product_weight = $product_wrapper->field_weight->value();
+    $this->assertEqual($product_weight['weight'], $new_weight['weight'], 'Weight imported on existing product');
+    $this->assertEqual($product_weight['unit'], $new_weight['unit'], 'Weight unit imported on existing product');
+
+    // Assert the product has the changed dimensions.
+    $product_dimensions = $product_wrapper->field_dimensions->value();
+    $this->assertEqual($product_dimensions['length'], $new_dimensions['length'], 'Length imported on existing product');
+    $this->assertEqual($product_dimensions['width'], $new_dimensions['width'], 'Width imported on existing product');
+    $this->assertEqual($product_dimensions['height'], $new_dimensions['height'], 'Height imported on existing product');
+    $this->assertEqual($product_dimensions['unit'], $new_dimensions['unit'], 'Dimensions unit imported on existing product');
+  }
+
+}
