@@ -78,12 +78,12 @@ class CommerceXlsImportDimensionsHandler extends CommerceXlsImportValueHandler i
   public static function toCsv($value, $delimiter = ',', $enclosure = '"') {
     $formatted = array();
     if (is_array($value)) {
-      foreach ($value as $unit => $measurement) {
-        // $unit would be length/width/height/unit.
-        // $measurement would be a numerical value or in/ft etc.
-        $unit = strtolower(trim($unit));
-        $measurement = strtolower(trim($measurement));
-        $formatted[] = ($unit . '=' . $measurement);
+      foreach ($value as $k => $v) {
+        // $k would be length/width/height/unit.
+        // $v would be a numerical value or in/ft etc.
+        $k = strtolower(trim($k));
+        $v = strtolower(trim($v));
+        $formatted[] = ($k . '=' . $v);
       }
     }
     return parent::toCsv($formatted);
@@ -101,11 +101,11 @@ class CommerceXlsImportDimensionsHandler extends CommerceXlsImportValueHandler i
         $dimension = trim($dimension);
         $split = explode('=', $dimension);
         if (count($split) == 2) {
-          // $unit would be length/width/height/unit.
-          // $measurement would be a numerical value or in/ft etc.
-          $unit = strtolower(trim($split[0]));
-          $measurement = strtolower(trim($split[1]));
-          $unserialized[$unit] = $measurement;
+          // $k would be length/width/height/unit.
+          // $v would be a numerical value or in/ft etc.
+          $k = strtolower(trim($split[0]));
+          $v = strtolower(trim($split[1]));
+          $unserialized[$k] = $v;
         }
       }
     }

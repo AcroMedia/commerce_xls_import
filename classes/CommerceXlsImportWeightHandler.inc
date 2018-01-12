@@ -74,12 +74,12 @@ class CommerceXlsImportWeightHandler extends CommerceXlsImportValueHandler imple
   public static function toCsv($value, $delimiter = ',', $enclosure = '"') {
     $formatted = array();
     if (is_array($value)) {
-      foreach ($value as $unit => $measurement) {
-        // $unit would be weight/unit.
-        // $measurement would be a numerical value or lb/kg etc.
-        $unit = strtolower(trim($unit));
-        $measurement = strtolower(trim($measurement));
-        $formatted[] = ($unit . '=' . $measurement);
+      foreach ($value as $k => $v) {
+        // $k would be weight/unit.
+        // $v would be a numerical value or lb/kg etc.
+        $k = strtolower(trim($k));
+        $v = strtolower(trim($v));
+        $formatted[] = ($k . '=' . $v);
       }
     }
     return parent::toCsv($formatted);
@@ -97,11 +97,11 @@ class CommerceXlsImportWeightHandler extends CommerceXlsImportValueHandler imple
         $dimension = trim($dimension);
         $split = explode('=', $dimension);
         if (count($split) == 2) {
-          // $unit would be weight/unit.
-          // $measurement would be a numerical value or lb/kg etc.
-          $unit = strtolower(trim($split[0]));
-          $measurement = strtolower(trim($split[1]));
-          $unserialized[$unit] = $measurement;
+          // $k would be weight/unit.
+          // $v would be a numerical value or lb/kg etc.
+          $k = strtolower(trim($split[0]));
+          $v = strtolower(trim($split[1]));
+          $unserialized[$k] = $v;
         }
       }
     }
