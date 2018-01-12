@@ -14,15 +14,29 @@ class CommerceXlsImportWeightHandler extends CommerceXlsImportValueHandler imple
    * {@inheritdoc}
    */
   public static function validate($value, EntityDrupalWrapper $wrapper, $field_name) {
+    $errors = array();
     $allowed_units = array_keys(physical_weight_units());
-    $weight = self::fromCsv($value);
-    $valid = isset($weight['weight'], $weight['unit'])
-      && is_numeric($weight['weight'])
-      && in_array($weight['unit'], $allowed_units);
+    $dimensions = self::fromCsv($value);
 
+    if (!isset($dimensions['weight'])) {
+      $errors[] = t('The "weight" value is not found.');
+    }
+    elseif (!is_numeric($dimensions['weight'])) {
+      $errors[] = t('The "weight" value must be numeric.');
+    }
+
+    if (!isset($dimensions['unit'])) {
+      $errors[] = t('The "unit" value is not found.');
+    }
+    elseif (!in_array($dimensions['unit'], $allowed_units)) {
+      $allowed_units_formatted = implode(', ', $allowed_units);
+      $errors[] = t('The "unit" value must be one of the following: !allowed_units_formatted.', array('!allowed_units_formatted' => $allowed_units_formatted));
+    }
+
+    $valid = empty($errors);
     return array(
-      'status' => ($valid) ? COMMERCE_XLS_IMPORT_DATA_SUCCESS : COMMERCE_XLS_IMPORT_DATA_ERROR,
-      'message' => (!$valid) ? t('Invalid Dimensions (format must look like weight=23,unit=lb)') : NULL,
+      'status' => $valid ? COMMERCE_XLS_IMPORT_DATA_SUCCESS : COMMERCE_XLS_IMPORT_DATA_ERROR,
+      'message' => $valid ? NULL : implode(' ', $errors),
     );
   }
 
@@ -60,10 +74,12 @@ class CommerceXlsImportWeightHandler extends CommerceXlsImportValueHandler imple
   public static function toCsv($value, $delimiter = ',', $enclosure = '"') {
     $formatted = array();
     if (is_array($value)) {
-      foreach ($value as $k => $v) {
-        $k = strtolower(trim($k));
-        $v = strtolower(trim($v));
-        $formatted[] = ($k . '=' . $v);
+      foreach ($value as $unit => $measurement) {
+        // $unit would be weight/unit.
+        // $measurement would be a numerical value or lb/kg etc.
+        $unit = strtolower(trim($unit));
+        $measurement = strtolower(trim($measurement));
+        $formatted[] = ($unit . '=' . $measurement);
       }
     }
     return parent::toCsv($formatted);
@@ -81,9 +97,11 @@ class CommerceXlsImportWeightHandler extends CommerceXlsImportValueHandler imple
         $dimension = trim($dimension);
         $split = explode('=', $dimension);
         if (count($split) == 2) {
-          $key = strtolower(trim($split[0]));
-          $value = strtolower(trim($split[1]));
-          $unserialized[$key] = $value;
+          // $unit would be weight/unit.
+          // $measurement would be a numerical value or lb/kg etc.
+          $unit = strtolower(trim($split[0]));
+          $measurement = strtolower(trim($split[1]));
+          $unserialized[$unit] = $measurement;
         }
       }
     }

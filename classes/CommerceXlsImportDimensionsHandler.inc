@@ -14,15 +14,31 @@ class CommerceXlsImportDimensionsHandler extends CommerceXlsImportValueHandler i
    * {@inheritdoc}
    */
   public static function validate($value, EntityDrupalWrapper $wrapper, $field_name) {
+    $errors = array();
     $allowed_units = array_keys(physical_dimension_units());
     $dimensions = self::fromCsv($value);
-    $valid = isset($dimensions['width'], $dimensions['length'], $dimensions['height'], $dimensions['unit'])
-      && is_numeric($dimensions['width']) && is_numeric($dimensions['length']) && is_numeric($dimensions['height'])
-      && in_array($dimensions['unit'], $allowed_units);
 
+    foreach (array('width', 'length', 'height') as $unit) {
+      if (!isset($dimensions[$unit])) {
+        $errors[] = t('The "!unit" value is not found.', array('!unit' => $unit));
+      }
+      elseif (!is_numeric($dimensions[$unit])) {
+        $errors[] = t('The "!unit" value must be numeric.', array('!unit' => $unit));
+      }
+    }
+
+    if (!isset($dimensions['unit'])) {
+      $errors[] = t('The "unit" value is not found.');
+    }
+    elseif (!in_array($dimensions['unit'], $allowed_units)) {
+      $allowed_units_formatted = implode(', ', $allowed_units);
+      $errors[] = t('The "unit" value must be one of the following: !allowed_units_formatted.', array('!allowed_units_formatted' => $allowed_units_formatted));
+    }
+
+    $valid = empty($errors);
     return array(
-      'status' => ($valid) ? COMMERCE_XLS_IMPORT_DATA_SUCCESS : COMMERCE_XLS_IMPORT_DATA_ERROR,
-      'message' => (!$valid) ? t('Invalid Dimensions (format must look like length=23,height=10,width=20,unit=in)') : NULL,
+      'status' => $valid ? COMMERCE_XLS_IMPORT_DATA_SUCCESS : COMMERCE_XLS_IMPORT_DATA_ERROR,
+      'message' => $valid ? NULL : implode(' ', $errors),
     );
   }
 
@@ -62,10 +78,12 @@ class CommerceXlsImportDimensionsHandler extends CommerceXlsImportValueHandler i
   public static function toCsv($value, $delimiter = ',', $enclosure = '"') {
     $formatted = array();
     if (is_array($value)) {
-      foreach ($value as $k => $v) {
-        $k = strtolower(trim($k));
-        $v = strtolower(trim($v));
-        $formatted[] = ($k . '=' . $v);
+      foreach ($value as $unit => $measurement) {
+        // $unit would be length/width/height/unit.
+        // $measurement would be a numerical value or in/ft etc.
+        $unit = strtolower(trim($unit));
+        $measurement = strtolower(trim($measurement));
+        $formatted[] = ($unit . '=' . $measurement);
       }
     }
     return parent::toCsv($formatted);
@@ -83,9 +101,11 @@ class CommerceXlsImportDimensionsHandler extends CommerceXlsImportValueHandler i
         $dimension = trim($dimension);
         $split = explode('=', $dimension);
         if (count($split) == 2) {
-          $key = strtolower(trim($split[0]));
-          $value = strtolower(trim($split[1]));
-          $unserialized[$key] = $value;
+          // $unit would be length/width/height/unit.
+          // $measurement would be a numerical value or in/ft etc.
+          $unit = strtolower(trim($split[0]));
+          $measurement = strtolower(trim($split[1]));
+          $unserialized[$unit] = $measurement;
         }
       }
     }
