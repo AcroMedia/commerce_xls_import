@@ -682,6 +682,10 @@ function commerce_xls_import_generate_records(Box\Spout\Writer\XLSX\Writer $writ
 
     foreach ($product_wrappers as $product_wrapper) {
       /** @var EntityDrupalWrapper $product_wrapper */
+      if ($product_wrapper->getBundle() != $product_type) {
+        continue;
+      }
+
       $data = $node_data;
       foreach ($field_info['commerce_product'] as $field_name => $field_type) {
         $handler = commerce_xls_import_field_type_handler($field_type);
