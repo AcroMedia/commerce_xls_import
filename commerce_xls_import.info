@@ -28,5 +28,6 @@ files[] = classes/CommerceXlsImportNumberDecimalHandler.inc
 files[] = classes/CommerceXlsImportSkuHandler.inc
 files[] = classes/CommerceXlsImportTaxonomyTermReferenceHandler.inc
 files[] = classes/CommerceXlsImportTextHandler.inc
+files[] = classes/CommerceXlsImportTextLongHandler.inc
 files[] = classes/CommerceXlsImportTextWithSummaryHandler.inc
 files[] = classes/CommerceXlsImportVariationTitleHandler.inc

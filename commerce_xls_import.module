@@ -194,6 +194,10 @@ function commerce_xls_import_commerce_xls_import_field_type_handler_info() {
 
   $handlers['text'] = $handlers['default'];
 
+  $handlers['text_long'] = array(
+    'class_name' => 'CommerceXlsImportTextLongHandler',
+  );
+
   $handlers['text_with_summary'] = array(
     'class_name' => 'CommerceXlsImportTextWithSummaryHandler',
   );
